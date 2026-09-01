@@ -213,7 +213,7 @@ export default function App() {
           }
         }
       })
-      .catch((err) => console.log('Session check in demo mode:', err));
+      .catch(() => {});
   }, []);
 
   const handleLogout = async () => {
@@ -386,8 +386,8 @@ export default function App() {
           setCourses(loadedCourses);
         }
       }
-    } catch (err) {
-      console.warn('Failed to load courses from API:', err);
+    } catch {
+      // ignore
     }
   };
 
@@ -420,8 +420,6 @@ export default function App() {
       bannerImage: newCourseData.bannerImage || getCourseCoverSvg(newCourseData.code || 'ENG101')
     };
 
-    console.log('[Frontend handleAddCourse] Submitting POST /api/courses with payload:', payload);
-
     try {
       const res = await fetch('/api/courses', {
         method: 'POST',
@@ -431,7 +429,6 @@ export default function App() {
       });
 
       const data = await res.json();
-      console.log('[Frontend handleAddCourse] POST /api/courses response status:', res.status, data);
 
       if (res.ok && data.course) {
         setCourses((prev) => [data.course, ...prev.filter((c) => c.id !== data.course.id)]);
@@ -451,7 +448,6 @@ export default function App() {
   };
 
   const handleUpdateCourse = async (courseId: string, updatedData: Partial<Course>) => {
-    console.log('[Frontend handleUpdateCourse] Submitting PATCH /api/courses/' + courseId, updatedData);
     try {
       const res = await fetch(`/api/courses/${courseId}`, {
         method: 'PATCH',
@@ -480,7 +476,6 @@ export default function App() {
 
   const handleDeleteCourse = async (courseId: string) => {
     const courseToDelete = courses.find((c) => c.id === courseId);
-    console.log('[Frontend handleDeleteCourse] Submitting DELETE /api/courses/' + courseId);
 
     try {
       const res = await fetch(`/api/courses/${courseId}`, {

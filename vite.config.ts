@@ -15,8 +15,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // File watching is disabled when DISABLE_HMR is true to save CPU during agent edits.
       hmr: disableHmr ? false : true,
       watch: disableHmr ? null : undefined,
     },
