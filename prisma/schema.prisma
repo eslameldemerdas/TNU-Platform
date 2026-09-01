@@ -1,0 +1,779 @@
+// Prisma Schema for EngHub Platform
+// Comprehensive PostgreSQL Database Architecture
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  student
+  moderator
+  department_admin
+  supervisor
+  super_admin
+}
+
+enum CourseCategory {
+  CORE
+  ELECTIVE
+  GENERAL
+}
+
+enum ResourceCategory {
+  lecture_notes
+  lab_manual
+  assignment
+  important_questions
+  reference_book
+  summary
+  notes
+  previous_exam
+  cheat_sheet
+  study_guide
+  lab_material
+  practice_material
+  reference
+  other
+}
+
+enum ResourceType {
+  lecture
+  section
+  lab
+  assignment
+  previousExam
+  summary
+  importantQuestion
+}
+
+enum ResourceStatus {
+  pending
+  approved
+  flagged
+  removed
+  rejected
+}
+
+enum ResourceVerificationStatus {
+  official
+  verified
+  student_uploaded
+  rejected
+}
+
+enum HonorCategory {
+  academic_excellence
+  hackathon_competition
+  scientific_research
+  graduation_project
+  robotics_ai
+  innovation_patents
+  student_leadership
+  community_impact
+}
+
+enum PointsLedgerType {
+  upload_approved
+  answer_accepted
+  helpful_comment
+  moderation_removal
+  bonus
+}
+
+enum ModerationTargetType {
+  resource
+  comment
+  post
+  user
+}
+
+enum ModerationActionType {
+  approve
+  flag
+  remove
+  ban
+  warn
+}
+
+// ==========================================
+// HIERARCHY TABLES
+// University -> Faculty -> Department -> AcademicLevel -> Semester -> Course
+// ==========================================
+
+model University {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  domain      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  faculties       Faculty[]
+  departments     Department[]
+  academicLevels  AcademicLevel[]
+  semesters       Semester[]
+  courses         Course[]
+  students        StudentProfile[]
+  resources       Resource[]
+}
+
+model Faculty {
+  id           String     @id @default(uuid())
+  name         String
+  code         String
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  departments  Department[]
+  courses      Course[]
+  students     StudentProfile[]
+  resources    Resource[]
+
+  @@unique([universityId, code])
+  @@index([universityId])
+}
+
+model Department {
+  id           String     @id @default(uuid())
+  name         String
+  code         String
+  facultyId    String
+  universityId String
+  description  String?
+  iconName     String?    @default("BookOpen")
+  color        String?    @default("from-blue-600 to-indigo-500")
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  faculty      Faculty    @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  instructors  Instructor[]
+  courses      Course[]
+  students     StudentProfile[]
+  resources    Resource[]
+  schedules    ScheduleItem[]
+  exams        ExamQuiz[]
+
+  @@unique([facultyId, code])
+  @@index([universityId])
+  @@index([facultyId])
+}
+
+model AcademicLevel {
+  id           String     @id @default(uuid())
+  name         String     // e.g. "Year 1 (Freshman)", "Year 2 (Sophomore)"
+  code         String     // e.g. "Y1", "Y2"
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  semesters    Semester[]
+  courses      Course[]      @relation("CourseLevel")
+  students     StudentProfile[]
+
+  @@unique([universityId, code])
+  @@index([universityId])
+}
+
+model Semester {
+  id              String        @id @default(uuid())
+  name            String        // e.g. "Fall 2026", "Spring 2026", "Summer 2026"
+  academicLevelId String
+  universityId    String
+  academicLevel   AcademicLevel @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
+  university      University    @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  courses         Course[]      @relation("CourseSemester")
+  enrollments     Enrollment[]
+  students        StudentProfile[]
+
+  @@index([academicLevelId])
+  @@index([universityId])
+}
+
+// ==========================================
+// INSTRUCTOR (FIRST-CLASS ENTITY)
+// ==========================================
+
+model Instructor {
+  id           String     @id @default(uuid())
+  name         String
+  title        String     // e.g. "دكتور", "أستاذ دكتور", "مهندس"
+  email        String     @unique
+  phone        String?
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  avatarUrl    String?
+  bio          String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  courses      Course[]
+  schedules    ScheduleItem[]
+
+  @@index([departmentId])
+  @@index([email])
+}
+
+// ==========================================
+// COURSE & ENROLLMENT
+// ==========================================
+
+model Course {
+  id              String         @id @default(uuid())
+  code            String         // e.g. "ENG 011", "AIE 101", "HUM XE1"
+  title           String
+  description     String?
+  creditHours     Int            @default(3)
+  credits         Int            @default(3)
+  category        CourseCategory @default(CORE)
+  universityId    String
+  facultyId       String
+  departmentId    String
+  levelId         String
+  semesterId      String
+  instructorId    String?
+  instructor      String?
+  instructorEmail String?
+  level           String?
+  semester        String?
+  syllabus        String[]      @default([])
+  scheduleDayTime String?
+  location        String?
+  prerequisites   String[]      @default([])
+  gradingScheme   Json?         @default("[]")
+  bannerImage     String?
+  archivedAt      DateTime?     // Soft-delete flag
+
+  university      University     @relation(fields: [universityId], references: [id])
+  faculty         Faculty        @relation(fields: [facultyId], references: [id])
+  department      Department     @relation(fields: [departmentId], references: [id])
+  levelRef        AcademicLevel  @relation("CourseLevel", fields: [levelId], references: [id])
+  semesterRef     Semester      @relation("CourseSemester", fields: [semesterId], references: [id])
+  instructorObj   Instructor?    @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  enrollments     Enrollment[]
+  resources       Resource[]
+  schedules       ScheduleItem[]
+  exams           ExamQuiz[]
+  threads         DiscussionThread[]
+  comments        Comment[]
+
+  @@unique([departmentId, code])
+  @@index([universityId])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@index([levelId])
+  @@index([semesterId])
+  @@index([instructorId])
+  @@index([departmentId, levelId, semesterId])
+  @@index([archivedAt])
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  studentId  String
+  courseId   String
+  semesterId String
+  enrolledAt DateTime @default(now())
+
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, semesterId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([semesterId])
+}
+
+// ==========================================
+// USER & PROFILES
+// ==========================================
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  phone           String?
+  studentId       String?
+  name            String
+  passwordHash    String
+  role            Role     @default(student)
+  supervisorTitle String?
+  supervisorScope Json?
+  universityId    String?
+  facultyId       String?
+  departmentId    String?
+  level           String?
+  semester        String?
+  avatar          String?
+  bio             String?
+  points          Int      @default(0)
+  badges          Json?    @default("[]")
+  savedBookmarks  String[] @default([])
+  enrolledCourseIds String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile         StudentProfile?
+  enrollments     Enrollment[]
+  pointsLedger    PointsLedger[]
+  resources       Resource[]            @relation("UserResources")
+  moderationDone  ModerationAction[]    @relation("ModeratorActions")
+  threads         DiscussionThread[]
+  comments        Comment[]
+  notifications   Notification[]
+  sessions        UserSession[]
+  resourceVotes   ResourceVote[]        @relation("ResourceVotes")
+  postUpvotes     PostUpvote[]          @relation("PostUpvotes")
+  quizSubmissions QuizSubmission[]
+  pomodoroLogs    PomodoroSession[]
+  honorStudents   HonorStudent[]
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model StudentProfile {
+  id           String         @id @default(uuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  universityId String
+  facultyId    String
+  departmentId String
+  levelId      String?
+  semesterId   String?
+  bio          String?
+  avatarUrl    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  university   University     @relation(fields: [universityId], references: [id])
+  faculty      Faculty        @relation(fields: [facultyId], references: [id])
+  department   Department     @relation(fields: [departmentId], references: [id])
+  level        AcademicLevel? @relation(fields: [levelId], references: [id])
+  semester     Semester?      @relation(fields: [semesterId], references: [id])
+
+  @@index([userId])
+  @@index([departmentId])
+  @@index([levelId])
+  @@index([semesterId])
+}
+
+// ==========================================
+// POINTS LEDGER (EVENT-SOURCED APPEND-ONLY)
+// ==========================================
+
+model PointsLedger {
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        PointsLedgerType
+  points      Int              // Positive for rewards, negative for reversals
+  referenceId String?          // ID of resource, comment, or moderation action
+  reason      String?
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+// ==========================================
+// RESOURCES (STUDY FILES)
+// ==========================================
+
+model Resource {
+  id                 String                     @id @default(uuid())
+  title              String
+  description        String?
+  category           ResourceCategory           @default(lecture_notes)
+  resourceType       ResourceType               @default(lecture)
+  fileKey            String                     // S3 / Storage encrypted key
+  fileType           String                     // e.g. "pdf", "docx", "zip"
+  fileSize           String                     // e.g. "4.2 MB"
+  fileSizeBytes      Int?                       @default(0)
+  fileName           String                     // original filename
+  fileData           String?
+  courseCode         String                     // denormalized for display/search
+  courseTitle        String?
+  uploaderId         String
+  uploaderName       String?
+  uploaderRole       String?
+  uploaderDepartment String?
+  uploadDate         String?
+  universityId       String
+  facultyId          String
+  departmentId       String
+  courseId           String
+  academicYear       String?
+  semester           String?
+  downloadsCount     Int                        @default(0)
+  viewCount          Int                        @default(0)
+  rating             Float                      @default(5.0)
+  ratingCount        Int                        @default(1)
+  helpfulCount       Int                        @default(0)
+  notHelpfulCount    Int                        @default(0)
+  status             ResourceStatus             @default(pending)
+  moderationStatus   ResourceStatus             @default(pending)
+  verificationStatus ResourceVerificationStatus @default(student_uploaded)
+  moderatedBy        String?
+  moderatedByName    String?
+  moderatedAt        DateTime?
+  rejectionReason    String?
+  downloadUrl        String?
+  previewContent     String?
+  version            Int?                       @default(1)
+  tags               String[]                   @default([])
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  university         University                 @relation(fields: [universityId], references: [id])
+  faculty            Faculty                    @relation(fields: [facultyId], references: [id])
+  department         Department                 @relation(fields: [departmentId], references: [id])
+  course             Course                     @relation(fields: [courseId], references: [id])
+  uploader           User                       @relation("UserResources", fields: [uploaderId], references: [id])
+  comments           Comment[]
+  votes              ResourceVote[]
+
+  @@index([courseId])
+  @@index([uploaderId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([courseId, status])
+  @@index([departmentId, status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// MODERATION & AUDIT TRAIL
+// ==========================================
+
+model ModerationAction {
+  id               String               @id @default(uuid())
+  moderatorId      String
+  moderator        User                 @relation("ModeratorActions", fields: [moderatorId], references: [id])
+  targetType       ModerationTargetType
+  targetId         String
+  action           ModerationActionType
+  reason           String
+  pointsReversalId String?              // Link to PointsLedger entry for auditability
+  createdAt        DateTime             @default(now())
+
+  @@index([moderatorId])
+  @@index([targetId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ==========================================
+// SCHEDULES
+// ==========================================
+
+model ScheduleItem {
+  id             String      @id @default(uuid())
+  courseId       String
+  courseCode     String
+  courseName     String
+  departmentId   String
+  level          String
+  dayOfWeek      String
+  startTime      String
+  endTime        String
+  location       String
+  type           String      // Lecture, Lab, Section, Tutorial
+  instructorId   String?
+  instructorName String
+  group          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  course         Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  department     Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  instructor     Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([departmentId])
+  @@index([level])
+  @@index([dayOfWeek])
+}
+
+// ==========================================
+// EXAMS & QUIZZES (QUESTION BANK)
+// ==========================================
+
+model ExamQuiz {
+  id             String         @id @default(uuid())
+  courseId       String
+  courseCode     String
+  courseTitle    String
+  departmentId   String
+  title          String
+  type           String         // Exam, Quiz, Midterm, Final
+  term           String         // Fall 2026, Spring 2026
+  durationMinutes Int           @default(60)
+  totalMarks     Int            @default(100)
+  difficulty     String         @default("Medium") // Easy, Medium, Hard
+  isPastExam     Boolean        @default(false)
+  questions      Json           @default("[]")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  department     Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([departmentId])
+  @@index([type])
+}
+
+// ==========================================
+// COMMUNITY DISCUSSIONS & NOTIFICATIONS
+// ==========================================
+
+model DiscussionThread {
+  id        String    @id @default(uuid())
+  courseId  String
+  courseCode String?
+  departmentId String?
+  authorId  String
+  title     String
+  content   String
+  postType  String    @default("question")
+  upvotes   Int       @default(0)
+  views     Int       @default(0)
+  isSolved  Boolean   @default(false)
+  isPinned  Boolean   @default(false)
+  replyCount Int      @default(0)
+  tags      String[]  @default([])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  upvoters  PostUpvote[]
+  comments  Comment[]
+
+  @@index([courseId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id         String            @id @default(uuid())
+  threadId   String?
+  courseId   String?
+  resourceId String?
+  targetId   String?
+  targetType String?
+  authorId   String
+  authorName String?
+  authorDepartment String?
+  authorRole String?
+  authorAvatar String?
+  content    String
+  upvotes    Int               @default(0)
+  isSolution Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  thread     DiscussionThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  course     Course?           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resource   Resource?         @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  author     User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([courseId])
+  @@index([resourceId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model UserSession {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique // SHA-256 of the opaque token; raw token never stored
+  userId     String
+  ipAddress  String
+  deviceInfo String
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  category     String
+  eventType    String
+  severity     String   @default("info")
+  actorId      String
+  actorName    String
+  actorRole    String
+  actorEmail   String?
+  targetId     String?
+  targetType   String?
+  targetName   String?
+  previousState Json?
+  newState     Json?
+  ipAddress    String
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([category])
+  @@index([eventType])
+  @@index([severity])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model ResourceVote {
+  id         String   @id @default(uuid())
+  resourceId String
+  userId     String
+  voteType   String // "helpful" | "not_helpful"
+  createdAt  DateTime @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user     User     @relation("ResourceVotes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, userId])
+  @@index([resourceId])
+}
+
+model PostUpvote {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post DiscussionThread @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User             @relation("PostUpvotes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+}
+
+model QuizSubmission {
+  id             String   @id @default(uuid())
+  userId         String?
+  quizId         String
+  quizTitle      String?
+  courseCode     String?
+  score          Int
+  totalQuestions Int
+  percentage     Int
+  passed         Boolean
+  pointsEarned   Int
+  answers        Json
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PomodoroSession {
+  id              String   @id @default(uuid())
+  userId          String
+  courseId        String?
+  courseCode      String?
+  taskName        String?
+  durationMinutes Int
+  mode            String
+  pointsAwarded   Int      @default(0)
+  completedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt])
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  userId         String
+  category       String           @default("academic")
+  type           String
+  title          String
+  titleAr        String?
+  message        String
+  messageAr      String?
+  read           Boolean          @default(false)
+  actionTab      String?
+  actionTargetId String?
+  actionUrl      String?
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model HonorStudent {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name             String
+  studentId        String?
+  email            String?
+  avatar           String?
+  departmentId     String
+  departmentName   String?
+  level            String
+  semester         String?
+
+  achievementTitle String
+  category         HonorCategory
+  description      String
+  honoredDate      DateTime
+  academicYear     String
+
+  gpaOrMetric      String?
+  badgeLabel       String?
+  certificateUrl   String?
+  projectUrl       String?
+  supervisorName   String?
+
+  featured         Boolean        @default(false)
+  applauseCount    Int            @default(0)
+  tags             String[]       @default([])
+
+  createdById      String
+  createdByName    String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([departmentId])
+  @@index([category])
+  @@index([featured])
+  @@index([createdAt])
+}

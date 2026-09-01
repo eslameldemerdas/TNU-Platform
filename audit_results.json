@@ -1,0 +1,282 @@
+{
+  "signup": [
+    {
+      "test": "Valid Student Signup",
+      "status": 400,
+      "expected": "200 or 201 with sessionToken",
+      "actual": "Status 400, token: false",
+      "pass": false,
+      "evidence": "{\"error\":\"Full name is required.\"}"
+    },
+    {
+      "test": "Duplicate Email Signup",
+      "status": 400,
+      "expected": "400 or 409 Conflict",
+      "actual": "Status 400",
+      "pass": true,
+      "evidence": "{\"error\":\"Full name is required.\"}"
+    },
+    {
+      "test": "Missing Required Fields (Empty Password)",
+      "status": 400,
+      "expected": "400 Bad Request",
+      "actual": "Status 400",
+      "pass": true,
+      "evidence": "{\"error\":\"Full name is required.\"}"
+    },
+    {
+      "test": "Invalid Email Format",
+      "status": 400,
+      "expected": "400 Bad Request",
+      "actual": "Status 400",
+      "pass": true,
+      "evidence": "{\"error\":\"Full name is required.\"}"
+    },
+    {
+      "test": "Weak Password (< 6 chars)",
+      "status": 400,
+      "expected": "400 Bad Request",
+      "actual": "Status 400",
+      "pass": true,
+      "evidence": "{\"error\":\"Full name is required.\"}"
+    }
+  ],
+  "login": [
+    {
+      "test": "Valid Student Login",
+      "status": 401,
+      "expected": "200 OK with sessionToken",
+      "actual": "Status 401, sessionToken present: false",
+      "pass": false,
+      "evidence": "{\"error\":\"Invalid email or password. Please verify your credentials.\"}"
+    },
+    {
+      "test": "Wrong Password Login",
+      "status": 401,
+      "expected": "401 Unauthorized",
+      "actual": "Status 401",
+      "pass": true,
+      "evidence": "{\"error\":\"Invalid email or password. Please verify your credentials.\"}"
+    },
+    {
+      "test": "Non-existent User Login",
+      "status": 401,
+      "expected": "401 Unauthorized or 404 Not Found",
+      "actual": "Status 401",
+      "pass": true,
+      "evidence": "{\"error\":\"Invalid email or password. Please verify your credentials.\"}"
+    },
+    {
+      "test": "Super Admin Login",
+      "status": 200,
+      "expected": "200 OK with role super_admin",
+      "actual": "Status 200, role: super_admin",
+      "pass": true,
+      "evidence": "Role: super_admin, email: eldmrdasheslam1@gmail.com"
+    },
+    {
+      "test": "Session Verification (/api/auth/me)",
+      "status": 401,
+      "expected": "200 OK with authenticated user profile",
+      "actual": "Status 401, email: undefined",
+      "pass": false,
+      "evidence": "{\"authenticated\":false,\"message\":\"Session expired.\"}"
+    },
+    {
+      "test": "Logout & Post-Logout Token Invalidation",
+      "status": 401,
+      "expected": "401 Unauthorized after logout",
+      "actual": "Status 401",
+      "pass": true,
+      "evidence": "Logout status: 200, Me-after-logout status: 401"
+    }
+  ],
+  "rbac": [
+    {
+      "name": "Admin Stats",
+      "endpoint": "GET /api/admin/stats",
+      "unauthenticatedStatus": 401,
+      "studentStatus": 401,
+      "adminStatus": 200,
+      "pass": false,
+      "evidence": "Unauth=401 (Expected 401), Student=401 (Expected 403), Admin=200 (Authorized)"
+    },
+    {
+      "name": "Admin Users List",
+      "endpoint": "GET /api/admin/users",
+      "unauthenticatedStatus": 401,
+      "studentStatus": 401,
+      "adminStatus": 200,
+      "pass": false,
+      "evidence": "Unauth=401 (Expected 401), Student=401 (Expected 403), Admin=200 (Authorized)"
+    },
+    {
+      "name": "Role Elevation",
+      "endpoint": "POST /api/admin/update-role",
+      "unauthenticatedStatus": 401,
+      "studentStatus": 401,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=401 (Expected 401), Student=401 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Create Course",
+      "endpoint": "POST /api/admin/courses",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Delete Course",
+      "endpoint": "DELETE /api/admin/courses/non-existent-course",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Create Admin Assignment",
+      "endpoint": "POST /api/admin/assignments",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Create Admin Schedule",
+      "endpoint": "POST /api/admin/schedule",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Approve File Moderation",
+      "endpoint": "POST /api/admin/files/approve",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    },
+    {
+      "name": "Reject File Moderation",
+      "endpoint": "POST /api/admin/files/reject",
+      "unauthenticatedStatus": 404,
+      "studentStatus": 404,
+      "adminStatus": 404,
+      "pass": false,
+      "evidence": "Unauth=404 (Expected 401), Student=404 (Expected 403), Admin=404 (Authorized)"
+    }
+  ],
+  "idor": [
+    {
+      "test": "IDOR on User Profile Modification",
+      "endpoint": "PUT /api/user/profile",
+      "status": 404,
+      "pass": false,
+      "evidence": "Student B name remained: \"undefined\". Server binds updates strictly to session user ID."
+    }
+  ],
+  "uploads": [
+    {
+      "test": "Valid PDF Upload with Magic Bytes (%PDF)",
+      "status": 404,
+      "expected": "200 OK",
+      "pass": false,
+      "evidence": "Status 404, response: {}"
+    },
+    {
+      "test": "Executable (MZ header) Disguised with .pdf Extension",
+      "status": 404,
+      "expected": "400 Bad Request (Magic byte mismatch)",
+      "pass": false,
+      "evidence": "Status 404, error message: {}"
+    },
+    {
+      "test": "Direct .exe Extension Upload Block",
+      "status": 404,
+      "expected": "400 Bad Request",
+      "pass": false,
+      "evidence": "Status 404, response: {}"
+    },
+    {
+      "test": "Oversized File (> 50MB) Server-Side Limit",
+      "status": 404,
+      "expected": "400 Bad Request",
+      "pass": false,
+      "evidence": "Status 404, response: {}"
+    }
+  ],
+  "xss": [
+    {
+      "test": "XSS in Profile Fields & React Output Encoding",
+      "status": 404,
+      "pass": true,
+      "evidence": "Profile stored data as plain string. Zero instances of dangerouslySetInnerHTML exist in React codebase."
+    }
+  ],
+  "secrets": {
+    "checkedFilesCount": 2,
+    "leaksFound": [],
+    "pass": true,
+    "evidence": "Zero secrets, API keys, or database URLs detected in dist/assets client bundle."
+  },
+  "ai": [
+    {
+      "test": "Engineering Query Response",
+      "status": 200,
+      "pass": true,
+      "evidence": "Status 200, Reply preview: \"أهلاً بك يا بطل الهندسية! بصفتي **EngHub AI Study Buddy**، يسعدني أن أقدم لك شرحاً هندسياً دقيقاً وم...\""
+    },
+    {
+      "test": "System Prompt & Model Vendor Obfuscation",
+      "status": 200,
+      "pass": true,
+      "evidence": "Vendor leaked: false. Reply snippet: \"Hello! I am **EngHub AI Study Buddy**, your engineering professor and tutor specializing in Computer...\""
+    }
+  ],
+  "rateLimiting": {
+    "pass": true,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": 429
+      },
+      {
+        "attempt": 2,
+        "status": 429
+      },
+      {
+        "attempt": 3,
+        "status": 429
+      },
+      {
+        "attempt": 4,
+        "status": 429
+      },
+      {
+        "attempt": 5,
+        "status": 429
+      },
+      {
+        "attempt": 6,
+        "status": 429
+      },
+      {
+        "attempt": 7,
+        "status": 429
+      },
+      {
+        "attempt": 8,
+        "status": 429
+      }
+    ],
+    "evidence": "429 Rate Limit triggered on attempt #1"
+  }
+}

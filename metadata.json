@@ -1,0 +1,6 @@
+{
+  "name": "EngHub — Engineering Student Platform",
+  "description": "Unified academic & campus platform for engineering students with course workspaces, files, GPA calculator, study schedules, community discussions, and AI study assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
