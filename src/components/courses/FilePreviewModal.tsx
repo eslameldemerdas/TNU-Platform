@@ -1,24 +1,18 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { StudyFile, Comment } from '../../types';
-import { parseApiError } from '../../utils/errorUtils';
 import {
   X,
   Download,
   Star,
-  Eye,
   Bookmark,
-  MessageSquare,
-  FileText,
-  User,
   ShieldCheck,
   Award,
   Clock,
   AlertCircle,
   Send,
-  Calendar,
-  ThumbsUp
-} from 'lucide-react';
+} from "lucide-react";
+import { motion } from "motion/react";
+import React, { useState } from "react";
+import { StudyFile, Comment } from "../../types";
+import { parseApiError } from "../../utils/errorUtils";
 
 interface FilePreviewModalProps {
   file: StudyFile | null;
@@ -35,9 +29,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   onRateFile,
   onToggleBookmark,
   comments,
-  onAddComment
+  onAddComment,
 }) => {
-  const [commentInput, setCommentInput] = useState('');
+  const [commentInput, setCommentInput] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -46,9 +40,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
 
   const fileComments = comments.filter((c) => c.targetId === file.id);
 
-  const isOfficial = file.verificationStatus === 'official';
-  const isVerified = file.verificationStatus === 'verified';
-  const isPending = file.moderationStatus === 'pending' || file.status === 'pending';
+  const isOfficial = file.verificationStatus === "official";
+  const isVerified = file.verificationStatus === "verified";
+  const isPending = file.moderationStatus === "pending" || file.status === "pending";
 
   const handleDownloadSignedUrl = async () => {
     setDownloading(true);
@@ -57,17 +51,17 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       const res = await fetch(`/api/files/download-url?fileId=${file.id}`);
       const data = await res.json();
       if (!res.ok) {
-        setDownloadError(parseApiError(data, 'تعذر تحميل الملف.'));
+        setDownloadError(parseApiError(data, "تعذر تحميل الملف."));
         return;
       }
       if (data.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+        window.open(data.signedUrl, "_blank");
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
       }
     } catch (err) {
-      console.error('Download error:', err);
-      setDownloadError('خطأ أثناء إنشاء رابط التحميل الآمن.');
+      console.error("Download error:", err);
+      setDownloadError("خطأ أثناء إنشاء رابط التحميل الآمن.");
     } finally {
       setDownloading(false);
     }
@@ -77,11 +71,11 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
     e.preventDefault();
     if (!commentInput.trim()) return;
     onAddComment(file.id, commentInput);
-    setCommentInput('');
+    setCommentInput("");
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
       onClick={onClose}
     >
@@ -118,9 +112,13 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                       <span>قيد المراجعة</span>
                     </span>
                   )}
-                  <span className="text-xs text-slate-400 font-medium dir-ltr">• {file.fileSize}</span>
+                  <span className="text-xs text-slate-400 font-medium dir-ltr">
+                    • {file.fileSize}
+                  </span>
                 </div>
-                <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{file.title}</h2>
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {file.title}
+                </h2>
               </div>
             </div>
 
@@ -137,8 +135,8 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
               onClick={() => onToggleBookmark(file.id)}
               className={`p-2 rounded-xl border text-xs font-semibold transition-colors ${
                 file.isBookmarked
-                  ? 'border-orange-500 bg-orange-500/10 text-orange-500'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600'
+                  ? "border-orange-500 bg-orange-500/10 text-orange-500"
+                  : "border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600"
               }`}
               title="حفظ في المفضلة"
             >
@@ -151,7 +149,13 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex-1 sm:flex-initial justify-center"
             >
               <Download className="w-4 h-4" />
-              <span>{downloading ? 'جاري التحقق...' : downloadSuccess ? 'تم التحميل!' : 'تحميل المرجع (Signed)'}</span>
+              <span>
+                {downloading
+                  ? "جاري التحقق..."
+                  : downloadSuccess
+                    ? "تم التحميل!"
+                    : "تحميل المرجع (Signed)"}
+              </span>
             </button>
 
             <button
@@ -176,9 +180,17 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
           <div className="lg:col-span-2 p-6 overflow-y-auto border-r border-slate-200 dark:border-slate-800 space-y-6">
             {/* File Info Card */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-xs space-y-2.5">
-              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{file.description}</p>
+              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                {file.description}
+              </p>
               <div className="flex flex-wrap items-center justify-between text-slate-400 pt-2 border-t border-slate-200/60 dark:border-slate-800 text-[11px] gap-2">
-                <span>الرافع: <strong className="text-slate-700 dark:text-slate-300">{file.uploaderName}</strong> ({file.uploaderDepartment})</span>
+                <span>
+                  الرافع:{" "}
+                  <strong className="text-slate-700 dark:text-slate-300">
+                    {file.uploaderName}
+                  </strong>{" "}
+                  ({file.uploaderDepartment})
+                </span>
                 <div className="flex items-center gap-3">
                   <span>تاريخ النشر: {file.uploadDate}</span>
                   {file.academicYear && <span>السنة: {file.academicYear}</span>}
@@ -195,15 +207,20 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
               </div>
 
               <pre className="whitespace-pre-wrap font-mono text-xs">
-                {file.previewContent || `// ${file.title}\n// Standard study resource file: ${file.fileType.toUpperCase()} format.\n// Verified Academic Resource for Engineering Students.\n// Download the original document securely using the signed download button.`}
+                {file.previewContent ||
+                  `// ${file.title}\n// Standard study resource file: ${file.fileType.toUpperCase()} format.\n// Verified Academic Resource for Engineering Students.\n// Download the original document securely using the signed download button.`}
               </pre>
             </div>
 
             {/* Star Rating Bar */}
             <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200">تقييم جودة المرجع</h4>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400">ساعد زملاءك في إيجاد أفضل الملخصات والحلول الموثوقة.</p>
+                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  تقييم جودة المرجع
+                </h4>
+                <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                  ساعد زملاءك في إيجاد أفضل الملخصات والحلول الموثوقة.
+                </p>
               </div>
 
               <div className="flex items-center gap-1">
@@ -214,7 +231,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                     className="p-1 text-amber-400 hover:scale-125 transition-transform"
                     title={`${star} نجوم`}
                   >
-                    <Star className={`w-5 h-5 ${star <= Math.round(file.rating || 5) ? 'fill-current' : ''}`} />
+                    <Star
+                      className={`w-5 h-5 ${star <= Math.round(file.rating || 5) ? "fill-current" : ""}`}
+                    />
                   </button>
                 ))}
               </div>
@@ -230,7 +249,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
 
               <div className="space-y-2">
                 {fileComments.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">لا توجد تعليقات بعد. كن أول من يناقش هذا المرجع!</p>
+                  <p className="text-xs text-slate-400 italic">
+                    لا توجد تعليقات بعد. كن أول من يناقش هذا المرجع!
+                  </p>
                 ) : (
                   fileComments.map((cmt) => (
                     <div
@@ -238,8 +259,12 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                       className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs space-y-1"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{cmt.authorName}</span>
-                        <span className="text-[10px] text-slate-400">{cmt.createdAt.slice(0, 10)}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {cmt.authorName}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {cmt.createdAt.slice(0, 10)}
+                        </span>
                       </div>
                       <p className="text-slate-600 dark:text-slate-300">{cmt.content}</p>
                     </div>
@@ -249,7 +274,10 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
             </div>
 
             {/* Comment Form */}
-            <form onSubmit={handleSendComment} className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <form
+              onSubmit={handleSendComment}
+              className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800"
+            >
               <input
                 type="text"
                 placeholder="اكتب تعليقاً أو استفساراً..."

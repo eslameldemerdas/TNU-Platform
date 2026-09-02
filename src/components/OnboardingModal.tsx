@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Department, AcademicLevel, Semester, UserProfile } from '../types';
-import { GraduationCap, Check, ArrowLeft, ArrowRight } from 'lucide-react';
-import { useTranslation } from '../i18n/LanguageContext';
+import { GraduationCap, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
+import React, { useState } from "react";
+import { useTranslation } from "../i18n/LanguageContext";
+import { Department, AcademicLevel, Semester, UserProfile } from "../types";
 
 interface OnboardingModalProps {
   departments: Department[];
@@ -15,7 +15,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   departments,
   currentUser,
   onSaveProfile,
-  onClose
+  onClose,
 }) => {
   const { isRTL } = useTranslation();
   const [name, setName] = useState(currentUser.name);
@@ -25,14 +25,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const [semester, setSemester] = useState<Semester>(currentUser.semester);
 
   const levels: { value: AcademicLevel; label: string }[] = [
-    { value: 'Year 1 (Freshman)', label: 'السنة الأولى (إعدادي)' },
-    { value: 'Year 2 (Sophomore)', label: 'السنة الثانية - الفصل الدراسي الأول (الترم الأول)' }
+    { value: "Year 1 (Freshman)", label: "السنة الأولى (إعدادي)" },
+    { value: "Year 2 (Sophomore)", label: "السنة الثانية - الفصل الدراسي الأول (الترم الأول)" },
   ];
 
   const semesters: { value: Semester; label: string }[] = [
-    { value: 'Fall 2026', label: 'الفصل الدراسي الأول (خريف 2026)' },
-    { value: 'Spring 2026', label: 'الفصل الدراسي الثاني (ربيع 2026)' },
-    { value: 'Summer 2026', label: 'الفصل الدراسي الصيفي (صيف 2026)' }
+    { value: "Fall 2026", label: "الفصل الدراسي الأول (خريف 2026)" },
+    { value: "Spring 2026", label: "الفصل الدراسي الثاني (ربيع 2026)" },
+    { value: "Summer 2026", label: "الفصل الدراسي الصيفي (صيف 2026)" },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,14 +43,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       studentId,
       departmentId: deptId,
       level,
-      semester
+      semester,
     };
     onSaveProfile(updatedUser);
     onClose();
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
       onClick={onClose}
     >
@@ -120,8 +120,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     onClick={() => setDeptId(d.id)}
                     className={`p-3.5 rounded-xl border text-right transition-all relative ${
                       isSelected
-                        ? 'border-amber-500 bg-amber-500/10 text-slate-900 dark:text-slate-100 shadow-md ring-2 ring-amber-500/20'
-                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                        ? "border-amber-500 bg-amber-500/10 text-slate-900 dark:text-slate-100 shadow-md ring-2 ring-amber-500/20"
+                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">

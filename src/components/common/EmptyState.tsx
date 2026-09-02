@@ -1,5 +1,5 @@
-import React from 'react';
-import { LucideIcon, FolderOpen } from 'lucide-react';
+import { LucideIcon, FolderOpen } from "lucide-react";
+import React from "react";
 
 interface EmptyStateProps {
   icon?: LucideIcon;
@@ -20,7 +20,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
   secondaryActionLabel,
   onSecondaryAction,
-  className = ''
+  className = "",
 }) => {
   return (
     <div

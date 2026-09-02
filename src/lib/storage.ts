@@ -1,24 +1,4 @@
 import {
-  University,
-  Faculty,
-  Department,
-  Course,
-  StudyFile,
-  DiscussionThread,
-  Comment,
-  Assignment,
-  ScheduleItem,
-  PointsLedgerEntry,
-  UserProfile,
-  Announcement,
-  CampusEvent,
-  LostFoundItem,
-  MarketplaceItem,
-  StudentClub,
-  HonorStudent
-} from '../types';
-
-import {
   INITIAL_UNIVERSITY,
   INITIAL_FACULTY,
   INITIAL_DEPARTMENTS,
@@ -35,45 +15,64 @@ import {
   INITIAL_LOST_FOUND,
   INITIAL_MARKETPLACE,
   INITIAL_CLUBS,
-  INITIAL_HONOR_STUDENTS
-} from '../data/mockData';
+  INITIAL_HONOR_STUDENTS,
+} from "../data/mockData";
+import {
+  University,
+  Faculty,
+  Department,
+  Course,
+  StudyFile,
+  DiscussionThread,
+  Comment,
+  Assignment,
+  ScheduleItem,
+  PointsLedgerEntry,
+  UserProfile,
+  Announcement,
+  CampusEvent,
+  LostFoundItem,
+  MarketplaceItem,
+  StudentClub,
+  HonorStudent,
+} from "../types";
 
 const STORAGE_KEYS = {
-  UNIVERSITY: 'enghub_university',
-  FACULTY: 'enghub_faculty',
-  DEPARTMENTS: 'enghub_departments',
-  COURSES: 'enghub_courses',
-  FILES: 'enghub_files',
-  DISCUSSIONS: 'enghub_discussions',
-  COMMENTS: 'enghub_comments',
-  ASSIGNMENTS: 'enghub_assignments',
-  SCHEDULE: 'enghub_schedule',
-  LEDGER: 'enghub_ledger',
-  USER: 'enghub_user',
-  SESSION_TOKEN: 'enghub_session_token',
-  ANNOUNCEMENTS: 'enghub_announcements',
-  EVENTS: 'enghub_events',
-  LOST_FOUND: 'enghub_lost_found',
-  MARKETPLACE: 'enghub_marketplace',
-  CLUBS: 'enghub_clubs',
-  HONOR_STUDENTS: 'enghub_honor_students',
-  ONBOARDED: 'enghub_onboarded'
+  UNIVERSITY: "enghub_university",
+  FACULTY: "enghub_faculty",
+  DEPARTMENTS: "enghub_departments",
+  COURSES: "enghub_courses",
+  FILES: "enghub_files",
+  DISCUSSIONS: "enghub_discussions",
+  COMMENTS: "enghub_comments",
+  ASSIGNMENTS: "enghub_assignments",
+  SCHEDULE: "enghub_schedule",
+  LEDGER: "enghub_ledger",
+  USER: "enghub_user",
+  SESSION_TOKEN: "enghub_session_token",
+  ANNOUNCEMENTS: "enghub_announcements",
+  EVENTS: "enghub_events",
+  LOST_FOUND: "enghub_lost_found",
+  MARKETPLACE: "enghub_marketplace",
+  CLUBS: "enghub_clubs",
+  HONOR_STUDENTS: "enghub_honor_students",
+  ONBOARDED: "enghub_onboarded",
 };
 
 export function getSessionToken(): string | null {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== "undefined" && window.localStorage) {
       return localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
     }
   } catch (err) {
-    console.warn('Error reading session token:', err);
+    console.warn("Error reading session token:", err);
   }
   return null;
 }
 
 export function setSessionToken(token: string | null): void {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== "undefined" && window.localStorage) {
       if (token) {
         localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, token);
       } else {
@@ -81,19 +80,19 @@ export function setSessionToken(token: string | null): void {
       }
     }
   } catch (err) {
-    console.warn('Error setting session token:', err);
+    console.warn("Error setting session token:", err);
   }
 }
 
 export function getAuthHeaders(customHeaders?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json'
+    "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   const token = getSessionToken();
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   if (customHeaders) {
@@ -212,10 +211,17 @@ export class EngHubStorage {
     const items = safeGetItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
     // Sanitize any test entries or awkward phrasing from past sessions
     const sanitized = items
-      .filter((anc) => !anc.title?.includes('تجريبي') && !anc.content?.includes('تجريبي') && !anc.title?.includes('مهم جدا'))
+      .filter(
+        (anc) =>
+          !anc.title?.includes("تجريبي") &&
+          !anc.content?.includes("تجريبي") &&
+          !anc.title?.includes("مهم جدا"),
+      )
       .map((anc) => ({
         ...anc,
-        authorName: anc.authorName ? anc.authorName.replace(/\(Super Admin\)/gi, '').trim() : 'إدارة الكلية'
+        authorName: anc.authorName
+          ? anc.authorName.replace(/\(Super Admin\)/gi, "").trim()
+          : "إدارة الكلية",
       }));
 
     if (sanitized.length === 0) {
@@ -270,7 +276,7 @@ export class EngHubStorage {
   }
 
   static addHonorStudent(
-    studentData: Omit<HonorStudent, 'id' | 'createdAt' | 'applauseCount'>
+    studentData: Omit<HonorStudent, "id" | "createdAt" | "applauseCount">,
   ): HonorStudent {
     const students = EngHubStorage.getHonorStudents();
     const newStudent: HonorStudent = {
@@ -278,7 +284,7 @@ export class EngHubStorage {
       id: `honor-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       applauseCount: 0,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     const updated = [newStudent, ...students];
     EngHubStorage.saveHonorStudents(updated);
@@ -294,7 +300,7 @@ export class EngHubStorage {
     const updatedStudent: HonorStudent = {
       ...students[index],
       ...updates,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     students[index] = updatedStudent;
     EngHubStorage.saveHonorStudents([...students]);
@@ -337,10 +343,10 @@ export class EngHubStorage {
 
   // Idempotent point addition with append-only ledger rule (§3.9)
   static addLedgerEntry(
-    type: PointsLedgerEntry['type'],
+    type: PointsLedgerEntry["type"],
     points: number,
     referenceId: string,
-    description: string
+    description: string,
   ): PointsLedgerEntry {
     const ledger = EngHubStorage.getLedger();
     const user = EngHubStorage.getUser();
@@ -352,7 +358,7 @@ export class EngHubStorage {
       points,
       referenceId,
       description,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     const updatedLedger = [newEntry, ...ledger];
@@ -372,13 +378,13 @@ export class EngHubStorage {
   static recordLedgerReversal(
     referenceId: string,
     originalPoints: number,
-    reason: string
+    reason: string,
   ): PointsLedgerEntry {
     return EngHubStorage.addLedgerEntry(
-      'reversal_file_removed',
+      "reversal_file_removed",
       -Math.abs(originalPoints),
       referenceId,
-      `Moderation Reversal: ${reason}`
+      `Moderation Reversal: ${reason}`,
     );
   }
 

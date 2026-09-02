@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Course } from '../../types';
-import { Bot, X, Send, User, CheckCircle2, HelpCircle, Loader2, BookOpenCheck } from 'lucide-react';
+import { Bot, X, Send, User, CheckCircle2, Loader2, BookOpenCheck } from "lucide-react";
+import { motion } from "motion/react";
+import React, { useState } from "react";
+import { Course } from "../../types";
 
 interface AIAssistantModalProps {
   isOpen: boolean;
@@ -14,17 +14,21 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
   isOpen,
   onClose,
   courses,
-  activeCourse
+  activeCourse,
 }) => {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(activeCourse ? activeCourse.id : 'all');
-  const [messages, setMessages] = useState<{ sender: 'ai' | 'user'; text: string; time: string }[]>([
-    {
-      sender: 'ai',
-      text: `أهلاً بك! أنا المساعد الأكاديمي لمقررات الهندسة. يمكنك طرح أي استفسار حول المفاهيم الهندسية والمسائل الرياضية والبرمجية، أو إنشاء اختبارات تدريبية تقييمية.`,
-      time: 'الآن'
-    }
-  ]);
-  const [inputQuery, setInputQuery] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(
+    activeCourse ? activeCourse.id : "all",
+  );
+  const [messages, setMessages] = useState<{ sender: "ai" | "user"; text: string; time: string }[]>(
+    [
+      {
+        sender: "ai",
+        text: `أهلاً بك! أنا المساعد الأكاديمي لمقررات الهندسة. يمكنك طرح أي استفسار حول المفاهيم الهندسية والمسائل الرياضية والبرمجية، أو إنشاء اختبارات تدريبية تقييمية.`,
+        time: "الآن",
+      },
+    ],
+  );
+  const [inputQuery, setInputQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Quiz mode state
@@ -40,24 +44,24 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     if (!inputQuery.trim() || loading) return;
 
     const userMsg = inputQuery;
-    setInputQuery('');
-    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-    setMessages((prev) => [...prev, { sender: 'user', text: userMsg, time: timeStr }]);
+    setInputQuery("");
+    const timeStr = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    setMessages((prev) => [...prev, { sender: "user", text: userMsg, time: timeStr }]);
     setLoading(true);
 
     const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
     // Prepare placeholder AI message for streaming
-    setMessages((prev) => [...prev, { sender: 'ai', text: '', time: timeStr }]);
+    setMessages((prev) => [...prev, { sender: "ai", text: "", time: timeStr }]);
 
     let stallTimeout: any = null;
 
     try {
-      const res = await fetch('/api/ai/assistant', {
-        method: 'POST',
+      const res = await fetch("/api/ai/assistant", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream'
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
         },
         body: JSON.stringify({
           prompt: userMsg,
@@ -65,26 +69,32 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
           courseCode: selectedCourse ? selectedCourse.code : undefined,
           courseTitle: selectedCourse ? selectedCourse.title : undefined,
           syllabus: selectedCourse ? selectedCourse.description : undefined,
-          fileContext: selectedCourse ? `Files in ${selectedCourse.code}: ${selectedCourse.title}` : undefined,
-          isStream: true
-        })
+          fileContext: selectedCourse
+            ? `Files in ${selectedCourse.code}: ${selectedCourse.title}`
+            : undefined,
+          isStream: true,
+        }),
       });
 
       if (!res.ok) {
         let errData: any = {};
-        try { errData = await res.json(); } catch {}
+        try {
+          errData = await res.json();
+        } catch {
+          /* ignore parse error */
+        }
         throw new Error(errData.error || errData.details || `خطأ في الخادم (${res.status})`);
       }
 
-      if (res.headers.get('content-type')?.includes('text/event-stream') && res.body) {
+      if (res.headers.get("content-type")?.includes("text/event-stream") && res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let accumulated = '';
+        let accumulated = "";
 
         const resetStallTimer = () => {
           if (stallTimeout) clearTimeout(stallTimeout);
           stallTimeout = setTimeout(() => {
-            console.warn('AI stream stalled for 7s');
+            console.warn("AI stream stalled for 7s");
           }, 7000);
         };
 
@@ -96,11 +106,11 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
           resetStallTimer();
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          const lines = chunk.split("\n");
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.replace('data: ', '').trim();
-              if (dataStr === '[DONE]') break;
+            if (line.startsWith("data: ")) {
+              const dataStr = line.replace("data: ", "").trim();
+              if (dataStr === "[DONE]") break;
               try {
                 const parsed = JSON.parse(dataStr);
                 if (parsed.text) {
@@ -108,16 +118,16 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                   setMessages((prev) => {
                     const newArr = [...prev];
                     newArr[newArr.length - 1] = {
-                      sender: 'ai',
+                      sender: "ai",
                       text: accumulated,
-                      time: timeStr
+                      time: timeStr,
                     };
                     return newArr;
                   });
                 } else if (parsed.error) {
                   throw new Error(parsed.error);
                 }
-              } catch (e) {
+              } catch {
                 // Ignore chunk parse error
               }
             }
@@ -126,26 +136,29 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
         if (stallTimeout) clearTimeout(stallTimeout);
       } else {
         const data = await res.json();
-        const replyText = data.reply || data.answer || 'إليك الشرح والتوضيح المطلوب للمسألة الهندسية.';
+        const replyText =
+          data.reply || data.answer || "إليك الشرح والتوضيح المطلوب للمسألة الهندسية.";
         setMessages((prev) => {
           const newArr = [...prev];
           newArr[newArr.length - 1] = {
-            sender: 'ai',
+            sender: "ai",
             text: replyText,
-            time: timeStr
+            time: timeStr,
           };
           return newArr;
         });
       }
-    } catch (err: any) {
-      console.error('AI assistant error:', err);
+    } catch (err) {
+      console.error("AI assistant error:", err);
       if (stallTimeout) clearTimeout(stallTimeout);
       setMessages((prev) => {
         const newArr = [...prev];
         newArr[newArr.length - 1] = {
-          sender: 'ai',
-          text: err?.message || 'تعذر الاتصال بالمساعد الذكي للمادة. يرجى التأكد من مفتاح API الخاص بالخدمة.',
-          time: timeStr
+          sender: "ai",
+          text:
+            err?.message ||
+            "تعذر الاتصال بالمساعد الذكي للمادة. يرجى التأكد من مفتاح API الخاص بالخدمة.",
+          time: timeStr,
         };
         return newArr;
       });
@@ -161,16 +174,16 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     setUserAnswers({});
 
     const selectedCourse = courses.find((c) => c.id === selectedCourseId);
-    
+
     try {
-      const res = await fetch('/api/ai/generate-quiz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/ai/generate-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          courseCode: selectedCourse ? selectedCourse.code : 'AIE 111',
-          courseTitle: selectedCourse ? selectedCourse.title : 'أسس البرمجة الهيكلية',
-          topic: selectedCourse ? selectedCourse.title : 'الهندسة العامة'
-        })
+          courseCode: selectedCourse ? selectedCourse.code : "AIE 111",
+          courseTitle: selectedCourse ? selectedCourse.title : "أسس البرمجة الهيكلية",
+          topic: selectedCourse ? selectedCourse.title : "الهندسة العامة",
+        }),
       });
 
       if (!res.ok) {
@@ -183,11 +196,11 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
       if (Array.isArray(quizList) && quizList.length > 0) {
         setActiveQuiz(quizList);
       } else {
-        throw new Error('لم يتم إرجاع أسئلة اختبار');
+        throw new Error("لم يتم إرجاع أسئلة اختبار");
       }
-    } catch (err: any) {
-      console.error('Quiz generation error:', err);
-      alert(err.message || 'فشل توليد الاختبار التجريبي.');
+    } catch (err) {
+      console.error("Quiz generation error:", err);
+      alert(err.message || "فشل توليد الاختبار التجريبي.");
     } finally {
       setIsGeneratingQuiz(false);
     }
@@ -205,7 +218,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
       onClick={onClose}
     >
@@ -224,12 +237,16 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xs sm:text-sm font-bold text-white">المساعد الأكاديمي للمقررات الهندسية</h2>
+                  <h2 className="text-xs sm:text-sm font-bold text-white">
+                    المساعد الأكاديمي للمقررات الهندسية
+                  </h2>
                   <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
                     نشط الآن
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-[11px] text-slate-300">مساعد دراسي متخصص ومولد اختبارات تقييمية</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-300">
+                  مساعد دراسي متخصص ومولد اختبارات تقييمية
+                </p>
               </div>
             </div>
 
@@ -258,11 +275,18 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               disabled={isGeneratingQuiz}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-all shrink-0 active:scale-[0.98]"
             >
-              {isGeneratingQuiz ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpenCheck className="w-3.5 h-3.5" />}
+              {isGeneratingQuiz ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <BookOpenCheck className="w-3.5 h-3.5" />
+              )}
               <span>إنشاء اختبار تدريبي</span>
             </button>
 
-            <button onClick={onClose} className="hidden sm:block p-1.5 text-slate-400 hover:text-white shrink-0">
+            <button
+              onClick={onClose}
+              className="hidden sm:block p-1.5 text-slate-400 hover:text-white shrink-0"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -276,7 +300,9 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                   اختبار تدريبي ذكي
                 </h3>
-                <p className="text-xs text-slate-400">اختبر مدى استيعابك للمادة واستعد للامتحانات الفردية</p>
+                <p className="text-xs text-slate-400">
+                  اختبر مدى استيعابك للمادة واستعد للامتحانات الفردية
+                </p>
               </div>
 
               <button
@@ -289,7 +315,10 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
 
             <div className="space-y-4">
               {activeQuiz.map((q, qIdx) => (
-                <div key={qIdx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-3">
+                <div
+                  key={qIdx}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-3"
+                >
                   <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
                     س{qIdx + 1}: {q.question}
                   </p>
@@ -303,9 +332,9 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                           onClick={() => setUserAnswers((prev) => ({ ...prev, [qIdx]: optIdx }))}
                           className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-xs text-right transition-all ${
                             isSelected
-                              ? 'border-amber-500 bg-amber-500/10 text-amber-600 font-bold'
-                              : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300'
-                          } ${isCorrect ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold' : ''}`}
+                              ? "border-amber-500 bg-amber-500/10 text-amber-600 font-bold"
+                              : "border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300"
+                          } ${isCorrect ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold" : ""}`}
                         >
                           <span>{opt}</span>
                           {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-500" />}
@@ -325,7 +354,8 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
             <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
               {quizScore !== null ? (
                 <div className="text-sm font-bold text-amber-500">
-                  نتيجة الاختبار: {quizScore} / {activeQuiz.length} ({( (quizScore / activeQuiz.length) * 100 ).toFixed(0)}%)
+                  نتيجة الاختبار: {quizScore} / {activeQuiz.length} (
+                  {((quizScore / activeQuiz.length) * 100).toFixed(0)}%)
                 </div>
               ) : (
                 <div />
@@ -344,23 +374,27 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex gap-3 max-w-[85%] ${msg.sender === 'user' ? 'mr-auto flex-row-reverse' : ''}`}
+                className={`flex gap-3 max-w-[85%] ${msg.sender === "user" ? "mr-auto flex-row-reverse" : ""}`}
               >
                 <div
                   className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${
-                    msg.sender === 'user'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-slate-800 text-amber-400 border border-slate-700'
+                    msg.sender === "user"
+                      ? "bg-amber-600 text-white"
+                      : "bg-slate-800 text-amber-400 border border-slate-700"
                   }`}
                 >
-                  {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  {msg.sender === "user" ? (
+                    <User className="w-4 h-4" />
+                  ) : (
+                    <Bot className="w-4 h-4" />
+                  )}
                 </div>
 
                 <div
                   className={`p-3.5 rounded-2xl text-xs space-y-1 ${
-                    msg.sender === 'user'
-                      ? 'bg-amber-600 text-white font-medium'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-sans leading-relaxed'
+                    msg.sender === "user"
+                      ? "bg-amber-600 text-white font-medium"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-sans leading-relaxed"
                   }`}
                 >
                   {msg.text ? (

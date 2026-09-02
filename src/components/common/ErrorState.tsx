@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import React from "react";
 
 interface ErrorStateProps {
   title?: string;
@@ -10,11 +10,11 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'حدث خطأ أثناء تحميل البيانات',
-  message = 'تعذر الاتصال بالخادم أو استرجاع المحتوى المطلوب. يرجى المحاولة مرة أخرى.',
+  title = "حدث خطأ أثناء تحميل البيانات",
+  message = "تعذر الاتصال بالخادم أو استرجاع المحتوى المطلوب. يرجى المحاولة مرة أخرى.",
   onRetry,
   technicalDetails,
-  className = ''
+  className = "",
 }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
@@ -51,7 +51,11 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
             className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
           >
             <span>تفاصيل تقنية للمطورين</span>
-            {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showDetails ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
           </button>
 
           {showDetails && (

@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Mail,
@@ -11,16 +9,17 @@ import {
   CheckCircle2,
   AlertCircle,
   GraduationCap,
-  ArrowRight,
   ArrowLeft,
   ShieldCheck,
-  RefreshCw
-} from 'lucide-react';
-import { Department, UserProfile } from '../types';
-import { parseApiError } from '../utils/errorUtils';
-import { setSessionToken } from '../lib/storage';
+  RefreshCw,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import React, { useState, useEffect } from "react";
+import { setSessionToken } from "../lib/storage";
+import { Department, UserProfile } from "../types";
+import { parseApiError } from "../utils/errorUtils";
 
-export type AuthMode = 'login' | 'signup';
+export type AuthMode = "login" | "signup";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -35,18 +34,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   departments,
   onAuthSuccess,
-  initialMode = 'login'
+  initialMode = "login",
 }) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
   // Form Fields
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [departmentId, setDepartmentId] = useState(departments[0]?.id || 'dept-cmp-01');
-  const [level, setLevel] = useState('Year 1 (Freshman)');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [departmentId, setDepartmentId] = useState(departments[0]?.id || "dept-cmp-01");
+  const [level, setLevel] = useState("Year 1 (Freshman)");
 
   // Password Visibility
   const [showPassword, setShowPassword] = useState(false);
@@ -57,21 +56,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Reset errors when mode changes
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setMode(initialMode);
     setErrorMessage(null);
     setSuccessMessage(null);
-  }, [mode]);
-
-  useEffect(() => {
-    setMode(initialMode);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
   // Live Password Strength Calculations
   const hasMinLength = password.length >= 8;
-  const hasNumberOrSymbol = /[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  const hasNumberOrSymbol = /[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
 
@@ -93,7 +90,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSuccessMessage(null);
 
     if (!email.trim() || !password) {
-      setErrorMessage('يرجى إدخال البريد الإلكتروني وكلمة المرور.');
+      setErrorMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور.");
       return;
     }
 
@@ -102,21 +99,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     // Timeout safety protection (6 seconds max)
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
-      setErrorMessage('انتهت مهلة الطلب. يرجى التحقق من اتصال الشبكة وإعادة المحاولة.');
+      setErrorMessage("انتهت مهلة الطلب. يرجى التحقق من اتصال الشبكة وإعادة المحاولة.");
     }, 6000);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
       clearTimeout(timeoutId);
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMessage(parseApiError(data, 'فشل تسجيل الدخول. يرجى التأكد من صحة البيانات.'));
+        setErrorMessage(parseApiError(data, "فشل تسجيل الدخول. يرجى التأكد من صحة البيانات."));
         setIsLoading(false);
         return;
       }
@@ -125,16 +122,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setSessionToken(data.sessionToken);
       }
 
-      setSuccessMessage(data.message || 'تم تسجيل الدخول بنجاح!');
+      setSuccessMessage(data.message || "تم تسجيل الدخول بنجاح!");
       setTimeout(() => {
         setIsLoading(false);
         onAuthSuccess(data.user);
         onClose();
       }, 600);
-    } catch (err: any) {
+    } catch {
       clearTimeout(timeoutId);
       setIsLoading(false);
-      setErrorMessage('Unable to connect to authentication server.');
+      setErrorMessage("Unable to connect to authentication server.");
     }
   };
 
@@ -147,28 +144,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     // Client-side validations
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      setErrorMessage('يرجى إدخال بريد إلكتروني أكاديمي صحيح.');
+      setErrorMessage("يرجى إدخال بريد إلكتروني أكاديمي صحيح.");
       return;
     }
 
-    const phoneRegex = /^\+?[0-9\s\-\(\)]{7,20}$/;
+    const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
     if (!phoneRegex.test(phoneNumber.trim())) {
-      setErrorMessage('يرجى إدخال رقم هاتف صحيح (مثال: +201012345678).');
+      setErrorMessage("يرجى إدخال رقم هاتف صحيح (مثال: +201012345678).");
       return;
     }
 
     if (password.length < 8) {
-      setErrorMessage('يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.');
+      setErrorMessage("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.");
       return;
     }
 
     if (!hasNumberOrSymbol || !hasLetter) {
-      setErrorMessage('يجب أن تحتوي كلمة المرور على حرف واحد ورقم أو رمز على الأقل.');
+      setErrorMessage("يجب أن تحتوي كلمة المرور على حرف واحد ورقم أو رمز على الأقل.");
       return;
     }
 
     if (password !== passwordConfirm) {
-      setErrorMessage('كلمتا المرور غير متطابقتين.');
+      setErrorMessage("كلمتا المرور غير متطابقتين.");
       return;
     }
 
@@ -176,13 +173,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
-      setErrorMessage('انتهت مهلة الإنشاء. يرجى إعادة المحاولة.');
+      setErrorMessage("انتهت مهلة الإنشاء. يرجى إعادة المحاولة.");
     }, 6000);
 
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
           email,
@@ -190,15 +187,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           password,
           passwordConfirm,
           departmentId,
-          level
-        })
+          level,
+        }),
       });
 
       clearTimeout(timeoutId);
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMessage(parseApiError(data, 'فشل عملية التسجيل.'));
+        setErrorMessage(parseApiError(data, "فشل عملية التسجيل."));
         setIsLoading(false);
         return;
       }
@@ -207,21 +204,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setSessionToken(data.sessionToken);
       }
 
-      setSuccessMessage(data.message || 'تم إنشاء الحساب بنجاح! مرحباً بك في EngHub.');
+      setSuccessMessage(data.message || "تم إنشاء الحساب بنجاح! مرحباً بك في EngHub.");
       setTimeout(() => {
         setIsLoading(false);
         onAuthSuccess(data.user);
         onClose();
       }, 700);
-    } catch (err) {
+    } catch {
       clearTimeout(timeoutId);
       setIsLoading(false);
-      setErrorMessage('Network connection error during signup.');
+      setErrorMessage("Network connection error during signup.");
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/75 backdrop-blur-md overflow-y-auto"
       onClick={onClose}
     >
@@ -240,7 +237,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
               <div>
                 <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-                  {mode === 'login' ? 'تسجيل الدخول إلى EngHub' : 'إنشاء حساب طالب جديد'}
+                  {mode === "login" ? "تسجيل الدخول إلى EngHub" : "إنشاء حساب طالب جديد"}
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   جامعة طنطا الأهلية - كلية الهندسة (TNU)
@@ -259,36 +256,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 mb-4">
             <button
               type="button"
-              onClick={() => setMode('login')}
+              onClick={() => {
+                setErrorMessage(null);
+                setSuccessMessage(null);
+                setMode("login");
+              }}
               className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all min-h-[40px] ${
-                mode === 'login'
-                  ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                mode === "login"
+                  ? "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               تسجيل الدخول
             </button>
             <button
               type="button"
-              onClick={() => setMode('signup')}
+              onClick={() => {
+                setErrorMessage(null);
+                setSuccessMessage(null);
+                setMode("signup");
+              }}
               className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all min-h-[40px] ${
-                mode === 'signup'
-                  ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                mode === "signup"
+                  ? "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               إنشاء حساب
             </button>
           </div>
 
-
-
           {/* Error Banner */}
           <AnimatePresence>
             {errorMessage && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="p-3 mb-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5"
               >
@@ -303,7 +306,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {successMessage && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="p-3 mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs flex items-start gap-2.5"
               >
@@ -318,7 +321,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* FORM BODY */}
 
           {/* 1. LOGIN FORM */}
-          {mode === 'login' && (
+          {mode === "login" && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -344,7 +347,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     placeholder="••••••••"
                     value={password}
@@ -382,8 +385,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
 
           {/* 2. SIGNUP FORM */}
-          {mode === 'signup' && (
-            <form onSubmit={handleSignup} className="space-y-3 max-h-[60vh] overflow-y-auto ltr:pr-1 rtl:pl-1">
+          {mode === "signup" && (
+            <form
+              onSubmit={handleSignup}
+              className="space-y-3 max-h-[60vh] overflow-y-auto ltr:pr-1 rtl:pl-1"
+            >
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   الاسم بالكامل
@@ -465,7 +471,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 min-h-[44px]"
                   >
                     <option value="Year 1 (Freshman)">السنة الأولى (إعدادي)</option>
-                    <option value="Year 2 (Sophomore)">السنة الثانية - الفصل الدراسي الأول (الترم الأول)</option>
+                    <option value="Year 2 (Sophomore)">
+                      السنة الثانية - الفصل الدراسي الأول (الترم الأول)
+                    </option>
                   </select>
                 </div>
               </div>
@@ -478,7 +486,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     placeholder="أنشئ كلمة مرور قوية"
                     value={password}
@@ -502,13 +510,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span
                         className={
                           strengthScore <= 1
-                            ? 'text-rose-500'
+                            ? "text-rose-500"
                             : strengthScore <= 3
-                            ? 'text-amber-500'
-                            : 'text-emerald-500'
+                              ? "text-amber-500"
+                              : "text-emerald-500"
                         }
                       >
-                        {strengthScore <= 1 ? 'ضعيفة' : strengthScore <= 3 ? 'متوسطة' : 'قوية جداً'}
+                        {strengthScore <= 1 ? "ضعيفة" : strengthScore <= 3 ? "متوسطة" : "قوية جداً"}
                       </span>
                     </div>
 
@@ -517,48 +525,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         className={`h-full transition-all flex-1 ${
                           strengthScore >= 1
                             ? strengthScore <= 1
-                              ? 'bg-rose-500'
+                              ? "bg-rose-500"
                               : strengthScore <= 3
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500'
-                            : 'bg-transparent'
+                                ? "bg-amber-500"
+                                : "bg-emerald-500"
+                            : "bg-transparent"
                         }`}
                       />
                       <div
                         className={`h-full transition-all flex-1 ${
                           strengthScore >= 2
                             ? strengthScore <= 3
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500'
-                            : 'bg-transparent'
+                              ? "bg-amber-500"
+                              : "bg-emerald-500"
+                            : "bg-transparent"
                         }`}
                       />
                       <div
                         className={`h-full transition-all flex-1 ${
-                          strengthScore >= 3 ? 'bg-emerald-500' : 'bg-transparent'
+                          strengthScore >= 3 ? "bg-emerald-500" : "bg-transparent"
                         }`}
                       />
                       <div
                         className={`h-full transition-all flex-1 ${
-                          strengthScore >= 4 ? 'bg-emerald-500' : 'bg-transparent'
+                          strengthScore >= 4 ? "bg-emerald-500" : "bg-transparent"
                         }`}
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-1 pt-1 text-[10px]">
-                      <div className={`flex items-center gap-1 ${hasMinLength ? 'text-emerald-500 font-semibold' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 ${hasMinLength ? "text-emerald-500 font-semibold" : "text-slate-400"}`}
+                      >
                         <CheckCircle2 className="w-3 h-3" />
                         <span>8+ أحرف</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${hasNumberOrSymbol ? 'text-emerald-500 font-semibold' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 ${hasNumberOrSymbol ? "text-emerald-500 font-semibold" : "text-slate-400"}`}
+                      >
                         <CheckCircle2 className="w-3 h-3" />
                         <span>رقم أو رمز خاص</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${hasLetter ? 'text-emerald-500 font-semibold' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 ${hasLetter ? "text-emerald-500 font-semibold" : "text-slate-400"}`}
+                      >
                         <CheckCircle2 className="w-3 h-3" />
                         <span>حرف واحد على الأقل</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${hasUpper ? 'text-emerald-500 font-semibold' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 ${hasUpper ? "text-emerald-500 font-semibold" : "text-slate-400"}`}
+                      >
                         <CheckCircle2 className="w-3 h-3" />
                         <span>حرف كبير (Capital)</span>
                       </div>
@@ -574,7 +590,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     placeholder="أعد كتابة كلمة المرور"
                     value={passwordConfirm}
@@ -586,7 +602,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute ltr:right-3 rtl:left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>

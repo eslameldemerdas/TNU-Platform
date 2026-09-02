@@ -1,22 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import {
-  DiscussionThread,
-  Comment,
-  PointsLedgerEntry,
-  UserProfile,
-  Department,
-  Course,
-  PostCategoryType
-} from '../../types';
 import {
   MessageSquare,
-  Trophy,
   Search,
-  Filter,
   Plus,
   CheckCircle2,
   HelpCircle,
-  BookOpen,
   Lightbulb,
   FileQuestion,
   Wrench,
@@ -24,23 +11,29 @@ import {
   Share2,
   ChevronDown,
   ChevronUp,
-  Award,
-  Sparkles,
   Send,
   Pin,
-  Clock,
-  User,
   ShieldCheck,
   Check,
   Tag,
-  ArrowUpDown,
   CheckCheck,
-  ExternalLink,
-  GraduationCap
-} from 'lucide-react';
-import { ScrollableTabs, ScrollableTabItem } from '../common/ScrollableTabs';
-import { ENGHUB_TOKENS } from '../../theme/tokens';
-import { HonorBoardView } from './HonorBoardView';
+  GraduationCap,
+  BookOpen,
+  Trophy,
+} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ENGHUB_TOKENS as _ENGHUB_TOKENS } from "../../theme/tokens";
+import {
+  DiscussionThread,
+  Comment,
+  PointsLedgerEntry,
+  UserProfile,
+  Department,
+  Course,
+  PostCategoryType,
+} from "../../types";
+import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import { HonorBoardView } from "./HonorBoardView";
 
 interface CommunityViewProps {
   discussions: DiscussionThread[];
@@ -56,48 +49,50 @@ interface CommunityViewProps {
 export const CommunityView: React.FC<CommunityViewProps> = ({
   discussions: initialDiscussions,
   comments: initialComments,
-  ledger,
+  _ledger,
   user,
   departments,
   courses = [],
   onUpvoteDiscussion,
-  onNewDiscussion
+  onNewDiscussion,
 }) => {
-  const [activeTab, setActiveTab] = useState<'posts' | 'leaderboard'>('posts');
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'solved' | 'unsolved'>('all');
-  const [sortBy, setSortBy] = useState<'recent' | 'upvotes' | 'replies'>('recent');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<"posts" | "leaderboard">("posts");
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "solved" | "unsolved">("all");
+  const [sortBy, setSortBy] = useState<"recent" | "upvotes" | "replies">("recent");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Local state for interactive posts and comments
   const [postsList, setPostsList] = useState<DiscussionThread[]>(initialDiscussions);
   const [commentsList, setCommentsList] = useState<Comment[]>(initialComments);
-  const [expandedPostIds, setExpandedPostIds] = useState<Set<string>>(new Set(['disc-101']));
+  const [expandedPostIds, setExpandedPostIds] = useState<Set<string>>(new Set(["disc-101"]));
   const [replyInputMap, setReplyInputMap] = useState<Record<string, string>>({});
   const [isSubmittingReply, setIsSubmittingReply] = useState<Record<string, boolean>>({});
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
 
   // Create Post Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [newTitle, setNewTitle] = useState<string>('');
-  const [newContent, setNewContent] = useState<string>('');
-  const [newCategory, setNewCategory] = useState<PostCategoryType>('question');
-  const [newCourseId, setNewCourseId] = useState<string>(courses[0]?.id || 'course-general');
-  const [newCourseCode, setNewCourseCode] = useState<string>(courses[0]?.code || 'ENG');
-  const [newTagsInput, setNewTagsInput] = useState<string>('');
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [newContent, setNewContent] = useState<string>("");
+  const [newCategory, setNewCategory] = useState<PostCategoryType>("question");
+  const [newCourseId, setNewCourseId] = useState<string>(courses[0]?.id || "course-general");
+  const [newCourseCode, setNewCourseCode] = useState<string>(courses[0]?.code || "ENG");
+  const [newTagsInput, setNewTagsInput] = useState<string>("");
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmittingPost, setIsSubmittingPost] = useState<boolean>(false);
 
   // Sync with initial discussions if prop changes
   useEffect(() => {
     if (initialDiscussions.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPostsList(initialDiscussions);
     }
   }, [initialDiscussions]);
 
   useEffect(() => {
     if (initialComments.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCommentsList(initialComments);
     }
   }, [initialComments]);
@@ -105,10 +100,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   // Filtering & Sorting Logic
   const filteredPosts = postsList
     .filter((post) => {
-      if (selectedCategory !== 'all' && post.postType !== selectedCategory) return false;
-      if (selectedDeptId !== 'all' && post.departmentId && post.departmentId !== selectedDeptId) return false;
-      if (selectedStatus === 'solved' && !post.isSolved) return false;
-      if (selectedStatus === 'unsolved' && post.isSolved) return false;
+      if (selectedCategory !== "all" && post.postType !== selectedCategory) return false;
+      if (selectedDeptId !== "all" && post.departmentId && post.departmentId !== selectedDeptId)
+        return false;
+      if (selectedStatus === "solved" && !post.isSolved) return false;
+      if (selectedStatus === "unsolved" && post.isSolved) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -124,10 +120,10 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
 
-      if (sortBy === 'upvotes') {
+      if (sortBy === "upvotes") {
         return (b.upvotes || 0) - (a.upvotes || 0);
       }
-      if (sortBy === 'replies') {
+      if (sortBy === "replies") {
         return (b.replyCount || 0) - (a.replyCount || 0);
       }
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -155,19 +151,21 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
           return {
             ...p,
             hasUpvoted: !hasUpvoted,
-            upvotes: hasUpvoted ? Math.max(0, p.upvotes - 1) : p.upvotes + 1
+            upvotes: hasUpvoted ? Math.max(0, p.upvotes - 1) : p.upvotes + 1,
           };
         }
         return p;
-      })
+      }),
     );
 
     try {
       await fetch(`/api/posts/${postId}/upvote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     if (onUpvoteDiscussion) {
       onUpvoteDiscussion(postId);
@@ -183,11 +181,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
           return {
             ...c,
             hasUpvoted: !hasUp,
-            upvotes: hasUp ? Math.max(0, c.upvotes - 1) : c.upvotes + 1
+            upvotes: hasUp ? Math.max(0, c.upvotes - 1) : c.upvotes + 1,
           };
         }
         return c;
-      })
+      }),
     );
   };
 
@@ -200,33 +198,35 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
 
     const newCmt: Comment = {
       id: `cmt-${Date.now()}`,
-      targetType: 'discussion',
+      targetType: "discussion",
       targetId: postId,
-      authorId: user?.id || 'usr-current',
-      authorName: user?.name || 'طالب مساهم',
-      authorDepartment: user?.departmentId === 'dept-mtr' ? 'هندسة الميكاترونكس' : 'هندسة الحاسب',
-      authorRole: user?.role || 'student',
+      authorId: user?.id || "usr-current",
+      authorName: user?.name || "طالب مساهم",
+      authorDepartment: user?.departmentId === "dept-mtr" ? "هندسة الميكاترونكس" : "هندسة الحاسب",
+      authorRole: user?.role || "student",
       authorAvatar: user?.avatar,
       content: text,
       createdAt: new Date().toISOString(),
       upvotes: 0,
       hasUpvoted: false,
-      isSolution: false
+      isSolution: false,
     };
 
     setCommentsList((prev) => [...prev, newCmt]);
     setPostsList((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, replyCount: p.replyCount + 1 } : p))
+      prev.map((p) => (p.id === postId ? { ...p, replyCount: p.replyCount + 1 } : p)),
     );
-    setReplyInputMap((prev) => ({ ...prev, [postId]: '' }));
+    setReplyInputMap((prev) => ({ ...prev, [postId]: "" }));
 
     try {
       await fetch(`/api/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text }),
       });
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     setIsSubmittingReply((prev) => ({ ...prev, [postId]: false }));
   };
@@ -234,19 +234,19 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   // Mark comment as solution
   const handleMarkAsSolution = async (postId: string, commentId: string) => {
     setCommentsList((prev) =>
-      prev.map((c) => (c.targetId === postId ? { ...c, isSolution: c.id === commentId } : c))
+      prev.map((c) => (c.targetId === postId ? { ...c, isSolution: c.id === commentId } : c)),
     );
-    setPostsList((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, isSolved: true } : p))
-    );
+    setPostsList((prev) => prev.map((p) => (p.id === postId ? { ...p, isSolved: true } : p)));
 
     try {
       await fetch(`/api/posts/${postId}/solve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId }),
       });
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   };
 
   // Share post link helper
@@ -261,11 +261,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || newTitle.trim().length < 5) {
-      setCreateError('يجب أن يكون عنوان الموضوع 5 أحرف على الأقل.');
+      setCreateError("يجب أن يكون عنوان الموضوع 5 أحرف على الأقل.");
       return;
     }
     if (!newContent.trim() || newContent.trim().length < 10) {
-      setCreateError('يجب كتابة تفاصيل الموضوع بما لا يقل عن 10 أحرف.');
+      setCreateError("يجب كتابة تفاصيل الموضوع بما لا يقل عن 10 أحرف.");
       return;
     }
 
@@ -281,14 +281,15 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       id: `disc-${Date.now()}`,
       courseId: newCourseId,
       courseCode: newCourseCode,
-      departmentId: user?.departmentId || 'dept-cmp',
+      departmentId: user?.departmentId || "dept-cmp",
       title: newTitle.trim(),
       content: newContent.trim(),
       postType: newCategory,
-      authorId: user?.id || 'usr-current',
-      authorName: user?.name || 'Alex Vance',
-      authorDepartment: user?.departmentId === 'dept-mtr' ? 'هندسة الميكاترونكس' : 'هندسة الحاسب والذكاء الاصطناعي',
-      authorRole: user?.role || 'student',
+      authorId: user?.id || "usr-current",
+      authorName: user?.name || "Alex Vance",
+      authorDepartment:
+        user?.departmentId === "dept-mtr" ? "هندسة الميكاترونكس" : "هندسة الحاسب والذكاء الاصطناعي",
+      authorRole: user?.role || "student",
       authorAvatar: user?.avatar,
       createdAt: new Date().toISOString(),
       upvotes: 0,
@@ -296,19 +297,19 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       replyCount: 0,
       isSolved: false,
       views: 1,
-      tags: tags.length > 0 ? tags : ['General', 'Discussion']
+      tags: tags.length > 0 ? tags : ["General", "Discussion"],
     };
 
     setPostsList((prev) => [newPost, ...prev]);
     setIsCreateModalOpen(false);
-    setNewTitle('');
-    setNewContent('');
-    setNewTagsInput('');
+    setNewTitle("");
+    setNewContent("");
+    setNewTagsInput("");
 
     try {
-      await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newPost.title,
           content: newPost.content,
@@ -316,10 +317,12 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
           courseId: newPost.courseId,
           courseCode: newPost.courseCode,
           departmentId: newPost.departmentId,
-          tags: newPost.tags
-        })
+          tags: newPost.tags,
+        }),
       });
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     if (onNewDiscussion) {
       onNewDiscussion(newCourseId, newPost.title, newPost.content);
@@ -331,33 +334,57 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   // Helper for category badge styling
   const getCategoryMeta = (type?: PostCategoryType) => {
     switch (type) {
-      case 'question':
-        return { label: 'سؤال واستفسار', icon: HelpCircle, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' };
-      case 'resource_share':
-        return { label: 'مشاركة مرجع', icon: BookOpen, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' };
-      case 'study_tip':
-        return { label: 'نصيحة دراسية', icon: Lightbulb, color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' };
-      case 'exam_discussion':
-        return { label: 'نقاش امتحانات', icon: FileQuestion, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' };
-      case 'project_help':
-        return { label: 'مساعدة مشروع', icon: Wrench, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' };
+      case "question":
+        return {
+          label: "سؤال واستفسار",
+          icon: HelpCircle,
+          color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        };
+      case "resource_share":
+        return {
+          label: "مشاركة مرجع",
+          icon: BookOpen,
+          color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        };
+      case "study_tip":
+        return {
+          label: "نصيحة دراسية",
+          icon: Lightbulb,
+          color: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+        };
+      case "exam_discussion":
+        return {
+          label: "نقاش امتحانات",
+          icon: FileQuestion,
+          color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+        };
+      case "project_help":
+        return {
+          label: "مساعدة مشروع",
+          icon: Wrench,
+          color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+        };
       default:
-        return { label: 'مناقشة عامة', icon: MessageSquare, color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' };
+        return {
+          label: "مناقشة عامة",
+          icon: MessageSquare,
+          color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+        };
     }
   };
 
   const communityTabs: ScrollableTabItem[] = [
     {
-      id: 'posts',
-      label: 'منشورات ومناقشات الطلاب (Posts & Q&A)',
+      id: "posts",
+      label: "منشورات ومناقشات الطلاب (Posts & Q&A)",
       icon: <MessageSquare className="w-4 h-4" />,
-      badge: postsList.length
+      badge: postsList.length,
     },
     {
-      id: 'leaderboard',
-      label: 'لوحة الشرف والتميز الأكاديمي (Honor Roll & Achievers)',
-      icon: <Trophy className="w-4 h-4 text-amber-500" />
-    }
+      id: "leaderboard",
+      label: "لوحة الشرف والتميز الأكاديمي (Honor Roll & Achievers)",
+      icon: <Trophy className="w-4 h-4 text-amber-500" />,
+    },
   ];
 
   return (
@@ -375,7 +402,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 1. ACADEMIC POSTS FEED VIEW                     */}
       {/* ------------------------------------------------ */}
-      {activeTab === 'posts' && (
+      {activeTab === "posts" && (
         <div className="space-y-6">
           {/* Header Action Bar */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-4">
@@ -391,7 +418,8 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  اطرح استفساراتك، شارك المراجع والحلول النموذجية، وتناقش مع زملائك وأعضاء هيئة التدريس (+10 نقاط للحلول المعتمدة).
+                  اطرح استفساراتك، شارك المراجع والحلول النموذجية، وتناقش مع زملائك وأعضاء هيئة
+                  التدريس (+10 نقاط للحلول المعتمدة).
                 </p>
               </div>
 
@@ -511,7 +539,10 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     <div className="flex items-start justify-between gap-3 sm:gap-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={post.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                          src={
+                            post.authorAvatar ||
+                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+                          }
                           alt={post.authorName}
                           className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 shrink-0"
                           loading="lazy"
@@ -521,13 +552,13 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                             <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                               {post.authorName}
                             </span>
-                            {post.authorRole === 'moderator' && (
+                            {post.authorRole === "moderator" && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center gap-1">
                                 <ShieldCheck className="w-3 h-3" />
                                 مشرف أكاديمي
                               </span>
                             )}
-                            {post.authorRole === 'supervisor' && (
+                            {post.authorRole === "supervisor" && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
                                 <GraduationCap className="w-3 h-3" />
                                 عضو هيئة تدريس
@@ -537,7 +568,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                           <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                             <span>{post.authorDepartment}</span>
                             <span>•</span>
-                            <span>{new Date(post.createdAt).toLocaleDateString('ar-EG')}</span>
+                            <span>{new Date(post.createdAt).toLocaleDateString("ar-EG")}</span>
                           </div>
                         </div>
                       </div>
@@ -550,7 +581,9 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                             مثبت
                           </span>
                         )}
-                        <span className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${categoryMeta.color} flex items-center gap-1`}>
+                        <span
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${categoryMeta.color} flex items-center gap-1`}
+                        >
                           <categoryMeta.icon className="w-3 h-3" />
                           <span className="hidden sm:inline">{categoryMeta.label}</span>
                         </span>
@@ -591,7 +624,10 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     {isSolvedState && (
                       <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>تم حل هذا الاستفسار واعتماد الإجابة النموذجية من المشرف الأكاديمي / صاحب السؤال</span>
+                        <span>
+                          تم حل هذا الاستفسار واعتماد الإجابة النموذجية من المشرف الأكاديمي / صاحب
+                          السؤال
+                        </span>
                       </div>
                     )}
 
@@ -602,12 +638,14 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                           onClick={() => handleUpvote(post.id)}
                           className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 min-h-[36px] ${
                             post.hasUpvoted
-                              ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                              ? "bg-indigo-600 text-white shadow-xs"
+                              : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                           }`}
                           aria-label="تأييد المنشور"
                         >
-                          <ThumbsUp className={`w-3.5 h-3.5 ${post.hasUpvoted ? 'text-white' : 'text-slate-500'}`} />
+                          <ThumbsUp
+                            className={`w-3.5 h-3.5 ${post.hasUpvoted ? "text-white" : "text-slate-500"}`}
+                          />
                           <span>{post.upvotes} تأييد</span>
                         </button>
 
@@ -618,7 +656,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                         >
                           <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
                           <span>{postComments.length} إجابات</span>
-                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
                         </button>
 
                         <button
@@ -646,7 +688,8 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                         <div className="space-y-3">
                           {postComments.length === 0 ? (
                             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center text-xs text-slate-500 dark:text-slate-400">
-                              لا توجد ردود بعد. كن أول من يجيب ويساعد زملاءه للحصول على نقاط (+5 نقاط للإجابة)!
+                              لا توجد ردود بعد. كن أول من يجيب ويساعد زملاءه للحصول على نقاط (+5
+                              نقاط للإجابة)!
                             </div>
                           ) : (
                             // Show verified solution comment at the top if present
@@ -657,8 +700,8 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                                   key={cmt.id}
                                   className={`p-4 rounded-xl border transition-all ${
                                     cmt.isSolution
-                                      ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-500/50 ring-1 ring-emerald-500/30'
-                                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80'
+                                      ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-500/50 ring-1 ring-emerald-500/30"
+                                      : "bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80"
                                   }`}
                                 >
                                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -679,21 +722,23 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
 
                                     <div className="flex items-center gap-2">
                                       {/* Mark as Solution button (author or elevated role) */}
-                                      {!cmt.isSolution && (user?.id === post.authorId || user?.role !== 'student') && (
-                                        <button
-                                          onClick={() => handleMarkAsSolution(post.id, cmt.id)}
-                                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-500/20 transition-colors"
-                                        >
-                                          اعتماد كحل نموذجي ✓
-                                        </button>
-                                      )}
+                                      {!cmt.isSolution &&
+                                        (user?.id === post.authorId ||
+                                          user?.role !== "student") && (
+                                          <button
+                                            onClick={() => handleMarkAsSolution(post.id, cmt.id)}
+                                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-500/20 transition-colors"
+                                          >
+                                            اعتماد كحل نموذجي ✓
+                                          </button>
+                                        )}
 
                                       <button
                                         onClick={() => handleUpvoteComment(cmt.id)}
                                         className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
                                           cmt.hasUpvoted
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                            ? "bg-indigo-600 text-white"
+                                            : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                                         }`}
                                       >
                                         ▲ {cmt.upvotes}
@@ -714,12 +759,12 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                           <input
                             type="text"
                             placeholder="اكتب إجابتك أو إيضاحك الأكاديمي هنا..."
-                            value={replyInputMap[post.id] || ''}
+                            value={replyInputMap[post.id] || ""}
                             onChange={(e) =>
                               setReplyInputMap((prev) => ({ ...prev, [post.id]: e.target.value }))
                             }
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
+                              if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
                                 handleAddReply(post.id);
                               }
@@ -748,7 +793,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 2. HONOR BOARD & ACHIEVERS TAB                   */}
       {/* ------------------------------------------------ */}
-      {activeTab === 'leaderboard' && (
+      {activeTab === "leaderboard" && (
         <HonorBoardView currentUser={user} departments={departments} />
       )}
 
@@ -872,7 +917,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   disabled={isSubmittingPost}
                   className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-colors disabled:opacity-50 min-h-[40px]"
                 >
-                  {isSubmittingPost ? 'جاري النشر...' : 'نشر الموضوع (+5 نقاط)'}
+                  {isSubmittingPost ? "جاري النشر..." : "نشر الموضوع (+5 نقاط)"}
                 </button>
               </div>
             </form>

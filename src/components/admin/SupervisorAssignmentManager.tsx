@@ -1,11 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Assignment, Course, Department, UserProfile } from '../../types';
-import { isWithinSupervisorScope, getSupervisorScopeLabel } from '../../utils/permissionUtils';
 import {
   CheckSquare,
   Plus,
   Search,
-  Filter,
   Edit3,
   Trash2,
   Calendar,
@@ -14,13 +10,14 @@ import {
   ShieldCheck,
   Lock,
   FileText,
-  Clock,
-  CheckCircle2,
   X,
   AlertCircle,
   Upload,
-  RefreshCw
-} from 'lucide-react';
+  RefreshCw,
+} from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Assignment, Course, Department, UserProfile } from "../../types";
+import { isWithinSupervisorScope, getSupervisorScopeLabel } from "../../utils/permissionUtils";
 
 interface SupervisorAssignmentManagerProps {
   user: UserProfile | null;
@@ -39,27 +36,27 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
   departments,
   onAddAssignment,
   onUpdateAssignment,
-  onDeleteAssignment
+  onDeleteAssignment,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
-  const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("all");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
   // Form Fields
-  const [fCourseId, setFCourseId] = useState('');
-  const [fTitle, setFTitle] = useState('');
-  const [fDescription, setFDescription] = useState('');
-  const [fDueDate, setFDueDate] = useState('');
+  const [fCourseId, setFCourseId] = useState("");
+  const [fTitle, setFTitle] = useState("");
+  const [fDescription, setFDescription] = useState("");
+  const [fDueDate, setFDueDate] = useState("");
   const [fTotalPoints, setFTotalPoints] = useState<number>(20);
   const [fWeightPercent, setFWeightPercent] = useState<number>(10);
-  const [fAttachmentUrl, setFAttachmentUrl] = useState('');
-  const [fAttachmentName, setFAttachmentName] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [fAttachmentUrl, setFAttachmentUrl] = useState("");
+  const [fAttachmentName, setFAttachmentName] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [isAttachmentDragging, setIsAttachmentDragging] = useState(false);
@@ -80,8 +77,8 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
     isWithinSupervisorScope(user, {
       departmentId: c.departmentId,
       level: c.level,
-      courseId: c.id
-    })
+      courseId: c.id,
+    }),
   );
 
   const scopeLabel = getSupervisorScopeLabel(user, departments);
@@ -89,15 +86,15 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
   const openCreateModal = () => {
     setEditingAssignment(null);
     const defaultCourse = allowedCourses[0] || courses[0];
-    setFCourseId(defaultCourse?.id || '');
-    setFTitle('');
-    setFDescription('');
-    setFDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    setFCourseId(defaultCourse?.id || "");
+    setFTitle("");
+    setFDescription("");
+    setFDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
     setFTotalPoints(20);
     setFWeightPercent(10);
-    setFAttachmentUrl('');
-    setFAttachmentName('');
-    setErrorMessage('');
+    setFAttachmentUrl("");
+    setFAttachmentName("");
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
@@ -106,37 +103,37 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
     const canEdit = isWithinSupervisorScope(user, {
       departmentId: asgn.departmentId || course?.departmentId,
       level: asgn.level || course?.level,
-      courseId: asgn.courseId
+      courseId: asgn.courseId,
     });
 
     if (!canEdit) {
-      alert('عذراً، هذا التكليف خارج نطاق اختصاصك الأكاديمي المخصص.');
+      alert("عذراً، هذا التكليف خارج نطاق اختصاصك الأكاديمي المخصص.");
       return;
     }
 
     setEditingAssignment(asgn);
     setFCourseId(asgn.courseId);
     setFTitle(asgn.title);
-    setFDescription(asgn.description || '');
+    setFDescription(asgn.description || "");
     setFDueDate(asgn.dueDate);
     setFTotalPoints(asgn.totalPoints || 20);
     setFWeightPercent(asgn.weightPercent || 10);
-    setFAttachmentUrl(asgn.attachmentUrl || '');
-    setFAttachmentName(asgn.attachmentName || '');
-    setErrorMessage('');
+    setFAttachmentUrl(asgn.attachmentUrl || "");
+    setFAttachmentName(asgn.attachmentName || "");
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fTitle.trim()) {
-      setErrorMessage('يرجى إدخال عنوان التكليف الدراسي.');
+      setErrorMessage("يرجى إدخال عنوان التكليف الدراسي.");
       return;
     }
 
     const selectedCourse = courses.find((c) => c.id === fCourseId);
     if (!selectedCourse) {
-      setErrorMessage('يرجى اختيار مقرر دراسي صحيح.');
+      setErrorMessage("يرجى اختيار مقرر دراسي صحيح.");
       return;
     }
 
@@ -144,11 +141,11 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
     const hasPermission = isWithinSupervisorScope(user, {
       departmentId: selectedCourse.departmentId,
       level: selectedCourse.level,
-      courseId: selectedCourse.id
+      courseId: selectedCourse.id,
     });
 
     if (!hasPermission) {
-      setErrorMessage('ليس لديك صلاحية لإضافة أو تعديل التكليفات لهذا المقرر خارج نطاق اختصاصك.');
+      setErrorMessage("ليس لديك صلاحية لإضافة أو تعديل التكليفات لهذا المقرر خارج نطاق اختصاصك.");
       return;
     }
 
@@ -164,8 +161,8 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
       attachmentName: fAttachmentName.trim() || undefined,
       departmentId: selectedCourse.departmentId,
       level: selectedCourse.level,
-      createdByName: user?.name || 'مشرف المقرر',
-      createdByRole: user?.role
+      createdByName: user?.name || "مشرف المقرر",
+      createdByRole: user?.role,
     };
 
     if (editingAssignment) {
@@ -173,7 +170,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
     } else {
       onAddAssignment({
         ...payload,
-        status: 'todo'
+        status: "todo",
       });
     }
 
@@ -185,11 +182,11 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
     const canDelete = isWithinSupervisorScope(user, {
       departmentId: asgn.departmentId || course?.departmentId,
       level: asgn.level || course?.level,
-      courseId: asgn.courseId
+      courseId: asgn.courseId,
     });
 
     if (!canDelete) {
-      alert('ليس لديك صلاحية لحذف تكليفات المواد الخارجيّة عن تخصصك.');
+      alert("ليس لديك صلاحية لحذف تكليفات المواد الخارجيّة عن تخصصك.");
       return;
     }
 
@@ -201,9 +198,12 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
   // Filtered Assignments List
   const filteredAssignments = assignments.filter((asgn) => {
     const course = courses.find((c) => c.id === asgn.courseId);
-    const matchesDept = selectedDeptId === 'all' || course?.departmentId === selectedDeptId || asgn.departmentId === selectedDeptId;
-    const matchesCourse = selectedCourseId === 'all' || asgn.courseId === selectedCourseId;
-    const matchesStatus = statusFilter === 'all' || asgn.status === statusFilter;
+    const matchesDept =
+      selectedDeptId === "all" ||
+      course?.departmentId === selectedDeptId ||
+      asgn.departmentId === selectedDeptId;
+    const matchesCourse = selectedCourseId === "all" || asgn.courseId === selectedCourseId;
+    const matchesStatus = statusFilter === "all" || asgn.status === statusFilter;
     const matchesSearch =
       asgn.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asgn.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -222,7 +222,9 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
               <CheckSquare className="w-5 h-5 text-purple-300" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">إدارة وترفيع التكليفات والواجبات الأكاديمية</h2>
+              <h2 className="text-sm font-bold text-white">
+                إدارة وترفيع التكليفات والواجبات الأكاديمية
+              </h2>
               <p className="text-xs text-purple-200 mt-0.5">{scopeLabel}</p>
             </div>
           </div>
@@ -304,8 +306,12 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
       {filteredAssignments.length === 0 ? (
         <div className="p-12 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
           <CheckSquare className="w-12 h-12 text-slate-400 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">لا توجد تكليفات مطابقة للبحث حالياً</h3>
-          <p className="text-xs text-slate-500">يمكنك إضافة أول واجب دراسي للمقررات التابعة لنطاق إشرافك.</p>
+          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+            لا توجد تكليفات مطابقة للبحث حالياً
+          </h3>
+          <p className="text-xs text-slate-500">
+            يمكنك إضافة أول واجب دراسي للمقررات التابعة لنطاق إشرافك.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -314,7 +320,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
             const canManage = isWithinSupervisorScope(user, {
               departmentId: asgn.departmentId || course?.departmentId,
               level: asgn.level || course?.level,
-              courseId: asgn.courseId
+              courseId: asgn.courseId,
             });
 
             return (
@@ -346,7 +352,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                   </h3>
 
                   <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                    {asgn.description || 'لا توجد تعليمات إضافية مذكورة لهذا التكليف.'}
+                    {asgn.description || "لا توجد تعليمات إضافية مذكورة لهذا التكليف."}
                   </p>
 
                   {asgn.attachmentName && (
@@ -361,11 +367,22 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                   <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>موعد التسليم: <strong className="text-slate-800 dark:text-slate-200">{asgn.dueDate}</strong></span>
+                      <span>
+                        موعد التسليم:{" "}
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          {asgn.dueDate}
+                        </strong>
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Award className="w-3.5 h-3.5 text-amber-500" />
-                      <span>الدرجات: <strong className="text-amber-600 font-bold">{asgn.totalPoints} درجات</strong> ({asgn.weightPercent}%)</span>
+                      <span>
+                        الدرجات:{" "}
+                        <strong className="text-amber-600 font-bold">
+                          {asgn.totalPoints} درجات
+                        </strong>{" "}
+                        ({asgn.weightPercent}%)
+                      </span>
                     </div>
                   </div>
 
@@ -403,7 +420,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
               <div className="flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-purple-600" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                  {editingAssignment ? 'تعديل التكليف الأكاديمي' : 'رفع تكليف / واجب دراسي جديد'}
+                  {editingAssignment ? "تعديل التكليف الأكاديمي" : "رفع تكليف / واجب دراسي جديد"}
                 </h3>
               </div>
               <button
@@ -437,11 +454,11 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                     const isAllowed = isWithinSupervisorScope(user, {
                       departmentId: c.departmentId,
                       level: c.level,
-                      courseId: c.id
+                      courseId: c.id,
                     });
                     return (
                       <option key={c.id} value={c.id} disabled={!isAllowed}>
-                        {c.code} - {c.title} {!isAllowed ? '(خارج نطاق إشرافك)' : ''}
+                        {c.code} - {c.title} {!isAllowed ? "(خارج نطاق إشرافك)" : ""}
                       </option>
                     );
                   })}
@@ -544,7 +561,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block truncate">
-                        {fAttachmentName || 'ملف التكليف المرفق'}
+                        {fAttachmentName || "ملف التكليف المرفق"}
                       </span>
                       <span className="text-[11px] text-purple-600 dark:text-purple-400">
                         تم إرفاق الملف من جهازك بنجاح
@@ -562,9 +579,9 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                       <button
                         type="button"
                         onClick={() => {
-                          setFAttachmentUrl('');
-                          setFAttachmentName('');
-                          if (attachmentInputRef.current) attachmentInputRef.current.value = '';
+                          setFAttachmentUrl("");
+                          setFAttachmentName("");
+                          if (attachmentInputRef.current) attachmentInputRef.current.value = "";
                         }}
                         className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition-all"
                         title="إزالة المرفق"
@@ -589,13 +606,15 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                     }}
                     className={`border-2 border-dashed rounded-2xl p-3.5 text-center cursor-pointer transition-all ${
                       isAttachmentDragging
-                        ? 'border-purple-500 bg-purple-500/10'
-                        : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-purple-50/50 hover:border-purple-400'
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-purple-50/50 hover:border-purple-400"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
                       <Upload className="w-4 h-4" />
-                      <span className="text-xs font-bold">رفع ملف أو شيت التكليف من جهازك (تصفح / سحب)</span>
+                      <span className="text-xs font-bold">
+                        رفع ملف أو شيت التكليف من جهازك (تصفح / سحب)
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       انقر لاختيار ملف (PDF, DOCX, ZIP, PNG) أو اسحبه هنا
@@ -616,7 +635,7 @@ export const SupervisorAssignmentManager: React.FC<SupervisorAssignmentManagerPr
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg transition-all"
                 >
-                  {editingAssignment ? 'حفظ التعديلات' : 'نشر التكليف الآن'}
+                  {editingAssignment ? "حفظ التعديلات" : "نشر التكليف الآن"}
                 </button>
               </div>
             </form>

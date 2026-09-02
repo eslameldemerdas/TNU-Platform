@@ -1,10 +1,10 @@
-export type AcademicLevel = 'Year 1 (Freshman)' | 'Year 2 (Sophomore)';
-export type Semester = 'Fall 2026' | 'Spring 2026' | 'Summer 2026';
-export type UserRole = 'student' | 'moderator' | 'department_admin' | 'supervisor' | 'super_admin';
+export type AcademicLevel = "Year 1 (Freshman)" | "Year 2 (Sophomore)";
+export type Semester = "Fall 2026" | "Spring 2026" | "Summer 2026";
+export type UserRole = "student" | "moderator" | "department_admin" | "supervisor" | "super_admin";
 
 export interface SupervisorScope {
-  departmentId: string | 'all'; // e.g., 'dept-cmp', 'dept-mtr', or 'all'
-  level?: AcademicLevel | 'all'; // e.g., 'Year 1 (Freshman)', 'Year 2 (Sophomore)', etc. or 'all'
+  departmentId: string | "all"; // e.g., 'dept-cmp', 'dept-mtr', or 'all'
+  level?: AcademicLevel | "all"; // e.g., 'Year 1 (Freshman)', 'Year 2 (Sophomore)', etc. or 'all'
   assignedCourseIds?: string[]; // list of specific course IDs or empty for all in scope
   canManageCourses?: boolean; // Add/edit course details, syllabus, schedule
   canUploadResources?: boolean; // Upload & approve study materials, labs, lectures
@@ -62,26 +62,26 @@ export interface Course {
 }
 
 export type ResourceCategory =
-  | 'summary'
-  | 'notes'
-  | 'previous_exam'
-  | 'cheat_sheet'
-  | 'study_guide'
-  | 'lab_material'
-  | 'practice_material'
-  | 'reference'
-  | 'other'
-  | 'lecture_notes'
-  | 'lab_manual'
-  | 'assignment'
-  | 'important_questions'
-  | 'reference_book';
+  | "summary"
+  | "notes"
+  | "previous_exam"
+  | "cheat_sheet"
+  | "study_guide"
+  | "lab_material"
+  | "practice_material"
+  | "reference"
+  | "other"
+  | "lecture_notes"
+  | "lab_manual"
+  | "assignment"
+  | "important_questions"
+  | "reference_book";
 
 export type FileCategory = ResourceCategory;
 
-export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'removed';
-export type ResourceModerationStatus = 'pending' | 'approved' | 'rejected';
-export type ResourceVerificationStatus = 'official' | 'verified' | 'student_uploaded' | 'rejected';
+export type ModerationStatus = "pending" | "approved" | "rejected" | "flagged" | "removed";
+export type ResourceModerationStatus = "pending" | "approved" | "rejected";
+export type ResourceVerificationStatus = "official" | "verified" | "student_uploaded" | "rejected";
 
 export interface StudyFile {
   id: string;
@@ -94,7 +94,7 @@ export interface StudyFile {
   academicYear?: string;
   semester?: string;
   category: FileCategory;
-  fileType: 'pdf' | 'docx' | 'pptx' | 'zip' | 'code' | 'image';
+  fileType: "pdf" | "docx" | "pptx" | "zip" | "code" | "image";
   fileSize: string;
   fileSizeBytes?: number;
   fileName?: string;
@@ -110,7 +110,7 @@ export interface StudyFile {
   ratingCount: number;
   helpfulCount?: number;
   notHelpfulCount?: number;
-  userVote?: 'helpful' | 'not_helpful' | null;
+  userVote?: "helpful" | "not_helpful" | null;
   previewContent?: string;
   downloadUrl: string;
   status: ModerationStatus;
@@ -132,7 +132,7 @@ export type AcademicResource = StudyFile;
 export interface Comment {
   id: string;
   parentId?: string; // For threaded 1-level reply nesting
-  targetType: 'file' | 'discussion';
+  targetType: "file" | "discussion";
   targetId: string;
   authorId: string;
   authorName: string;
@@ -169,7 +169,7 @@ export interface DiscussionThread {
   tags: string[];
 }
 
-export type AssignmentStatus = 'todo' | 'in_progress' | 'submitted' | 'graded';
+export type AssignmentStatus = "todo" | "in_progress" | "submitted" | "graded";
 
 export interface Assignment {
   id: string;
@@ -196,8 +196,20 @@ export interface ScheduleItem {
   courseId: string;
   courseCode: string;
   title: string;
-  type: 'lecture' | 'section' | 'lab' | 'office_hour' | 'exam';
-  dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'الإثنين' | 'الثلاثاء' | 'الأربعاء' | 'الخميس' | 'الجمعة' | string;
+  type: "lecture" | "section" | "lab" | "office_hour" | "exam";
+  dayOfWeek:
+    | "Monday"
+    | "Tuesday"
+    | "Wednesday"
+    | "Thursday"
+    | "Friday"
+    | "Saturday"
+    | "الإثنين"
+    | "الثلاثاء"
+    | "الأربعاء"
+    | "الخميس"
+    | "الجمعة"
+    | string;
   startTime: string; // "09:00"
   endTime: string; // "10:30"
   location: string;
@@ -210,7 +222,13 @@ export interface ScheduleItem {
 export interface PointsLedgerEntry {
   id: string;
   userId: string;
-  type: 'upload_approved' | 'helpful_answer' | 'file_rated' | 'solved_exam_q' | 'reversal_file_removed' | 'reversal_spam';
+  type:
+    | "upload_approved"
+    | "helpful_answer"
+    | "file_rated"
+    | "solved_exam_q"
+    | "reversal_file_removed"
+    | "reversal_spam";
   points: number; // positive or negative
   referenceId: string;
   description: string;
@@ -252,7 +270,7 @@ export interface Badge {
 
 export interface Announcement {
   id: string;
-  scope: 'university' | 'faculty' | 'department' | 'course';
+  scope: "university" | "faculty" | "department" | "course";
   targetId?: string; // departmentId or courseId
   title: string;
   content: string;
@@ -260,10 +278,11 @@ export interface Announcement {
   authorRole: string;
   date: string;
   isPinned?: boolean;
-  priority: 'low' | 'normal' | 'urgent';
+  priority: "low" | "normal" | "urgent";
 }
 
-export type EventCategory = 'workshop' | 'hackathon' | 'guest_lecture' | 'social' | 'competition' | 'field_trip' | 'seminar';
+export type EventCategory =
+  "workshop" | "hackathon" | "guest_lecture" | "social" | "competition" | "field_trip" | "seminar";
 
 export interface EventRegistrant {
   id: string;
@@ -300,7 +319,7 @@ export interface CampusEvent {
   contactEmail?: string;
   contactPhone?: string;
   tags?: string[];
-  status?: 'published' | 'draft' | 'cancelled';
+  status?: "published" | "draft" | "cancelled";
   registeredStudents?: EventRegistrant[];
   agenda?: EventAgendaItem[];
 }
@@ -309,13 +328,13 @@ export interface LostFoundItem {
   id: string;
   title: string;
   description: string;
-  type: 'lost' | 'found';
+  type: "lost" | "found";
   location: string;
   date: string;
   contactInfo: string;
-  status: 'active' | 'resolved';
+  status: "active" | "resolved";
   reporterName: string;
-  category: 'electronics' | 'calculator' | 'kit' | 'documents' | 'personal';
+  category: "electronics" | "calculator" | "kit" | "documents" | "personal";
 }
 
 export interface MarketplaceItem {
@@ -324,14 +343,14 @@ export interface MarketplaceItem {
   description: string;
   price: number;
   currency: string;
-  category: 'textbook' | 'hardware_kit' | 'drawing_gear' | 'components' | 'other';
-  condition: 'like_new' | 'good' | 'fair';
+  category: "textbook" | "hardware_kit" | "drawing_gear" | "components" | "other";
+  condition: "like_new" | "good" | "fair";
   sellerName: string;
   sellerDepartment: string;
   contactInfo?: string;
   whatsappNumber: string;
   date: string;
-  status: 'available' | 'sold';
+  status: "available" | "sold";
   image?: string;
   images?: string[];
 }
@@ -358,8 +377,8 @@ export interface QuizQuestion {
   hint?: string;
 }
 
-export type QuizDifficulty = 'easy' | 'medium' | 'hard';
-export type ExamTermType = 'Midterm' | 'Final' | 'Quiz' | 'Practical';
+export type QuizDifficulty = "easy" | "medium" | "hard";
+export type ExamTermType = "Midterm" | "Final" | "Quiz" | "Practical";
 
 export interface ExamQuiz {
   id: string;
@@ -404,29 +423,20 @@ export interface PomodoroSession {
   courseCode?: string;
   taskName: string;
   durationMinutes: number;
-  mode: 'focus' | 'short_break' | 'long_break';
+  mode: "focus" | "short_break" | "long_break";
   completedAt: string;
   pointsAwarded: number;
 }
 
 export type PostCategoryType =
-  | 'question'
-  | 'resource_share'
-  | 'study_tip'
-  | 'exam_discussion'
-  | 'project_help';
+  "question" | "resource_share" | "study_tip" | "exam_discussion" | "project_help";
 
 export interface PostReaction {
   userId: string;
-  type: 'like' | 'helpful' | 'insightful';
+  type: "like" | "helpful" | "insightful";
 }
 
-export type NotificationCategory =
-  | 'academic'
-  | 'community'
-  | 'study'
-  | 'system'
-  | 'gamification';
+export type NotificationCategory = "academic" | "community" | "study" | "system" | "gamification";
 
 export interface AppNotification {
   id: string;
@@ -449,14 +459,14 @@ export interface AppNotification {
 // HONOR BOARD & STUDENT ACHIEVEMENTS
 // ----------------------------------------------------
 export type HonorCategory =
-  | 'academic_excellence'   // تفوق وامتياز دراسي (Top GPA / Valedictorian)
-  | 'hackathon_competition' // مسابقات وهاكاثونات هندسية وبرمجية
-  | 'scientific_research'   // أبحاث علمية ونشر دولي
-  | 'graduation_project'   // مشاريع تخرج مميزة ونماذج صناعية
-  | 'robotics_ai'           // روبوتات، أنظمة مدمجة وذكاء اصطناعي
-  | 'innovation_patents'    // ابتكارات وبراءات اختراع ونماذج أولية
-  | 'student_leadership'    // قيادة طلابية وتنظيم مؤتمرات ومبادرات
-  | 'community_impact';     // خدمة مجتمعية وأنشطة تطوعية
+  | "academic_excellence" // تفوق وامتياز دراسي (Top GPA / Valedictorian)
+  | "hackathon_competition" // مسابقات وهاكاثونات هندسية وبرمجية
+  | "scientific_research" // أبحاث علمية ونشر دولي
+  | "graduation_project" // مشاريع تخرج مميزة ونماذج صناعية
+  | "robotics_ai" // روبوتات، أنظمة مدمجة وذكاء اصطناعي
+  | "innovation_patents" // ابتكارات وبراءات اختراع ونماذج أولية
+  | "student_leadership" // قيادة طلابية وتنظيم مؤتمرات ومبادرات
+  | "community_impact"; // خدمة مجتمعية وأنشطة تطوعية
 
 export interface HonorStudent {
   id: string;

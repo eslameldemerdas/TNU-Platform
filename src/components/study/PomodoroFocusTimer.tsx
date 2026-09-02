@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -15,13 +14,11 @@ import {
   Plus,
   Trash2,
   Coffee,
-  BookOpen,
   Headphones,
-  Sliders,
-  TrendingUp,
-  ArrowRight
-} from 'lucide-react';
-import { Course, UserProfile, PomodoroSession } from '../../types';
+  ArrowRight,
+} from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Course, UserProfile, PomodoroSession } from "../../types";
 
 interface PomodoroFocusTimerProps {
   courses: Course[];
@@ -38,27 +35,39 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
   onUpdatePoints,
   initialCourseCode,
   initialTask,
-  onBackToExams
+  onBackToExams,
 }) => {
   // Modes: focus_25, focus_50, short_break (5m), long_break (15m), custom
-  const [mode, setMode] = useState<'focus_25' | 'focus_50' | 'short_break' | 'long_break' | 'custom'>('focus_25');
+  const [mode, setMode] = useState<
+    "focus_25" | "focus_50" | "short_break" | "long_break" | "custom"
+  >("focus_25");
   const [durationMinutes, setDurationMinutes] = useState<number>(25);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(25 * 60);
   const [isActive, setIsActive] = useState<boolean>(false);
 
   // Selected course & task
   const [selectedCourseCode, setSelectedCourseCode] = useState<string>(
-    initialCourseCode || courses[0]?.code || 'ENG X13'
+    initialCourseCode || courses[0]?.code || "ENG X13",
   );
-  const [taskName, setTaskName] = useState<string>(
-    initialTask || 'مذاكرة ومراجعة مركزة'
-  );
-  const [tasksList, setTasksList] = useState<Array<{ id: string; text: string; courseCode?: string; completed: boolean }>>([
-    { id: 't-1', text: 'مراجعة خريطة كارنوف وشروط Don\'t Care', courseCode: 'AIE 103', completed: true },
-    { id: 't-2', text: 'حل مسائل تحويلات لابلاس العكسية', courseCode: 'ENG X13', completed: false },
-    { id: 't-3', text: 'تطبيق برمجي لمصفوفات C++ الديناميكية', courseCode: 'AIE 101', completed: false }
+  const [taskName, setTaskName] = useState<string>(initialTask || "مذاكرة ومراجعة مركزة");
+  const [tasksList, setTasksList] = useState<
+    Array<{ id: string; text: string; courseCode?: string; completed: boolean }>
+  >([
+    {
+      id: "t-1",
+      text: "مراجعة خريطة كارنوف وشروط Don't Care",
+      courseCode: "AIE 103",
+      completed: true,
+    },
+    { id: "t-2", text: "حل مسائل تحويلات لابلاس العكسية", courseCode: "ENG X13", completed: false },
+    {
+      id: "t-3",
+      text: "تطبيق برمجي لمصفوفات C++ الديناميكية",
+      courseCode: "AIE 101",
+      completed: false,
+    },
   ]);
-  const [newTaskInput, setNewTaskInput] = useState<string>('');
+  const [newTaskInput, setNewTaskInput] = useState<string>("");
 
   // Daily & Weekly statistics
   const [todayCompletedSessions, setTodayCompletedSessions] = useState<number>(0);
@@ -66,14 +75,15 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
   const [dailyStreak, setDailyStreak] = useState<number>(0);
   const [weeklySessionsCount, setWeeklySessionsCount] = useState<number>(0);
   const [recentLogs, setRecentLogs] = useState<PomodoroSession[]>([]);
-  const [isLoadingSessions, setIsLoadingSessions] = useState<boolean>(true);
+  const [_isLoadingSessions, _setIsLoadingSessions] = useState<boolean>(true);
 
   // Fetch real sessions from the server on mount
   useEffect(() => {
     let cancelled = false;
-    setIsLoadingSessions(true);
-    fetch('/api/study/pomodoro/sessions', { credentials: 'include' })
-      .then((res) => res.ok ? res.json() : Promise.resolve({ sessions: [] }))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    _setIsLoadingSessions(true);
+    fetch("/api/study/pomodoro/sessions", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : Promise.resolve({ sessions: [] })))
       .then((data) => {
         if (cancelled) return;
         const sessions: PomodoroSession[] = Array.isArray(data.sessions) ? data.sessions : [];
@@ -90,23 +100,24 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
         weekAgo.setDate(weekAgo.getDate() - 7);
         const weekSessions = sessions.filter((s) => new Date(s.completedAt) >= weekAgo);
         setWeeklySessionsCount(weekSessions.length);
-        setIsLoadingSessions(false);
       })
       .catch(() => {
-        if (!cancelled) setIsLoadingSessions(false);
+        if (!cancelled) _setIsLoadingSessions(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Audio / Sound state
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [ambientSound, setAmbientSound] = useState<'none' | 'whitenoise' | 'rain'>('none');
-  const [ambientVolume, setAmbientVolume] = useState<number>(0.2);
+  const [ambientSound, setAmbientSound] = useState<"none" | "whitenoise" | "rain">("none");
+  const [ambientVolume, _setAmbientVolume] = useState<number>(0.2);
 
   // Completion modal / toast state
   const [showCompletionNotice, setShowCompletionNotice] = useState<{
     isOpen: boolean;
-    mode: 'focus' | 'break';
+    mode: "focus" | "break";
     minutes: number;
     courseCode: string;
     points: number;
@@ -114,19 +125,24 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ambientNodeRef = useRef<{ source: AudioNode; gain: GainNode } | null>(null);
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Synchronize when initialCourseCode or initialTask changes
   useEffect(() => {
-    if (initialCourseCode) setSelectedCourseCode(initialCourseCode);
-    if (initialTask) setTaskName(initialTask);
+    if (initialCourseCode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedCourseCode(initialCourseCode);
+    }
+    if (initialTask) {
+      setTaskName(initialTask);
+    }
   }, [initialCourseCode, initialTask]);
 
   // Top studied course calculation
   const topStudiedCourse = useMemo(() => {
     const courseMinutesMap: Record<string, number> = {};
     recentLogs.forEach((log) => {
-      const code = log.courseCode || 'عام';
+      const code = log.courseCode || "عام";
       courseMinutesMap[code] = (courseMinutesMap[code] || 0) + log.durationMinutes;
     });
 
@@ -156,11 +172,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
       const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc1.type = 'sine';
+      osc1.type = "sine";
       osc1.frequency.setValueAtTime(528, now);
       osc1.frequency.exponentialRampToValueAtTime(1056, now + 0.8);
 
-      osc2.type = 'triangle';
+      osc2.type = "triangle";
       osc2.frequency.setValueAtTime(1056, now);
 
       gain.gain.setValueAtTime(0.3, now);
@@ -181,12 +197,14 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
   // Ambient sound synthesizer
   useEffect(() => {
-    if (ambientSound === 'none' || !isActive) {
+    if (ambientSound === "none" || !isActive) {
       if (ambientNodeRef.current) {
         try {
           ambientNodeRef.current.gain.gain.setValueAtTime(0, 0);
           (ambientNodeRef.current.source as any).stop?.();
-        } catch {}
+        } catch {
+          // ignore audio cleanup errors
+        }
         ambientNodeRef.current = null;
       }
       return;
@@ -197,7 +215,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
       if (!AudioCtx) return;
       if (!audioCtxRef.current) audioCtxRef.current = new AudioCtx();
       const ctx = audioCtxRef.current;
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === "suspended") ctx.resume();
 
       const bufferSize = ctx.sampleRate * 2;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -206,7 +224,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
-        if (ambientSound === 'rain') {
+        if (ambientSound === "rain") {
           lastOut = (lastOut + 0.02 * white) / 1.02;
           data[i] = lastOut * 3.5;
         } else {
@@ -220,8 +238,8 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
       noiseSource.loop = true;
 
       const filter = ctx.createBiquadFilter();
-      filter.type = ambientSound === 'rain' ? 'lowpass' : 'bandpass';
-      filter.frequency.setValueAtTime(ambientSound === 'rain' ? 800 : 1200, ctx.currentTime);
+      filter.type = ambientSound === "rain" ? "lowpass" : "bandpass";
+      filter.frequency.setValueAtTime(ambientSound === "rain" ? 800 : 1200, ctx.currentTime);
 
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(ambientVolume, ctx.currentTime);
@@ -232,29 +250,36 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
       noiseSource.start();
       ambientNodeRef.current = { source: noiseSource, gain };
-    } catch {}
+    } catch {
+      // ignore audio playback errors
+    }
 
     return () => {
       if (ambientNodeRef.current) {
         try {
           (ambientNodeRef.current.source as any).stop?.();
-        } catch {}
+        } catch {
+          // ignore audio cleanup errors
+        }
         ambientNodeRef.current = null;
       }
     };
   }, [ambientSound, isActive, ambientVolume]);
 
   // Mode Selection Helper
-  const switchMode = (newMode: 'focus_25' | 'focus_50' | 'short_break' | 'long_break' | 'custom', customMins?: number) => {
+  const switchMode = (
+    newMode: "focus_25" | "focus_50" | "short_break" | "long_break" | "custom",
+    customMins?: number,
+  ) => {
     setIsActive(false);
     setMode(newMode);
 
     let mins = 25;
-    if (newMode === 'focus_25') mins = 25;
-    else if (newMode === 'focus_50') mins = 50;
-    else if (newMode === 'short_break') mins = 5;
-    else if (newMode === 'long_break') mins = 15;
-    else if (newMode === 'custom') mins = customMins || durationMinutes || 30;
+    if (newMode === "focus_25") mins = 25;
+    else if (newMode === "focus_50") mins = 50;
+    else if (newMode === "short_break") mins = 5;
+    else if (newMode === "long_break") mins = 15;
+    else if (newMode === "custom") mins = customMins || durationMinutes || 30;
 
     setDurationMinutes(mins);
     setTimeLeftSeconds(mins * 60);
@@ -266,7 +291,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
     setDurationMinutes(newMins);
     if (!isActive) {
       setTimeLeftSeconds(newMins * 60);
-      setMode('custom');
+      setMode("custom");
     }
   };
 
@@ -281,6 +306,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
       setTimeLeftSeconds((prev) => {
         if (prev <= 1) {
           if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+          // eslint-disable-next-line react-hooks/immutability
           handleCompleteSession();
           return 0;
         }
@@ -291,6 +317,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, mode, durationMinutes, taskName, selectedCourseCode]);
 
   // Handle Session Completion
@@ -298,7 +325,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
     setIsActive(false);
     playChime();
 
-    const isFocus = mode === 'focus_25' || mode === 'focus_50' || mode === 'custom';
+    const isFocus = mode === "focus_25" || mode === "focus_50" || mode === "custom";
 
     if (isFocus) {
       const addedMinutes = durationMinutes;
@@ -312,11 +339,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
         id: `pomo-${Date.now()}`,
         userId: currentUser.id,
         courseCode: selectedCourseCode,
-        taskName: taskName || 'جلسة تركيز هندسي',
+        taskName: taskName || "جلسة تركيز هندسي",
         durationMinutes: addedMinutes,
-        mode: 'focus',
+        mode: "focus",
         completedAt: new Date().toISOString(),
-        pointsAwarded: pointsEarned
+        pointsAwarded: pointsEarned,
       };
 
       setRecentLogs((prev) => [newSessionLog, ...prev]);
@@ -327,32 +354,34 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
       // Log to backend safely
       try {
-        await fetch('/api/study/pomodoro/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        await fetch("/api/study/pomodoro/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             courseCode: selectedCourseCode,
             taskName,
             durationMinutes: addedMinutes,
-            mode: 'focus'
-          })
+            mode: "focus",
+          }),
         });
-      } catch {}
+      } catch {
+        // ignore session completion errors
+      }
 
       setShowCompletionNotice({
         isOpen: true,
-        mode: 'focus',
+        mode: "focus",
         minutes: addedMinutes,
         courseCode: selectedCourseCode,
-        points: pointsEarned
+        points: pointsEarned,
       });
     } else {
       setShowCompletionNotice({
         isOpen: true,
-        mode: 'break',
+        mode: "break",
         minutes: durationMinutes,
         courseCode: selectedCourseCode,
-        points: 0
+        points: 0,
       });
     }
   };
@@ -375,16 +404,14 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
       id: `task-${Date.now()}`,
       text: newTaskInput.trim(),
       courseCode: selectedCourseCode,
-      completed: false
+      completed: false,
     };
     setTasksList((prev) => [...prev, newTask]);
-    setNewTaskInput('');
+    setNewTaskInput("");
   };
 
   const handleToggleTask = (id: string) => {
-    setTasksList((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+    setTasksList((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
   };
 
   const handleDeleteTask = (id: string) => {
@@ -401,38 +428,38 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isBreak = mode === 'short_break' || mode === 'long_break';
+  const isBreak = mode === "short_break" || mode === "long_break";
 
   const modeTheme = isBreak
-    ? mode === 'short_break'
+    ? mode === "short_break"
       ? {
-          primary: 'text-teal-500',
-          bg: 'bg-teal-500/10',
-          stroke: '#14b8a6',
-          name: 'استراحة قصيرة (Short Break)'
+          primary: "text-teal-500",
+          bg: "bg-teal-500/10",
+          stroke: "#14b8a6",
+          name: "استراحة قصيرة (Short Break)",
         }
       : {
-          primary: 'text-indigo-500',
-          bg: 'bg-indigo-500/10',
-          stroke: '#6366f1',
-          name: 'استراحة طويلة (Long Break)'
+          primary: "text-indigo-500",
+          bg: "bg-indigo-500/10",
+          stroke: "#6366f1",
+          name: "استراحة طويلة (Long Break)",
         }
-    : mode === 'focus_50'
-    ? {
-        primary: 'text-purple-500',
-        bg: 'bg-purple-500/10',
-        stroke: '#a855f7',
-        name: 'تركيز عميق (Deep Focus - 50m)'
-      }
-    : {
-        primary: 'text-emerald-500',
-        bg: 'bg-emerald-500/10',
-        stroke: '#10b981',
-        name: 'جلسة تركيز هندسي (Focus)'
-      };
+    : mode === "focus_50"
+      ? {
+          primary: "text-purple-500",
+          bg: "bg-purple-500/10",
+          stroke: "#a855f7",
+          name: "تركيز عميق (Deep Focus - 50m)",
+        }
+      : {
+          primary: "text-emerald-500",
+          bg: "bg-emerald-500/10",
+          stroke: "#10b981",
+          name: "جلسة تركيز هندسي (Focus)",
+        };
 
   const currentMatchedCourse = courses.find((c) => c.code === selectedCourseCode);
 
@@ -443,7 +470,10 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
         <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
           <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold">
             <Flame className="w-4 h-4 text-emerald-600" />
-            <span>حلقة المذاكرة: تم ضبط المؤقت لمذاكرة مقرر {selectedCourseCode} بناءً على مراجعة الاختبار.</span>
+            <span>
+              حلقة المذاكرة: تم ضبط المؤقت لمذاكرة مقرر {selectedCourseCode} بناءً على مراجعة
+              الاختبار.
+            </span>
           </div>
           <button
             onClick={onBackToExams}
@@ -465,7 +495,9 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
             <div className="text-xl font-bold text-slate-900 dark:text-white">
               {todayCompletedSessions}
             </div>
-            <div className="text-xs text-slate-500">جلسات اليوم ({weeklySessionsCount} أسبوعياً)</div>
+            <div className="text-xs text-slate-500">
+              جلسات اليوم ({weeklySessionsCount} أسبوعياً)
+            </div>
           </div>
         </div>
 
@@ -513,11 +545,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
           {/* Mode Selector Presets */}
           <div className="inline-flex flex-wrap items-center justify-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 gap-1">
             <button
-              onClick={() => switchMode('focus_25')}
+              onClick={() => switchMode("focus_25")}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-                mode === 'focus_25'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                mode === "focus_25"
+                  ? "bg-emerald-600 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Flame className="w-4 h-4 text-amber-300" />
@@ -525,11 +557,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
             </button>
 
             <button
-              onClick={() => switchMode('focus_50')}
+              onClick={() => switchMode("focus_50")}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-                mode === 'focus_50'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                mode === "focus_50"
+                  ? "bg-purple-600 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Zap className="w-4 h-4 text-purple-300" />
@@ -537,11 +569,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
             </button>
 
             <button
-              onClick={() => switchMode('short_break')}
+              onClick={() => switchMode("short_break")}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-                mode === 'short_break'
-                  ? 'bg-teal-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                mode === "short_break"
+                  ? "bg-teal-600 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Coffee className="w-4 h-4 text-teal-300" />
@@ -549,11 +581,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
             </button>
 
             <button
-              onClick={() => switchMode('long_break')}
+              onClick={() => switchMode("long_break")}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-                mode === 'long_break'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                mode === "long_break"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Clock className="w-4 h-4 text-indigo-300" />
@@ -571,7 +603,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
               >
                 {courses.map((c) => (
                   <option key={c.id} value={c.code}>
-                    {c.code} — {c.title.split('(')[0]}
+                    {c.code} — {c.title.split("(")[0]}
                   </option>
                 ))}
               </select>
@@ -666,8 +698,8 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
               onClick={toggleTimer}
               className={`px-8 py-4 rounded-2xl font-bold text-base text-white shadow-xl transition-all flex items-center gap-2.5 ${
                 isActive
-                  ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20'
-                  : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
+                  ? "bg-amber-600 hover:bg-amber-500 shadow-amber-500/20"
+                  : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20"
               }`}
             >
               {isActive ? (
@@ -678,7 +710,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
               ) : (
                 <>
                   <Play className="w-5 h-5" />
-                  {isBreak ? 'بدء الاستراحة' : 'بدء جلسة التركيز'}
+                  {isBreak ? "بدء الاستراحة" : "بدء جلسة التركيز"}
                 </>
               )}
             </button>
@@ -699,31 +731,31 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
               <span>أصوات التركيز المحيطية:</span>
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setAmbientSound('none')}
+                  onClick={() => setAmbientSound("none")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    ambientSound === 'none'
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                      : 'bg-slate-100 dark:bg-slate-800'
+                    ambientSound === "none"
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                      : "bg-slate-100 dark:bg-slate-800"
                   }`}
                 >
                   صامت
                 </button>
                 <button
-                  onClick={() => setAmbientSound('rain')}
+                  onClick={() => setAmbientSound("rain")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    ambientSound === 'rain'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800'
+                    ambientSound === "rain"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-100 dark:bg-slate-800"
                   }`}
                 >
                   صوت المطر 🌧️
                 </button>
                 <button
-                  onClick={() => setAmbientSound('whitenoise')}
+                  onClick={() => setAmbientSound("whitenoise")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    ambientSound === 'whitenoise'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800'
+                    ambientSound === "whitenoise"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-100 dark:bg-slate-800"
                   }`}
                 >
                   ضوضاء بيضاء ☕
@@ -735,7 +767,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
               onClick={() => setSoundEnabled((prev) => !prev)}
               className="flex items-center gap-1 hover:text-emerald-500 transition-colors"
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-500" /> : <VolumeX className="w-4 h-4" />}
+              {soundEnabled ? (
+                <Volume2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <VolumeX className="w-4 h-4" />
+              )}
               <span>تنبيه نهاية الوقت</span>
             </button>
           </div>
@@ -787,8 +823,8 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
                     <span
                       className={`${
                         task.completed
-                          ? 'line-through text-slate-400 dark:text-slate-500'
-                          : 'text-slate-700 dark:text-slate-300 font-medium'
+                          ? "line-through text-slate-400 dark:text-slate-500"
+                          : "text-slate-700 dark:text-slate-300 font-medium"
                       }`}
                     >
                       {task.text}
@@ -826,7 +862,11 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
                       <span className="line-clamp-1">{log.taskName}</span>
                     </div>
                     <div className="text-slate-400 text-[10px]">
-                      {log.durationMinutes} دقيقة تركيز • {new Date(log.completedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                      {log.durationMinutes} دقيقة تركيز •{" "}
+                      {new Date(log.completedAt).toLocaleTimeString("ar-EG", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </div>
                   </div>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -853,23 +893,23 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
 
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                {showCompletionNotice.mode === 'focus'
-                  ? '🎉 أحسنت صنعاً! أتممت جلسة التركيز'
-                  : '☕ انتهت الاستراحة! هل أنت جاهز؟'}
+                {showCompletionNotice.mode === "focus"
+                  ? "🎉 أحسنت صنعاً! أتممت جلسة التركيز"
+                  : "☕ انتهت الاستراحة! هل أنت جاهز؟"}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {showCompletionNotice.mode === 'focus'
+                {showCompletionNotice.mode === "focus"
                   ? `أكملت ${showCompletionNotice.minutes} دقيقة تركيز بنجاح في مادة ${showCompletionNotice.courseCode} وحصلت على +${showCompletionNotice.points} نقاط!`
-                  : 'استعد لبدء جلسة تركيز جديدة ومواصلة التقدم الأكاديمي.'}
+                  : "استعد لبدء جلسة تركيز جديدة ومواصلة التقدم الأكاديمي."}
               </p>
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
-              {showCompletionNotice.mode === 'focus' ? (
+              {showCompletionNotice.mode === "focus" ? (
                 <button
                   onClick={() => {
                     setShowCompletionNotice(null);
-                    switchMode('short_break');
+                    switchMode("short_break");
                   }}
                   className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md transition-colors flex items-center justify-center gap-2"
                 >
@@ -880,7 +920,7 @@ export const PomodoroFocusTimer: React.FC<PomodoroFocusTimerProps> = ({
                 <button
                   onClick={() => {
                     setShowCompletionNotice(null);
-                    switchMode('focus_25');
+                    switchMode("focus_25");
                   }}
                   className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-colors flex items-center justify-center gap-2"
                 >

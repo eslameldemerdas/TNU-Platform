@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 export interface UserSession {
   id: string;
@@ -29,20 +29,20 @@ export class SessionManager {
    * Helper to parse simple device string from User-Agent without heavy external libraries
    */
   static parseUserAgent(ua?: string): string {
-    if (!ua) return 'Web Browser · Desktop';
-    let browser = 'Web Browser';
-    let os = 'Unknown OS';
+    if (!ua) return "Web Browser · Desktop";
+    let browser = "Web Browser";
+    let os = "Unknown OS";
 
-    if (ua.includes('Edg/')) browser = 'Microsoft Edge';
-    else if (ua.includes('Chrome/')) browser = 'Google Chrome';
-    else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Apple Safari';
-    else if (ua.includes('Firefox/')) browser = 'Mozilla Firefox';
+    if (ua.includes("Edg/")) browser = "Microsoft Edge";
+    else if (ua.includes("Chrome/")) browser = "Google Chrome";
+    else if (ua.includes("Safari/") && !ua.includes("Chrome")) browser = "Apple Safari";
+    else if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
 
-    if (ua.includes('Windows NT')) os = 'Windows';
-    else if (ua.includes('Mac OS X')) os = 'macOS';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-    else if (ua.includes('Linux')) os = 'Linux';
+    if (ua.includes("Windows NT")) os = "Windows";
+    else if (ua.includes("Mac OS X")) os = "macOS";
+    else if (ua.includes("Android")) os = "Android";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+    else if (ua.includes("Linux")) os = "Linux";
 
     return `${browser} · ${os}`;
   }
@@ -55,10 +55,10 @@ export class SessionManager {
     userEmail: string,
     ipAddress: string,
     userAgent?: string,
-    durationMs = 7 * 24 * 3600 * 1000 // 7 days
+    durationMs = 7 * 24 * 3600 * 1000, // 7 days
   ): { session: UserSession; token: string } {
-    const token = crypto.randomBytes(32).toString('hex');
-    const sessionId = `sess-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const token = crypto.randomBytes(32).toString("hex");
+    const sessionId = `sess-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
     const now = new Date().toISOString();
 
     const session: UserSession = {
@@ -66,11 +66,11 @@ export class SessionManager {
       token,
       userId,
       userEmail: userEmail.toLowerCase(),
-      ipAddress: ipAddress || '127.0.0.1',
+      ipAddress: ipAddress || "127.0.0.1",
       deviceInfo: this.parseUserAgent(userAgent),
       createdAt: now,
       lastUsedAt: now,
-      expiresAt: Date.now() + durationMs
+      expiresAt: Date.now() + durationMs,
     };
 
     this.SESSIONS_MAP.set(token, session);
@@ -132,11 +132,13 @@ export class SessionManager {
         ipAddress: session.ipAddress,
         createdAt: session.createdAt,
         lastUsedAt: session.lastUsedAt,
-        isCurrent: token === currentToken
+        isCurrent: token === currentToken,
       });
     }
 
-    return result.sort((a, b) => new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime());
+    return result.sort(
+      (a, b) => new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime(),
+    );
   }
 
   /**

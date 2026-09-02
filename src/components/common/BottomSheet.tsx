@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import React, { useEffect, useRef } from "react";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -18,8 +18,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   title,
   description,
   children,
-  maxHeight = 'max-h-[85vh]',
-  showCloseButton = true
+  maxHeight = "max-h-[85vh]",
+  showCloseButton = true,
 }) => {
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -27,7 +27,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   useEffect(() => {
     if (isOpen) {
       const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = prevOverflow;
       };
@@ -37,12 +37,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   return (
@@ -63,14 +63,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           {/* Sheet Container */}
           <motion.div
             ref={sheetRef}
-            initial={{ y: '100%', opacity: 0.8 }}
+            initial={{ y: "100%", opacity: 0.8 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className={`relative z-10 w-full md:max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl md:rounded-3xl border-t md:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col ${maxHeight} overflow-hidden`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? 'bottom-sheet-title' : undefined}
+            aria-labelledby={title ? "bottom-sheet-title" : undefined}
           >
             {/* Mobile Drag Indicator */}
             <div className="md:hidden flex justify-center pt-3 pb-1">
@@ -82,7 +82,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800/80">
                 <div className="min-w-0 flex-1">
                   {title && (
-                    <h3 id="bottom-sheet-title" className="text-base font-bold text-slate-900 dark:text-white truncate">
+                    <h3
+                      id="bottom-sheet-title"
+                      className="text-base font-bold text-slate-900 dark:text-white truncate"
+                    >
                       {title}
                     </h3>
                   )}
@@ -106,9 +109,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             )}
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 safe-area-pb">
-              {children}
-            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 safe-area-pb">{children}</div>
           </motion.div>
         </div>
       )}

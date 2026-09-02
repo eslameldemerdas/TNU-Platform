@@ -1,15 +1,4 @@
-import React, { useState } from 'react';
-import { useTranslation } from '../../i18n/LanguageContext';
 import {
-  Announcement,
-  CampusEvent,
-  LostFoundItem,
-  MarketplaceItem,
-  StudentClub,
-  Department
-} from '../../types';
-import {
-  Building2,
   Bell,
   Calendar,
   Search,
@@ -19,24 +8,29 @@ import {
   CheckCircle2,
   Users,
   MapPin,
-  Clock,
-  Phone,
   Pin,
   AlertCircle,
   Eye,
   UserCheck,
   Award,
-  Sparkles,
   Upload,
   Image as ImageIcon,
   X,
-  MessageCircle,
   Trash2,
   Camera,
-  ExternalLink
-} from 'lucide-react';
-import { EventDetailsModal } from './EventDetailsModal';
-import { ScrollableTabs, ScrollableTabItem } from '../common/ScrollableTabs';
+} from "lucide-react";
+import React, { useState } from "react";
+import { useTranslation } from "../../i18n/LanguageContext";
+import {
+  Announcement,
+  CampusEvent,
+  LostFoundItem,
+  MarketplaceItem,
+  StudentClub,
+  Department,
+} from "../../types";
+import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import { EventDetailsModal } from "./EventDetailsModal";
 
 interface CampusHubViewProps {
   announcements: Announcement[];
@@ -57,41 +51,45 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
   lostFound,
   marketplace,
   clubs,
-  departments,
+  _departments,
   onToggleRSVP,
   onToggleClubJoin,
   onAddMarketplaceItem,
-  onAddLostFoundItem
+  onAddLostFoundItem,
 }) => {
   const { t } = useTranslation();
-  const [activeSubTab, setActiveSubTab] = useState<'announcements' | 'events' | 'marketplace' | 'lost_found' | 'clubs'>('announcements');
+  const [activeSubTab, setActiveSubTab] = useState<
+    "announcements" | "events" | "marketplace" | "lost_found" | "clubs"
+  >("announcements");
   const [revealedContacts, setRevealedContacts] = useState<Record<string, boolean>>({});
 
   // Event Details Modal & Filter State
-  const [eventSearchQuery, setEventSearchQuery] = useState('');
-  const [selectedEventCat, setSelectedEventCat] = useState<string>('all');
+  const [eventSearchQuery, setEventSearchQuery] = useState("");
+  const [selectedEventCat, setSelectedEventCat] = useState<string>("all");
   const [selectedModalEvent, setSelectedModalEvent] = useState<CampusEvent | null>(null);
 
   // Marketplace Modal
   const [showMktModal, setShowMktModal] = useState(false);
-  const [mktTitle, setMktTitle] = useState('');
+  const [mktTitle, setMktTitle] = useState("");
   const [mktPrice, setMktPrice] = useState<number>(25);
-  const [mktCategory, setMktCategory] = useState<'textbook' | 'hardware_kit' | 'drawing_gear' | 'components' | 'other'>('textbook');
-  const [mktCondition, setMktCondition] = useState<'like_new' | 'good' | 'fair'>('good');
-  const [mktDesc, setMktDesc] = useState('');
-  const [mktContact, setMktContact] = useState('');
-  const [mktWhatsapp, setMktWhatsapp] = useState('');
+  const [mktCategory, setMktCategory] = useState<
+    "textbook" | "hardware_kit" | "drawing_gear" | "components" | "other"
+  >("textbook");
+  const [mktCondition, setMktCondition] = useState<"like_new" | "good" | "fair">("good");
+  const [mktDesc, setMktDesc] = useState("");
+  const [mktContact, setMktContact] = useState("");
+  const [mktWhatsapp, setMktWhatsapp] = useState("");
   const [mktImages, setMktImages] = useState<string[]>([]);
   const [mktError, setMktError] = useState<string | null>(null);
   const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string, number>>({});
 
   // Lost & Found Modal
   const [showLafModal, setShowLafModal] = useState(false);
-  const [lafTitle, setLafTitle] = useState('');
-  const [lafLocation, setLafLocation] = useState('');
-  const [lafDesc, setLafDesc] = useState('');
-  const [lafContact, setLafContact] = useState('');
-  const [lafType, setLafType] = useState<'lost' | 'found'>('lost');
+  const [lafTitle, setLafTitle] = useState("");
+  const [lafLocation, setLafLocation] = useState("");
+  const [lafDesc, setLafDesc] = useState("");
+  const [lafContact, setLafContact] = useState("");
+  const [lafType, setLafType] = useState<"lost" | "found">("lost");
 
   const toggleContactReveal = (id: string) => {
     setRevealedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -106,7 +104,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
     const newImages: string[] = [];
 
     fileList.forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
+      if (!file.type.startsWith("image/")) return;
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -119,7 +117,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       };
       reader.readAsDataURL(file);
     });
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const removeMktImage = (index: number) => {
@@ -132,11 +130,13 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
 
     const cleanWhatsapp = mktWhatsapp.trim();
     if (!mktTitle.trim()) {
-      setMktError('Please provide an item title.');
+      setMktError("Please provide an item title.");
       return;
     }
     if (!cleanWhatsapp) {
-      setMktError('WhatsApp number is mandatory to post a listing so buyers can message you directly.');
+      setMktError(
+        "WhatsApp number is mandatory to post a listing so buyers can message you directly.",
+      );
       return;
     }
 
@@ -149,16 +149,16 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       contactInfo: mktContact.trim() || `WhatsApp: ${cleanWhatsapp}`,
       whatsappNumber: cleanWhatsapp,
       images: mktImages,
-      image: mktImages.length > 0 ? mktImages[0] : undefined
+      image: mktImages.length > 0 ? mktImages[0] : undefined,
     });
 
-    setMktTitle('');
+    setMktTitle("");
     setMktPrice(25);
-    setMktCategory('textbook');
-    setMktCondition('good');
-    setMktDesc('');
-    setMktContact('');
-    setMktWhatsapp('');
+    setMktCategory("textbook");
+    setMktCondition("good");
+    setMktDesc("");
+    setMktContact("");
+    setMktWhatsapp("");
     setMktImages([]);
     setMktError(null);
     setShowMktModal(false);
@@ -173,41 +173,41 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       description: lafDesc,
       contactInfo: lafContact,
       type: lafType,
-      category: 'calculator'
+      category: "calculator",
     });
-    setLafTitle('');
-    setLafLocation('');
-    setLafDesc('');
-    setLafContact('');
+    setLafTitle("");
+    setLafLocation("");
+    setLafDesc("");
+    setLafContact("");
     setShowLafModal(false);
   };
 
   const campusTabs: ScrollableTabItem[] = [
     {
-      id: 'announcements',
+      id: "announcements",
       label: t.campus.announcementsSubTab,
-      icon: <Bell className="w-4 h-4" />
+      icon: <Bell className="w-4 h-4" />,
     },
     {
-      id: 'events',
+      id: "events",
       label: t.campus.eventsSubTab,
-      icon: <Calendar className="w-4 h-4" />
+      icon: <Calendar className="w-4 h-4" />,
     },
     {
-      id: 'marketplace',
+      id: "marketplace",
       label: t.campus.marketplaceSubTab,
-      icon: <ShoppingBag className="w-4 h-4" />
+      icon: <ShoppingBag className="w-4 h-4" />,
     },
     {
-      id: 'lost_found',
+      id: "lost_found",
       label: t.campus.lostFoundSubTab,
-      icon: <Search className="w-4 h-4" />
+      icon: <Search className="w-4 h-4" />,
     },
     {
-      id: 'clubs',
+      id: "clubs",
       label: t.campus.clubsSubTab,
-      icon: <Users className="w-4 h-4" />
-    }
+      icon: <Users className="w-4 h-4" />,
+    },
   ];
 
   return (
@@ -223,7 +223,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       </div>
 
       {/* 1. ANNOUNCEMENTS */}
-      {activeSubTab === 'announcements' && (
+      {activeSubTab === "announcements" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
@@ -236,7 +236,9 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               <div
                 key={anc.id}
                 className={`p-5 rounded-2xl border bg-white dark:bg-slate-900 shadow-sm space-y-2 ${
-                  anc.isPinned ? 'border-amber-500/40 bg-amber-500/5 dark:bg-amber-950/10' : 'border-slate-200 dark:border-slate-800'
+                  anc.isPinned
+                    ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-950/10"
+                    : "border-slate-200 dark:border-slate-800"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -250,17 +252,21 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
 
                   <span
                     className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                      anc.priority === 'urgent'
-                        ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                      anc.priority === "urgent"
+                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                     }`}
                   >
                     {anc.priority}
                   </span>
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{anc.title}</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{anc.content}</p>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {anc.title}
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {anc.content}
+                </p>
 
                 <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                   Issued by: {anc.authorName} ({anc.authorRole})
@@ -272,9 +278,8 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       )}
 
       {/* 2. CAMPUS EVENTS */}
-      {activeSubTab === 'events' && (
+      {activeSubTab === "events" && (
         <div className="space-y-6">
-          
           {/* Header & Search Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -303,20 +308,20 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           {/* Category Filter Chips */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {[
-              { id: 'all', label: 'الكل' },
-              { id: 'workshop', label: '💻 ورش عمل' },
-              { id: 'hackathon', label: '⚡ هكاثونات' },
-              { id: 'guest_lecture', label: '🎤 ندوات ومحاضرات' },
-              { id: 'field_trip', label: '🚌 رحلات ميدانية' },
-              { id: 'competition', label: '🏆 مسابقات' }
+              { id: "all", label: "الكل" },
+              { id: "workshop", label: "💻 ورش عمل" },
+              { id: "hackathon", label: "⚡ هكاثونات" },
+              { id: "guest_lecture", label: "🎤 ندوات ومحاضرات" },
+              { id: "field_trip", label: "🚌 رحلات ميدانية" },
+              { id: "competition", label: "🏆 مسابقات" },
             ].map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedEventCat(cat.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
                   selectedEventCat === cat.id
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 {cat.label}
@@ -327,8 +332,8 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           {/* Events Grid */}
           {(() => {
             const filteredEvents = events.filter((evt) => {
-              if (evt.status === 'draft' || evt.status === 'cancelled') return false;
-              if (selectedEventCat !== 'all' && evt.category !== selectedEventCat) return false;
+              if (evt.status === "draft" || evt.status === "cancelled") return false;
+              if (selectedEventCat !== "all" && evt.category !== selectedEventCat) return false;
               if (eventSearchQuery.trim()) {
                 const q = eventSearchQuery.toLowerCase();
                 const matchTitle = evt.title.toLowerCase().includes(q);
@@ -363,7 +368,11 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                       {/* Banner Image */}
                       {evt.image ? (
                         <div className="h-40 relative overflow-hidden bg-slate-900">
-                          <img src={evt.image} alt={evt.title} className="w-full h-full object-cover" />
+                          <img
+                            src={evt.image}
+                            alt={evt.title}
+                            className="w-full h-full object-cover"
+                          />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex items-end justify-between">
                             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white uppercase border border-white/10">
                               {evt.category}
@@ -400,7 +409,9 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                            <span className="truncate">{evt.date} • {evt.time}</span>
+                            <span className="truncate">
+                              {evt.date} • {evt.time}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-1.5">
@@ -412,17 +423,21 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         {/* Seat Availability Bar */}
                         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-1 text-[11px]">
                           <div className="flex items-center justify-between font-bold">
-                            <span className="text-slate-600 dark:text-slate-300">مقاعد المحجوزة:</span>
+                            <span className="text-slate-600 dark:text-slate-300">
+                              مقاعد المحجوزة:
+                            </span>
                             <span className="text-indigo-600 dark:text-indigo-400">
-                              {rsvps} / {cap} ({seatsLeft > 0 ? `باقي ${seatsLeft}` : 'اكتمل'})
+                              {rsvps} / {cap} ({seatsLeft > 0 ? `باقي ${seatsLeft}` : "اكتمل"})
                             </span>
                           </div>
                           <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${
-                                isFull ? 'bg-rose-500' : 'bg-indigo-600'
+                                isFull ? "bg-rose-500" : "bg-indigo-600"
                               }`}
-                              style={{ width: `${Math.min(100, Math.round((rsvps / cap) * 100))}%` }}
+                              style={{
+                                width: `${Math.min(100, Math.round((rsvps / cap) * 100))}%`,
+                              }}
                             />
                           </div>
                         </div>
@@ -442,10 +457,10 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                             disabled={isFull}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
                               evt.hasRsvped
-                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                                 : isFull
-                                ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none'
-                                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
+                                  ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
+                                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20"
                             }`}
                           >
                             {evt.hasRsvped ? (
@@ -472,7 +487,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       )}
 
       {/* 3. STUDENT MARKETPLACE */}
-      {activeSubTab === 'marketplace' && (
+      {activeSubTab === "marketplace" && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -481,7 +496,8 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                 <span>Peer Engineering Marketplace (Textbooks & Kits)</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Buy and sell used engineering textbooks, lab kits, calculators, and components directly with students.
+                Buy and sell used engineering textbooks, lab kits, calculators, and components
+                directly with students.
               </p>
             </div>
 
@@ -495,7 +511,10 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           </div>
 
           {showMktModal && (
-            <form onSubmit={handleCreateMarketplace} className="p-5 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 dark:bg-indigo-950/20 space-y-4 text-xs shadow-lg">
+            <form
+              onSubmit={handleCreateMarketplace}
+              className="p-5 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 dark:bg-indigo-950/20 space-y-4 text-xs shadow-lg"
+            >
               <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2">
                 <h4 className="font-bold text-sm text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
                   <Tag className="w-4 h-4 text-indigo-500" />
@@ -573,10 +592,10 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                     placeholder="Price ($)"
                     required
                     min={0}
-                    value={Number.isNaN(mktPrice) || mktPrice === undefined ? '' : mktPrice}
+                    value={Number.isNaN(mktPrice) || mktPrice === undefined ? "" : mktPrice}
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
-                      setMktPrice(Number.isNaN(val) ? ('' as any) : val);
+                      setMktPrice(Number.isNaN(val) ? ("" as any) : val);
                     }}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
                   />
@@ -587,10 +606,15 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
                 <div>
                   <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0" viewBox="0 0 24 24">
+                    <svg
+                      className="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.762.459 3.48 1.333 5.001L2 22l5.122-1.334c1.464.799 3.111 1.218 4.88 1.219h.005c5.507 0 9.991-4.479 9.992-9.986.001-2.667-1.033-5.173-2.913-7.054A9.923 9.923 0 0012.012 2zm.005 18.232h-.004a8.28 8.28 0 01-4.22-1.157l-.303-.18-3.136.818.835-3.058-.198-.314a8.272 8.272 0 01-1.267-4.357c.001-4.568 3.719-8.286 8.288-8.286 2.213 0 4.292.862 5.856 2.428a8.23 8.23 0 012.423 5.857c-.001 4.569-3.719 8.287-8.284 8.287zm4.542-6.204c-.249-.125-1.472-.726-1.7-.809-.228-.083-.394-.125-.56.125-.166.249-.643.809-.788.975-.145.166-.29.187-.539.062a6.793 6.793 0 01-1.998-1.231 7.483 7.483 0 01-1.383-1.722c-.145-.249-.015-.384.109-.508.112-.112.249-.29.373-.435.125-.145.166-.249.249-.415.083-.166.042-.311-.021-.435-.062-.125-.56-1.349-.767-1.846-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.871.85-.871 2.074 0 1.224.891 2.406 1.015 2.572.125.166 1.752 2.675 4.244 3.752.593.256 1.056.409 1.417.524.595.189 1.136.162 1.564.098.477-.071 1.472-.601 1.679-1.182.207-.581.207-1.078.145-1.182-.062-.104-.228-.187-.477-.312z" />
                     </svg>
-                    <span>WhatsApp Number (Required) <span className="text-red-500">*</span></span>
+                    <span>
+                      WhatsApp Number (Required) <span className="text-red-500">*</span>
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -664,8 +688,15 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                     </p>
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {mktImages.map((img, index) => (
-                        <div key={index} className="relative group shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900">
-                          <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                        <div
+                          key={index}
+                          className="relative group shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900"
+                        >
+                          <img
+                            src={img}
+                            alt={`Preview ${index}`}
+                            className="w-full h-full object-cover"
+                          />
                           <button
                             type="button"
                             onClick={() => removeMktImage(index)}
@@ -702,18 +733,23 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           {/* MARKETPLACE LISTINGS GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {marketplace.map((item) => {
-              const itemPhotos = item.images && item.images.length > 0
-                ? item.images
-                : item.image
-                ? [item.image]
-                : [];
+              const itemPhotos =
+                item.images && item.images.length > 0
+                  ? item.images
+                  : item.image
+                    ? [item.image]
+                    : [];
               const selectedImgIdx = activeImageIndexes[item.id] || 0;
               const activePhoto = itemPhotos[selectedImgIdx] || itemPhotos[0];
 
               const formatWhatsappUrl = (phone: string, title: string) => {
-                const digits = phone.replace(/[^0-9]/g, '');
-                const message = encodeURIComponent(`Hello! I am interested in your item "${title}" on GNUE Engineering Marketplace.`);
-                return digits ? `https://wa.me/${digits}?text=${message}` : `https://wa.me/?text=${message}`;
+                const digits = phone.replace(/[^0-9]/g, "");
+                const message = encodeURIComponent(
+                  `Hello! I am interested in your item "${title}" on GNUE Engineering Marketplace.`,
+                );
+                return digits
+                  ? `https://wa.me/${digits}?text=${message}`
+                  : `https://wa.me/?text=${message}`;
               };
 
               return (
@@ -732,7 +768,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-2 left-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white border border-white/20">
-                            {item.category.replace('_', ' ')}
+                            {item.category.replace("_", " ")}
                           </span>
                         </div>
 
@@ -742,11 +778,13 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                             {itemPhotos.map((photo, pIdx) => (
                               <button
                                 key={pIdx}
-                                onClick={() => setActiveImageIndexes((prev) => ({ ...prev, [item.id]: pIdx }))}
+                                onClick={() =>
+                                  setActiveImageIndexes((prev) => ({ ...prev, [item.id]: pIdx }))
+                                }
                                 className={`w-12 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                                   pIdx === selectedImgIdx
-                                    ? 'border-indigo-600 scale-105 shadow-sm'
-                                    : 'border-transparent opacity-60 hover:opacity-100'
+                                    ? "border-indigo-600 scale-105 shadow-sm"
+                                    : "border-transparent opacity-60 hover:opacity-100"
                                 }`}
                               >
                                 <img src={photo} alt="" className="w-full h-full object-cover" />
@@ -766,7 +804,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
-                          {item.condition.replace('_', ' ')}
+                          {item.condition.replace("_", " ")}
                         </span>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1.5 line-clamp-2">
                           {item.title}
@@ -785,13 +823,21 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                   {/* Footer & Direct WhatsApp Button */}
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
                     <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>Seller: <strong className="text-slate-800 dark:text-slate-200">{item.sellerName}</strong></span>
+                      <span>
+                        Seller:{" "}
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          {item.sellerName}
+                        </strong>
+                      </span>
                       <span className="text-[11px] text-slate-400">({item.sellerDepartment})</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <a
-                        href={formatWhatsappUrl(item.whatsappNumber || item.contactInfo || '', item.title)}
+                        href={formatWhatsappUrl(
+                          item.whatsappNumber || item.contactInfo || "",
+                          item.title,
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -811,7 +857,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       )}
 
       {/* 4. LOST & FOUND */}
-      {activeSubTab === 'lost_found' && (
+      {activeSubTab === "lost_found" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
@@ -828,14 +874,29 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           </div>
 
           {showLafModal && (
-            <form onSubmit={handleCreateLostFound} className="p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 space-y-3 text-xs">
-              <h4 className="font-bold text-indigo-950 dark:text-indigo-200">Report Lost or Found Item</h4>
+            <form
+              onSubmit={handleCreateLostFound}
+              className="p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 space-y-3 text-xs"
+            >
+              <h4 className="font-bold text-indigo-950 dark:text-indigo-200">
+                Report Lost or Found Item
+              </h4>
               <div className="flex gap-4">
                 <label className="flex items-center gap-1">
-                  <input type="radio" checked={lafType === 'lost'} onChange={() => setLafType('lost')} /> Lost
+                  <input
+                    type="radio"
+                    checked={lafType === "lost"}
+                    onChange={() => setLafType("lost")}
+                  />{" "}
+                  Lost
                 </label>
                 <label className="flex items-center gap-1">
-                  <input type="radio" checked={lafType === 'found'} onChange={() => setLafType('found')} /> Found
+                  <input
+                    type="radio"
+                    checked={lafType === "found"}
+                    onChange={() => setLafType("found")}
+                  />{" "}
+                  Found
                 </label>
               </div>
               <input
@@ -862,10 +923,17 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
               />
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowLafModal(false)} className="px-3 py-1 text-slate-500">
+                <button
+                  type="button"
+                  onClick={() => setShowLafModal(false)}
+                  className="px-3 py-1 text-slate-500"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold">
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold"
+                >
                   Submit Report
                 </button>
               </div>
@@ -874,13 +942,16 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {lostFound.map((item) => (
-              <div key={item.id} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2">
+              <div
+                key={item.id}
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2"
+              >
                 <div className="flex justify-between items-center">
                   <span
                     className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                      item.type === 'lost'
-                        ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                        : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                      item.type === "lost"
+                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                        : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                     }`}
                   >
                     {item.type}
@@ -888,16 +959,20 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                   <span className="text-xs text-slate-400">{item.date}</span>
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.title}</h4>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {item.title}
+                </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{item.description}</p>
-                <p className="text-[11px] text-indigo-400 font-semibold">Location: {item.location}</p>
+                <p className="text-[11px] text-indigo-400 font-semibold">
+                  Location: {item.location}
+                </p>
 
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
                   <button
                     onClick={() => toggleContactReveal(item.id)}
                     className="text-xs font-bold text-indigo-500 hover:underline"
                   >
-                    {revealedContacts[item.id] ? item.contactInfo : 'Contact Reporter'}
+                    {revealedContacts[item.id] ? item.contactInfo : "Contact Reporter"}
                   </button>
                 </div>
               </div>
@@ -907,7 +982,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       )}
 
       {/* 5. STUDENT CLUBS */}
-      {activeSubTab === 'clubs' && (
+      {activeSubTab === "clubs" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
@@ -917,17 +992,26 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {clubs.map((club) => (
-              <div key={club.id} className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
+              <div
+                key={club.id}
+                className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3"
+              >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{club.name}</h4>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {club.name}
+                    </h4>
                     <p className="text-xs text-indigo-500 font-medium mt-0.5">{club.tagline}</p>
                   </div>
 
-                  <span className="text-xs font-semibold text-slate-400">{club.memberCount} Members</span>
+                  <span className="text-xs font-semibold text-slate-400">
+                    {club.memberCount} Members
+                  </span>
                 </div>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">{club.description}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+                  {club.description}
+                </p>
 
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                   <span className="text-xs text-slate-400">Lead: {club.leadName}</span>
@@ -936,11 +1020,11 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                     onClick={() => onToggleClubJoin(club.id)}
                     className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
                       club.isJoined
-                        ? 'bg-emerald-500 text-white shadow-md'
-                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md'
+                        ? "bg-emerald-500 text-white shadow-md"
+                        : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md"
                     }`}
                   >
-                    {club.isJoined ? 'Joined Member ✔' : 'Join Chapter'}
+                    {club.isJoined ? "Joined Member ✔" : "Join Chapter"}
                   </button>
                 </div>
               </div>
@@ -963,7 +1047,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               hasRsvped: updatedRsvp,
               rsvpCount: updatedRsvp
                 ? (selectedModalEvent.rsvpCount || 0) + 1
-                : Math.max(0, (selectedModalEvent.rsvpCount || 0) - 1)
+                : Math.max(0, (selectedModalEvent.rsvpCount || 0) - 1),
             });
           }
         }}

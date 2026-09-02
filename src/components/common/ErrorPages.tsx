@@ -1,7 +1,7 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { motion } from 'motion/react';
-import { Home, Compass, AlertTriangle, RefreshCw, ShieldAlert, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useTranslation } from '../../i18n/LanguageContext';
+import { Home, Compass, RefreshCw, ShieldAlert, ArrowRight, ArrowLeft } from "lucide-react";
+import { motion } from "motion/react";
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { useTranslation } from "../../i18n/LanguageContext";
 
 interface NotFoundProps {
   onGoHome: () => void;
@@ -35,7 +35,8 @@ export const NotFoundView: React.FC<NotFoundProps> = ({ onGoHome }) => {
             تائه في أروقة الكلية؟
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            عذراً، الرابط أو الصفحة التي تحاول الوصول إليها غير موجودة أو تم نقلها. يسعدنا إرشادك للعودة إلى اللوحة الرئيسية.
+            عذراً، الرابط أو الصفحة التي تحاول الوصول إليها غير موجودة أو تم نقلها. يسعدنا إرشادك
+            للعودة إلى اللوحة الرئيسية.
           </p>
         </div>
 
@@ -61,7 +62,7 @@ interface ServerErrorProps {
 }
 
 export const ServerErrorView: React.FC<ServerErrorProps> = ({ onGoHome, onRetry }) => {
-  const { isRTL } = useTranslation();
+  const { _isRTL } = useTranslation();
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12">
@@ -88,7 +89,8 @@ export const ServerErrorView: React.FC<ServerErrorProps> = ({ onGoHome, onRetry 
             عذراً، حدث استثناء غير متوقع
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            تم تسجيل تقرير المشكلة تلقائياً لحماية سرية البيانات والأنظمة. يمكنك المحاولة مجدداً أو الانتقال للصفحة الرئيسية.
+            تم تسجيل تقرير المشكلة تلقائياً لحماية سرية البيانات والأنظمة. يمكنك المحاولة مجدداً أو
+            الانتقال للصفحة الرئيسية.
           </p>
         </div>
 
@@ -128,7 +130,7 @@ interface ErrorBoundaryState {
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(): ErrorBoundaryState {
@@ -136,7 +138,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error in EngHub application:', error, errorInfo);
+    console.error("Uncaught error in EngHub application:", error, errorInfo);
   }
 
   private handleReset = () => {
@@ -152,7 +154,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <ServerErrorView
           onGoHome={() => {
             this.handleReset();
-            window.location.hash = '#dashboard';
+            window.location.hash = "#dashboard";
           }}
           onRetry={this.handleReset}
         />

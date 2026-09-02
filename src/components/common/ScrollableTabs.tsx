@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 
 export interface ScrollableTabItem {
   id: string;
@@ -15,16 +15,16 @@ interface ScrollableTabsProps {
   onTabChange: (id: string) => void;
   className?: string;
   ariaLabel?: string;
-  variant?: 'pills' | 'segmented' | 'underline';
+  variant?: "pills" | "segmented" | "underline";
 }
 
 export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
   tabs,
   activeTab,
   onTabChange,
-  className = '',
-  ariaLabel = 'شريط التبويبات',
-  variant = 'segmented'
+  className = "",
+  ariaLabel = "شريط التبويبات",
+  variant = "segmented",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showRightArrow, setShowRightArrow] = useState<boolean>(false);
@@ -70,22 +70,22 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
       checkScrollBounds();
     };
 
-    el.addEventListener('scroll', handleScroll, { passive: true });
+    el.addEventListener("scroll", handleScroll, { passive: true });
 
     let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
         checkScrollBounds();
       });
       resizeObserver.observe(el);
     }
 
-    window.addEventListener('resize', checkScrollBounds);
+    window.addEventListener("resize", checkScrollBounds);
 
     return () => {
-      el.removeEventListener('scroll', handleScroll);
+      el.removeEventListener("scroll", handleScroll);
       if (resizeObserver) resizeObserver.disconnect();
-      window.removeEventListener('resize', checkScrollBounds);
+      window.removeEventListener("resize", checkScrollBounds);
     };
   }, [checkScrollBounds, tabs.length]);
 
@@ -97,9 +97,9 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
     const activeBtn = el.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
     if (activeBtn) {
       activeBtn.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
       });
       setTimeout(checkScrollBounds, 350);
     }
@@ -114,9 +114,9 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       e.preventDefault();
       // In RTL, positive deltaY should scroll to left (increase absScroll)
-      const isRtl = document.dir === 'rtl' || getComputedStyle(el).direction === 'rtl';
+      const isRtl = document.dir === "rtl" || getComputedStyle(el).direction === "rtl";
       const scrollStep = e.deltaY * (isRtl ? -1 : 1);
-      el.scrollBy({ left: scrollStep, behavior: 'auto' });
+      el.scrollBy({ left: scrollStep, behavior: "auto" });
     }
   };
 
@@ -124,39 +124,43 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
   const scrollRight = () => {
     const el = containerRef.current;
     if (!el) return;
-    const isRtl = document.dir === 'rtl' || getComputedStyle(el).direction === 'rtl';
+    const isRtl = document.dir === "rtl" || getComputedStyle(el).direction === "rtl";
     const amount = el.clientWidth * 0.65;
     // In RTL, scrolling right moves towards 0 (positive if negative scrollLeft)
-    el.scrollBy({ left: isRtl ? amount : -amount, behavior: 'smooth' });
+    el.scrollBy({ left: isRtl ? amount : -amount, behavior: "smooth" });
   };
 
   const scrollLeft = () => {
     const el = containerRef.current;
     if (!el) return;
-    const isRtl = document.dir === 'rtl' || getComputedStyle(el).direction === 'rtl';
+    const isRtl = document.dir === "rtl" || getComputedStyle(el).direction === "rtl";
     const amount = el.clientWidth * 0.65;
     // In RTL, scrolling left moves away from 0 (negative if negative scrollLeft)
-    el.scrollBy({ left: isRtl ? -amount : amount, behavior: 'smooth' });
+    el.scrollBy({ left: isRtl ? -amount : amount, behavior: "smooth" });
   };
 
   // Keyboard navigation across tabs
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const isRtl = document.dir === 'rtl';
+    const isRtl = document.dir === "rtl";
     const currentIndex = tabs.findIndex((t) => t.id === activeTab);
     if (currentIndex === -1) return;
 
-    if (e.key === 'ArrowRight') {
+    if (e.key === "ArrowRight") {
       e.preventDefault();
-      const nextIndex = isRtl ? Math.max(0, currentIndex - 1) : Math.min(tabs.length - 1, currentIndex + 1);
+      const nextIndex = isRtl
+        ? Math.max(0, currentIndex - 1)
+        : Math.min(tabs.length - 1, currentIndex + 1);
       onTabChange(tabs[nextIndex].id);
-    } else if (e.key === 'ArrowLeft') {
+    } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      const nextIndex = isRtl ? Math.min(tabs.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
+      const nextIndex = isRtl
+        ? Math.min(tabs.length - 1, currentIndex + 1)
+        : Math.max(0, currentIndex - 1);
       onTabChange(tabs[nextIndex].id);
-    } else if (e.key === 'Home') {
+    } else if (e.key === "Home") {
       e.preventDefault();
       onTabChange(tabs[0].id);
-    } else if (e.key === 'End') {
+    } else if (e.key === "End") {
       e.preventDefault();
       onTabChange(tabs[tabs.length - 1].id);
     }
@@ -195,25 +199,25 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
         role="tablist"
         aria-label={ariaLabel}
         className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scrollbar-none py-1 px-1 w-full select-none scroll-smooth"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
 
-          let btnClass = '';
-          if (variant === 'segmented') {
+          let btnClass = "";
+          if (variant === "segmented") {
             btnClass = isActive
-              ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70';
-          } else if (variant === 'pills') {
+              ? "bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70";
+          } else if (variant === "pills") {
             btnClass = isActive
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+              ? "bg-emerald-600 text-white shadow-md"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700";
           } else {
             // underline
             btnClass = isActive
-              ? 'text-emerald-500 border-b-2 border-emerald-500 font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent';
+              ? "text-emerald-500 border-b-2 border-emerald-500 font-bold"
+              : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent";
           }
 
           return (
@@ -232,7 +236,10 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
               {tab.badge !== undefined && (
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold leading-none ${
-                    tab.badgeColor || (isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300')
+                    tab.badgeColor ||
+                    (isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300")
                   }`}
                 >
                   {tab.badge}

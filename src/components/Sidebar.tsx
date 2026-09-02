@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   LayoutDashboard,
   BookOpen,
@@ -7,21 +6,22 @@ import {
   Building2,
   Bot,
   ShieldAlert,
-  PlusCircle
-} from 'lucide-react';
-import { UserRole } from '../types';
-import { useTranslation } from '../i18n/LanguageContext';
+  PlusCircle,
+} from "lucide-react";
+import React from "react";
+import { useTranslation } from "../i18n/LanguageContext";
+import { UserRole } from "../types";
 
 export type SidebarTab =
-  | 'dashboard'
-  | 'courses'
-  | 'study_tools'
-  | 'community'
-  | 'campus'
-  | 'ai_assistant'
-  | 'admin'
-  | 'not_found'
-  | 'server_error';
+  | "dashboard"
+  | "courses"
+  | "study_tools"
+  | "community"
+  | "campus"
+  | "ai_assistant"
+  | "admin"
+  | "not_found"
+  | "server_error";
 
 interface SidebarProps {
   activeTab: SidebarTab;
@@ -34,20 +34,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   userRole,
-  onUploadFileClick
+  onUploadFileClick,
 }) => {
   const { t } = useTranslation();
 
-  const desktopNavItems: { id: SidebarTab; label: string; shortLabel: string; icon: React.ElementType; badge?: string }[] = [
-    { id: 'dashboard', label: t.nav.dashboard, shortLabel: t.nav.dashboardShort, icon: LayoutDashboard },
-    { id: 'courses', label: t.nav.courses, shortLabel: t.nav.coursesShort, icon: BookOpen },
-    { id: 'study_tools', label: t.nav.studyTools, shortLabel: t.nav.studyToolsShort, icon: Calculator },
-    { id: 'community', label: t.nav.community, shortLabel: t.nav.communityShort, icon: MessageSquare },
-    { id: 'campus', label: t.nav.campus, shortLabel: t.nav.campusShort, icon: Building2 },
-    { id: 'ai_assistant', label: t.nav.aiAssistant, shortLabel: t.nav.aiAssistantShort, icon: Bot },
-    ...(userRole !== 'student'
-      ? [{ id: 'admin' as SidebarTab, label: t.nav.admin, shortLabel: t.nav.adminShort, icon: ShieldAlert }]
-      : [])
+  const desktopNavItems: {
+    id: SidebarTab;
+    label: string;
+    shortLabel: string;
+    icon: React.ElementType;
+    badge?: string;
+  }[] = [
+    {
+      id: "dashboard",
+      label: t.nav.dashboard,
+      shortLabel: t.nav.dashboardShort,
+      icon: LayoutDashboard,
+    },
+    { id: "courses", label: t.nav.courses, shortLabel: t.nav.coursesShort, icon: BookOpen },
+    {
+      id: "study_tools",
+      label: t.nav.studyTools,
+      shortLabel: t.nav.studyToolsShort,
+      icon: Calculator,
+    },
+    {
+      id: "community",
+      label: t.nav.community,
+      shortLabel: t.nav.communityShort,
+      icon: MessageSquare,
+    },
+    { id: "campus", label: t.nav.campus, shortLabel: t.nav.campusShort, icon: Building2 },
+    { id: "ai_assistant", label: t.nav.aiAssistant, shortLabel: t.nav.aiAssistantShort, icon: Bot },
+    ...(userRole !== "student"
+      ? [
+          {
+            id: "admin" as SidebarTab,
+            label: t.nav.admin,
+            shortLabel: t.nav.adminShort,
+            icon: ShieldAlert,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -56,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <aside className="hidden md:flex w-16 lg:w-64 border-r border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md flex-col justify-between py-4 transition-all shrink-0">
         <div className="space-y-6">
           {/* Quick Action: Upload Resource Button (Restricted to Overseers & Admins) */}
-          {userRole !== 'student' && (
+          {userRole !== "student" && (
             <div className="px-2 lg:px-4">
               <button
                 onClick={onUploadFileClick}
@@ -82,18 +110,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onSelectTab(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                     isActive
-                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white'
+                      ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400 dark:text-amber-600' : 'text-slate-400 group-hover:text-amber-500'}`} />
-                  <span className="hidden lg:inline truncate flex-1 ltr:text-left rtl:text-right">{item.label}</span>
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${isActive ? "text-amber-400 dark:text-amber-600" : "text-slate-400 group-hover:text-amber-500"}`}
+                  />
+                  <span className="hidden lg:inline truncate flex-1 ltr:text-left rtl:text-right">
+                    {item.label}
+                  </span>
                   {item.badge && (
                     <span
                       className={`hidden lg:inline-flex px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${
                         isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                          ? "bg-white/20 text-white"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                       }`}
                     >
                       {item.badge}
@@ -123,24 +155,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onSelectTab(item.id)}
                 className={`relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl transition-all shrink-0 min-h-[48px] min-w-[58px] snap-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                   isActive
-                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold shadow-sm scale-100'
-                    : 'text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white'
+                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold shadow-sm scale-100"
+                    : "text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <div className="relative">
                   <Icon
                     className={`w-5 h-5 transition-colors ${
                       isActive
-                        ? 'text-amber-400 dark:text-amber-600'
-                        : 'text-slate-500 dark:text-slate-400'
+                        ? "text-amber-400 dark:text-amber-600"
+                        : "text-slate-500 dark:text-slate-400"
                     }`}
                   />
                   {item.badge && (
                     <span
                       className={`absolute -top-1.5 -right-3 px-1 py-0.2 text-[8px] font-black rounded-full leading-none tracking-tight ${
                         isActive
-                          ? 'bg-amber-400 text-slate-950 dark:bg-amber-500 dark:text-slate-950 shadow-xs'
-                          : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                          ? "bg-amber-400 text-slate-950 dark:bg-amber-500 dark:text-slate-950 shadow-xs"
+                          : "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                       }`}
                     >
                       {item.badge}
@@ -160,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
 
           {/* Quick Upload action button for elevated roles on mobile if available */}
-          {userRole !== 'student' && (
+          {userRole !== "student" && (
             <button
               id="mobile-nav-upload-quick"
               onClick={onUploadFileClick}

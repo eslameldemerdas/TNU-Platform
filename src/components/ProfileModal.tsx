@@ -1,34 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { UserProfile, Department, PointsLedgerEntry } from '../types';
 import {
   X,
   User,
   Award,
-  Shield,
   CheckCircle2,
   GraduationCap,
   Edit3,
-  BookOpen,
   Key,
-  Smartphone,
   Laptop,
   Trash2,
   AlertCircle,
   Camera,
   Upload,
-  Link as LinkIcon,
-  Sparkles,
   Lock,
   Mail,
   Hash,
   Building,
   Check,
-  Image as ImageIcon
-} from 'lucide-react';
-import { useTranslation } from '../i18n/LanguageContext';
-import { parseApiError } from '../utils/errorUtils';
-import { getAuthHeaders } from '../lib/storage';
+  Image as ImageIcon,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "../i18n/LanguageContext";
+import { getAuthHeaders } from "../lib/storage";
+import { UserProfile, Department, PointsLedgerEntry } from "../types";
+import { parseApiError } from "../utils/errorUtils";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -50,14 +45,14 @@ interface SessionItem {
 }
 
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80'
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
 ];
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
@@ -67,17 +62,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   departments,
   ledger,
   onUpdateBio,
-  onUpdateProfile
+  onUpdateProfile,
 }) => {
-  const { t, language } = useTranslation();
-  const isAr = language === 'ar';
+  const { _t, language } = useTranslation();
+  const isAr = language === "ar";
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
 
   // Editable Profile States (Only Name, Avatar, and Bio)
-  const [nameInput, setNameInput] = useState(user?.name || '');
-  const [avatarInput, setAvatarInput] = useState(user?.avatar || '');
-  const [bioInput, setBioInput] = useState(user?.bio || '');
+  const [nameInput, setNameInput] = useState(user?.name || "");
+  const [avatarInput, setAvatarInput] = useState(user?.avatar || "");
+  const [bioInput, setBioInput] = useState(user?.bio || "");
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string | null>(null);
@@ -85,30 +80,53 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Security Form State (Preserved intact)
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [revokeOtherSessions, setRevokeOtherSessions] = useState(true);
   const [secLoading, setSecLoading] = useState(false);
-  const [secMessage, setSecMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [secMessage, setSecMessage] = useState<{ text: string; type: "success" | "error" } | null>(
+    null,
+  );
 
   // Sessions State (Preserved intact)
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setNameInput(user.name || '');
-      setAvatarInput(user.avatar || '');
-      setBioInput(user.bio || '');
+  const fetchSessions = useCallback(async () => {
+    setLoadingSessions(true);
+    try {
+      const res = await fetch(`/api/auth/sessions?userId=${encodeURIComponent(user.id)}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data.sessions || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch sessions:", e);
+    } finally {
+      setLoadingSessions(false);
     }
+  }, [user.id]);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (user) {
+      setNameInput(user.name || "");
+      setAvatarInput(user.avatar || "");
+      setBioInput(user.bio || "");
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [user]);
 
   useEffect(() => {
-    if (isOpen && activeTab === 'security' && user) {
+    if (isOpen && activeTab === "security" && user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchSessions();
     }
-  }, [isOpen, activeTab, user]);
+  }, [isOpen, activeTab, user, fetchSessions]);
 
   if (!isOpen || !user) return null;
 
@@ -119,13 +137,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert(isAr ? 'يرجى اختيار ملف صورة صالح (JPEG, PNG, WebP).' : 'Please choose a valid image file (JPEG, PNG, WebP).');
+    if (!file.type.startsWith("image/")) {
+      alert(
+        isAr
+          ? "يرجى اختيار ملف صورة صالح (JPEG, PNG, WebP)."
+          : "Please choose a valid image file (JPEG, PNG, WebP).",
+      );
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert(isAr ? 'حجم الصورة يجب ألا يتجاوز 10 ميغابايت.' : 'Image size must not exceed 10MB.');
+      alert(isAr ? "حجم الصورة يجب ألا يتجاوز 10 ميغابايت." : "Image size must not exceed 10MB.");
       return;
     }
 
@@ -136,7 +158,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         const maxDim = 320;
         let width = img.width;
         let height = img.height;
@@ -155,10 +177,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
           setAvatarInput(compressedDataUrl);
           setShowAvatarPicker(false);
         } else {
@@ -177,7 +199,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   const handleSaveProfile = async () => {
     if (!nameInput.trim()) {
-      alert(isAr ? 'يرجى إدخال اسم صحيح.' : 'Please provide a valid name.');
+      alert(isAr ? "يرجى إدخال اسم صحيح." : "Please provide a valid name.");
       return;
     }
 
@@ -188,7 +210,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       userId: user.id,
       name: nameInput.trim(),
       avatar: avatarInput.trim(),
-      bio: bioInput.trim()
+      bio: bioInput.trim(),
     };
 
     try {
@@ -197,7 +219,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         onUpdateProfile({
           name: updatedData.name,
           avatar: updatedData.avatar,
-          bio: updatedData.bio
+          bio: updatedData.bio,
         });
       } else if (onUpdateBio) {
         onUpdateBio(updatedData.bio);
@@ -205,11 +227,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
       // 2. Synchronize with server
       try {
-        const res = await fetch('/api/auth/profile', {
-          method: 'PATCH',
+        const res = await fetch("/api/auth/profile", {
+          method: "PATCH",
           headers: getAuthHeaders(),
-          credentials: 'include',
-          body: JSON.stringify(updatedData)
+          credentials: "include",
+          body: JSON.stringify(updatedData),
         });
 
         if (res.ok) {
@@ -218,58 +240,50 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             onUpdateProfile({
               name: resData.user.name || updatedData.name,
               avatar: resData.user.avatar || updatedData.avatar,
-              bio: resData.user.bio || updatedData.bio
+              bio: resData.user.bio || updatedData.bio,
             });
           }
         }
       } catch (networkErr) {
         // Network sync warning, local state already saved
-        console.warn('Backend profile sync deferred, local changes persisted:', networkErr);
+        console.warn("Backend profile sync deferred, local changes persisted:", networkErr);
       }
 
-      setProfileSuccessMsg(isAr ? 'تم حفظ بيانات الملف الشخصي بنجاح!' : 'Profile updated successfully!');
+      setProfileSuccessMsg(
+        isAr ? "تم حفظ بيانات الملف الشخصي بنجاح!" : "Profile updated successfully!",
+      );
       setTimeout(() => setProfileSuccessMsg(null), 3500);
     } catch (err) {
-      console.error('Profile update error:', err);
+      console.error("Profile update error:", err);
     } finally {
       setIsSavingProfile(false);
     }
   };
 
   const hasProfileChanges =
-    nameInput.trim() !== (user.name || '').trim() ||
-    avatarInput.trim() !== (user.avatar || '').trim() ||
-    bioInput.trim() !== (user.bio || '').trim();
-
-  const fetchSessions = async () => {
-    setLoadingSessions(true);
-    try {
-      const res = await fetch(`/api/auth/sessions?userId=${encodeURIComponent(user.id)}`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSessions(data.sessions || []);
-      }
-    } catch (e) {
-      console.error('Failed to fetch sessions:', e);
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
+    nameInput.trim() !== (user.name || "").trim() ||
+    avatarInput.trim() !== (user.avatar || "").trim() ||
+    bioInput.trim() !== (user.bio || "").trim();
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) return;
 
     if (newPassword.length < 8) {
-      setSecMessage({ text: isAr ? 'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.' : 'New password must be at least 8 characters.', type: 'error' });
+      setSecMessage({
+        text: isAr
+          ? "كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف."
+          : "New password must be at least 8 characters.",
+        type: "error",
+      });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setSecMessage({ text: isAr ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.', type: 'error' });
+      setSecMessage({
+        text: isAr ? "كلمتا المرور غير متطابقتين." : "Passwords do not match.",
+        type: "error",
+      });
       return;
     }
 
@@ -277,29 +291,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setSecMessage(null);
 
     try {
-      const res = await fetch('/api/auth/change-password', {
-        method: 'POST',
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
         headers: getAuthHeaders(),
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           currentPassword,
           newPassword,
-          revokeOtherSessions
-        })
+          revokeOtherSessions,
+        }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setSecMessage({ text: data.message || (isAr ? 'تم تغيير كلمة المرور بنجاح!' : 'Password changed successfully!'), type: 'success' });
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        setSecMessage({
+          text:
+            data.message ||
+            (isAr ? "تم تغيير كلمة المرور بنجاح!" : "Password changed successfully!"),
+          type: "success",
+        });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
         fetchSessions();
       } else {
-        setSecMessage({ text: parseApiError(data, isAr ? 'فشل تغيير كلمة المرور.' : 'Failed to change password.'), type: 'error' });
+        setSecMessage({
+          text: parseApiError(data, isAr ? "فشل تغيير كلمة المرور." : "Failed to change password."),
+          type: "error",
+        });
       }
-    } catch (e) {
-      setSecMessage({ text: isAr ? 'حدث خطأ في الاتصال بالخادم.' : 'Server connection error.', type: 'error' });
+    } catch {
+      setSecMessage({
+        text: isAr ? "حدث خطأ في الاتصال بالخادم." : "Server connection error.",
+        type: "error",
+      });
     } finally {
       setSecLoading(false);
     }
@@ -307,22 +332,28 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   const handleRevokeSession = async (sessionId: string) => {
     try {
-      const res = await fetch(`/api/auth/sessions/${encodeURIComponent(sessionId)}?userId=${encodeURIComponent(user.id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
+      const res = await fetch(
+        `/api/auth/sessions/${encodeURIComponent(sessionId)}?userId=${encodeURIComponent(user.id)}`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+          credentials: "include",
+        },
+      );
       if (res.ok) {
         setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-        setSecMessage({ text: isAr ? 'تم إنهاء الجلسة بنجاح.' : 'Session revoked successfully.', type: 'success' });
+        setSecMessage({
+          text: isAr ? "تم إنهاء الجلسة بنجاح." : "Session revoked successfully.",
+          type: "success",
+        });
       }
     } catch (e) {
-      console.error('Failed to revoke session:', e);
+      console.error("Failed to revoke session:", e);
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
       onClick={onClose}
     >
@@ -340,10 +371,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {isAr ? 'الملف الأكاديمي وإعدادات الحساب' : 'Academic Profile & Settings'}
+                {isAr ? "الملف الأكاديمي وإعدادات الحساب" : "Academic Profile & Settings"}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {isAr ? 'تعديل بيانات الحساب، الصورة الشخصية، والأمان' : 'Manage your profile, avatar, and security'}
+                {isAr
+                  ? "تعديل بيانات الحساب، الصورة الشخصية، والأمان"
+                  : "Manage your profile, avatar, and security"}
               </p>
             </div>
           </div>
@@ -358,31 +391,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
           <button
-            onClick={() => setActiveTab('profile')}
+            onClick={() => setActiveTab("profile")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'profile'
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === "profile"
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             <User className="w-4 h-4" />
-            <span>{isAr ? 'الملف الشخصي والإنجازات' : 'Profile & Achievements'}</span>
+            <span>{isAr ? "الملف الشخصي والإنجازات" : "Profile & Achievements"}</span>
           </button>
           <button
-            onClick={() => setActiveTab('security')}
+            onClick={() => setActiveTab("security")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'security'
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === "security"
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             <Key className="w-4 h-4" />
-            <span>{isAr ? 'كلمة المرور والأمان' : 'Password & Security'}</span>
+            <span>{isAr ? "كلمة المرور والأمان" : "Password & Security"}</span>
           </button>
         </div>
 
         {/* TAB 1: PROFILE, EDITABLE INFO & ACHIEVEMENTS */}
-        {activeTab === 'profile' && (
+        {activeTab === "profile" && (
           <div className="space-y-6 animate-fade-in">
             {profileSuccessMsg && (
               <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
@@ -405,7 +438,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     type="button"
                     onClick={() => setShowAvatarPicker(!showAvatarPicker)}
                     className="absolute -bottom-1.5 -right-1.5 p-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black shadow-lg transition-transform active:scale-90"
-                    title={isAr ? 'تغيير الصورة الشخصية' : 'Change profile picture'}
+                    title={isAr ? "تغيير الصورة الشخصية" : "Change profile picture"}
                   >
                     <Camera className="w-4 h-4" />
                   </button>
@@ -415,24 +448,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex-1 text-center sm:text-left rtl:sm:text-right space-y-1.5 w-full">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start rtl:sm:justify-start gap-2">
                     <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
-                      {user.role.replace('_', ' ')}
+                      {user.role.replace("_", " ")}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {dept?.name || (isAr ? 'كلية الهندسة' : 'Faculty of Engineering')}
+                      {dept?.name || (isAr ? "كلية الهندسة" : "Faculty of Engineering")}
                     </span>
                   </div>
 
                   {/* Name Edit Input */}
                   <div className="space-y-1 pt-1">
                     <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                      {isAr ? 'الاسم المعروض (قابل للتعديل)' : 'Display Name (Editable)'}
+                      {isAr ? "الاسم المعروض (قابل للتعديل)" : "Display Name (Editable)"}
                     </label>
                     <div className="relative">
                       <input
                         type="text"
                         value={nameInput}
                         onChange={(e) => setNameInput(e.target.value)}
-                        placeholder={isAr ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+                        placeholder={isAr ? "أدخل اسمك الكامل" : "Enter your full name"}
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-xs"
                       />
                       <Edit3 className="w-3.5 h-3.5 text-slate-400 absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -446,20 +479,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 {showAvatarPicker && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden pt-2 border-t border-slate-200 dark:border-slate-800 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                         <ImageIcon className="w-4 h-4 text-amber-500" />
-                        <span>{isAr ? 'تحديد الصورة الشخصية' : 'Select Profile Picture'}</span>
+                        <span>{isAr ? "تحديد الصورة الشخصية" : "Select Profile Picture"}</span>
                       </h4>
                       <button
                         onClick={() => setShowAvatarPicker(false)}
                         className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                       >
-                        {isAr ? 'إغلاق' : 'Close'}
+                        {isAr ? "إغلاق" : "Close"}
                       </button>
                     </div>
 
@@ -478,14 +511,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         className="w-full flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border-2 border-dashed border-amber-500/50 hover:border-amber-500 bg-amber-500/10 hover:bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs transition-all active:scale-98 shadow-sm"
                       >
                         <Upload className="w-5 h-5" />
-                        <span>{isAr ? 'رفع واختيار صورة مباشرة من جهازك (تصفح الملفات)' : 'Upload image directly from your device'}</span>
+                        <span>
+                          {isAr
+                            ? "رفع واختيار صورة مباشرة من جهازك (تصفح الملفات)"
+                            : "Upload image directly from your device"}
+                        </span>
                       </button>
                     </div>
 
                     {/* Preset Avatars Gallery */}
                     <div className="space-y-1.5">
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                        {isAr ? 'أو اختر من النماذج الجاهزة:' : 'Or choose a preset avatar:'}
+                        {isAr ? "أو اختر من النماذج الجاهزة:" : "Or choose a preset avatar:"}
                       </span>
                       <div className="flex items-center gap-2 overflow-x-auto pb-1">
                         {PRESET_AVATARS.map((url, idx) => (
@@ -498,11 +535,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             }}
                             className={`relative shrink-0 w-11 h-11 rounded-xl overflow-hidden ring-2 transition-all ${
                               avatarInput === url
-                                ? 'ring-amber-500 scale-105 shadow-sm'
-                                : 'ring-transparent hover:ring-slate-300 dark:hover:ring-slate-700 opacity-80 hover:opacity-100'
+                                ? "ring-amber-500 scale-105 shadow-sm"
+                                : "ring-transparent hover:ring-slate-300 dark:hover:ring-slate-700 opacity-80 hover:opacity-100"
                             }`}
                           >
-                            <img src={url} alt={`Preset ${idx + 1}`} className="w-full h-full object-cover" />
+                            <img
+                              src={url}
+                              alt={`Preset ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
                             {avatarInput === url && (
                               <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
                                 <Check className="w-4 h-4 text-amber-500 drop-shadow" />
@@ -520,9 +561,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                    {isAr ? 'النبذة الأكاديمية والاهتمامات (قابلة للتعديل)' : 'Academic Bio & Interests (Editable)'}
+                    {isAr
+                      ? "النبذة الأكاديمية والاهتمامات (قابلة للتعديل)"
+                      : "Academic Bio & Interests (Editable)"}
                   </label>
-                  <span className="text-[10px] text-slate-400 font-mono">{bioInput.length}/500</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {bioInput.length}/500
+                  </span>
                 </div>
                 <textarea
                   rows={3}
@@ -531,8 +576,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   onChange={(e) => setBioInput(e.target.value)}
                   placeholder={
                     isAr
-                      ? 'اكتب نبذة عن اهتماماتك الهندسية، مشاريعك، أو مجالات تميزك الأكاديمي...'
-                      : 'Share your engineering passions, project focuses, and academic goals...'
+                      ? "اكتب نبذة عن اهتماماتك الهندسية، مشاريعك، أو مجالات تميزك الأكاديمي..."
+                      : "Share your engineering passions, project focuses, and academic goals..."
                   }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all font-medium resize-none shadow-xs"
                 />
@@ -543,11 +588,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <span className="text-[11px] text-slate-500 dark:text-slate-400">
                   {hasProfileChanges
                     ? isAr
-                      ? 'لديك تعديلات غير محفوظة'
-                      : 'You have unsaved changes'
+                      ? "لديك تعديلات غير محفوظة"
+                      : "You have unsaved changes"
                     : isAr
-                    ? 'البيانات الشخصية محدثة'
-                    : 'Profile details up to date'}
+                      ? "البيانات الشخصية محدثة"
+                      : "Profile details up to date"}
                 </span>
                 <button
                   type="button"
@@ -559,11 +604,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <span>
                     {isSavingProfile
                       ? isAr
-                        ? 'جاري الحفظ...'
-                        : 'Saving...'
+                        ? "جاري الحفظ..."
+                        : "Saving..."
                       : isAr
-                      ? 'حفظ التعديلات'
-                      : 'Save Profile Changes'}
+                        ? "حفظ التعديلات"
+                        : "Save Profile Changes"}
                   </span>
                 </button>
               </div>
@@ -575,11 +620,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-slate-400" />
                   <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
-                    {isAr ? 'البيانات والسجل الأكاديمي الرسمي (للقراءة فقط)' : 'Official Academic Records (Locked / Read-Only)'}
+                    {isAr
+                      ? "البيانات والسجل الأكاديمي الرسمي (للقراءة فقط)"
+                      : "Official Academic Records (Locked / Read-Only)"}
                   </h4>
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">
-                  {isAr ? 'موثق' : 'Verified'}
+                  {isAr ? "موثق" : "Verified"}
                 </span>
               </div>
 
@@ -589,8 +636,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Hash className="w-4 h-4 text-slate-400 shrink-0" />
                     <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">{isAr ? 'الرقم الجامعي' : 'Student ID'}</span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{user.studentId}</span>
+                      <span className="block text-[10px] text-slate-400 font-bold">
+                        {isAr ? "الرقم الجامعي" : "Student ID"}
+                      </span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                        {user.studentId}
+                      </span>
                     </div>
                   </div>
                   <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -601,8 +652,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center gap-2 min-w-0">
                     <Mail className="w-4 h-4 text-slate-400 shrink-0" />
                     <div className="min-w-0">
-                      <span className="block text-[10px] text-slate-400 font-bold">{isAr ? 'البريد الجامعي' : 'University Email'}</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{user.email}</span>
+                      <span className="block text-[10px] text-slate-400 font-bold">
+                        {isAr ? "البريد الجامعي" : "University Email"}
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                        {user.email}
+                      </span>
                     </div>
                   </div>
                   <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -613,8 +668,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Building className="w-4 h-4 text-slate-400 shrink-0" />
                     <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">{isAr ? 'القسم العلمي' : 'Department'}</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{dept?.name || 'كلية الهندسة'}</span>
+                      <span className="block text-[10px] text-slate-400 font-bold">
+                        {isAr ? "القسم العلمي" : "Department"}
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {dept?.name || "كلية الهندسة"}
+                      </span>
                     </div>
                   </div>
                   <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -625,8 +684,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-slate-400 shrink-0" />
                     <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">{isAr ? 'الفرقة الدراسية' : 'Academic Level'}</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{user.level}</span>
+                      <span className="block text-[10px] text-slate-400 font-bold">
+                        {isAr ? "الفرقة الدراسية" : "Academic Level"}
+                      </span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {user.level}
+                      </span>
                     </div>
                   </div>
                   <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -635,8 +698,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed italic">
                 {isAr
-                  ? '🔒 تنبيه: البيانات الأكاديمية الرسمية (القسم، الفرقة، الرقم الجامعي) موثقة ولا يمكن تعديلها إلا بمراجعة شؤون الطلاب.'
-                  : '🔒 Note: Official academic registration details are institutionally verified and managed via student affairs.'}
+                  ? "🔒 تنبيه: البيانات الأكاديمية الرسمية (القسم، الفرقة، الرقم الجامعي) موثقة ولا يمكن تعديلها إلا بمراجعة شؤون الطلاب."
+                  : "🔒 Note: Official academic registration details are institutionally verified and managed via student affairs."}
               </p>
             </div>
 
@@ -644,11 +707,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                  {isAr ? 'الأوسمة والشهادات التقديرية' : 'Earned Recognition Badges'} ({(user.badges || []).length})
+                  {isAr ? "الأوسمة والشهادات التقديرية" : "Earned Recognition Badges"} (
+                  {(user.badges || []).length})
                 </span>
                 <div className="flex items-center gap-1 text-xs font-bold text-amber-500">
                   <Award className="w-4 h-4" />
-                  <span>{user.points} {isAr ? 'نقطة' : 'total pts'}</span>
+                  <span>
+                    {user.points} {isAr ? "نقطة" : "total pts"}
+                  </span>
                 </div>
               </div>
 
@@ -672,7 +738,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             {/* Ledger History */}
             <div className="space-y-2">
               <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                {isAr ? 'سجل النقاط والمساهمات' : 'Contribution Points History'}
+                {isAr ? "سجل النقاط والمساهمات" : "Contribution Points History"}
               </span>
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {ledger.map((entry) => (
@@ -681,8 +747,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     className="p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex items-center justify-between text-xs"
                   >
                     <div>
-                      <p className="font-semibold text-slate-800 dark:text-slate-200">{entry.description}</p>
-                      <p className="text-[10px] text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">
+                        {entry.description}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {new Date(entry.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                     <span className="font-extrabold text-emerald-500">+{entry.points} pts</span>
                   </div>
@@ -693,14 +763,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         )}
 
         {/* TAB 2: SECURITY & ACTIVE SESSIONS (UNTOUCHED & PRESERVED EXACTLY AS IS) */}
-        {activeTab === 'security' && (
+        {activeTab === "security" && (
           <div className="space-y-6 animate-fade-in text-xs">
             {secMessage && (
               <div
                 className={`p-3 rounded-xl border font-bold flex items-center gap-2 ${
-                  secMessage.type === 'success'
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                    : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                  secMessage.type === "success"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
                 }`}
               >
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -709,14 +779,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             )}
 
             {/* Password Change Form */}
-            <form onSubmit={handleChangePassword} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
+            <form
+              onSubmit={handleChangePassword}
+              className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3"
+            >
               <h4 className="font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Key className="w-4 h-4 text-amber-500" />
-                <span>{isAr ? 'تغيير كلمة المرور' : 'Change Password'}</span>
+                <span>{isAr ? "تغيير كلمة المرور" : "Change Password"}</span>
               </h4>
 
               <div>
-                <label className="block text-slate-500 mb-1">{isAr ? 'كلمة المرور الحالية' : 'Current Password'}</label>
+                <label className="block text-slate-500 mb-1">
+                  {isAr ? "كلمة المرور الحالية" : "Current Password"}
+                </label>
                 <input
                   type="password"
                   required
@@ -728,7 +803,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-500 mb-1">{isAr ? 'كلمة المرور الجديدة' : 'New Password'}</label>
+                  <label className="block text-slate-500 mb-1">
+                    {isAr ? "كلمة المرور الجديدة" : "New Password"}
+                  </label>
                   <input
                     type="password"
                     required
@@ -739,7 +816,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1">{isAr ? 'تأكيد كلمة المرور الجديدة' : 'Confirm New Password'}</label>
+                  <label className="block text-slate-500 mb-1">
+                    {isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password"}
+                  </label>
                   <input
                     type="password"
                     required
@@ -758,7 +837,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
                 />
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {isAr ? 'تسجيل الخروج من جميع الأجهزة والجلسات الأخرى فور التغيير' : 'Sign out of all other devices and sessions upon update'}
+                  {isAr
+                    ? "تسجيل الخروج من جميع الأجهزة والجلسات الأخرى فور التغيير"
+                    : "Sign out of all other devices and sessions upon update"}
                 </span>
               </label>
 
@@ -768,7 +849,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   disabled={secLoading}
                   className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 font-bold shadow-md transition-all disabled:opacity-50"
                 >
-                  {secLoading ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'تحديث كلمة المرور' : 'Update Password')}
+                  {secLoading
+                    ? isAr
+                      ? "جاري الحفظ..."
+                      : "Saving..."
+                    : isAr
+                      ? "تحديث كلمة المرور"
+                      : "Update Password"}
                 </button>
               </div>
             </form>
@@ -778,20 +865,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="flex items-center justify-between">
                 <h4 className="font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <Laptop className="w-4 h-4 text-amber-500" />
-                  <span>{isAr ? 'الأجهزة والجلسات النشطة' : 'Active Sessions & Devices'}</span>
+                  <span>{isAr ? "الأجهزة والجلسات النشطة" : "Active Sessions & Devices"}</span>
                 </h4>
                 <button
                   onClick={fetchSessions}
                   className="text-xs text-amber-500 hover:underline font-bold"
                 >
-                  {isAr ? 'تحديث' : 'Refresh'}
+                  {isAr ? "تحديث" : "Refresh"}
                 </button>
               </div>
 
               {loadingSessions ? (
-                <p className="text-slate-400 text-center py-4">{isAr ? 'جاري فحص الجلسات...' : 'Loading sessions...'}</p>
+                <p className="text-slate-400 text-center py-4">
+                  {isAr ? "جاري فحص الجلسات..." : "Loading sessions..."}
+                </p>
               ) : sessions.length === 0 ? (
-                <p className="text-slate-400 text-center py-4">{isAr ? 'جلسة واحدة نشطة حالياً.' : '1 active current session.'}</p>
+                <p className="text-slate-400 text-center py-4">
+                  {isAr ? "جلسة واحدة نشطة حالياً." : "1 active current session."}
+                </p>
               ) : (
                 <div className="space-y-2">
                   {sessions.map((s) => (
@@ -802,19 +893,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900 dark:text-slate-100">
-                            {s.userAgent?.includes('Mobile') ? '📱 Smartphone' : '💻 Browser Client'}
+                            {s.userAgent?.includes("Mobile")
+                              ? "📱 Smartphone"
+                              : "💻 Browser Client"}
                           </span>
-                          <span className="font-mono text-[10px] text-slate-400">{s.ipAddress}</span>
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {s.ipAddress}
+                          </span>
                         </div>
                         <p className="text-[10px] text-slate-400">
-                          {isAr ? 'نشط منذ:' : 'Last active:'} {new Date(s.lastActiveAt).toLocaleString()}
+                          {isAr ? "نشط منذ:" : "Last active:"}{" "}
+                          {new Date(s.lastActiveAt).toLocaleString()}
                         </p>
                       </div>
 
                       <button
                         onClick={() => handleRevokeSession(s.id)}
                         className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
-                        title={isAr ? 'إنهاء هذه الجلسة' : 'Revoke session'}
+                        title={isAr ? "إنهاء هذه الجلسة" : "Revoke session"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -829,4 +925,3 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     </div>
   );
 };
-

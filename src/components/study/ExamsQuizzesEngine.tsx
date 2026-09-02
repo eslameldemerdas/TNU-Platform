@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   HelpCircle,
   Clock,
@@ -11,37 +10,31 @@ import {
   ChevronRight,
   ChevronLeft,
   BookOpen,
-  Filter,
   Search,
   Flag,
-  Share2,
   AlertCircle,
   FileText,
-  Zap,
   GraduationCap,
   ListOrdered,
   Layers,
-  ArrowRight,
-  TrendingUp,
   Bookmark,
   BookmarkCheck,
   Flame,
-  Check,
   AlertTriangle,
   FileQuestion,
-  RefreshCw,
-  MessageSquare
-} from 'lucide-react';
-import { ExamQuiz, QuizQuestion, QuizSubmission, Course, UserProfile } from '../../types';
-import { MOCK_EXAMS_QUIZZES } from '../../data/mockData';
-import { ScrollableTabs, ScrollableTabItem } from '../common/ScrollableTabs';
+  TrendingUp,
+} from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { MOCK_EXAMS_QUIZZES } from "../../data/mockData";
+import { ExamQuiz, QuizQuestion, QuizSubmission, Course, UserProfile } from "../../types";
+import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
 
 interface ExamsQuizzesEngineProps {
   courses: Course[];
   initialQuizzes?: ExamQuiz[];
   currentUser: UserProfile;
   onUpdatePoints?: (points: number) => void;
-  onOpenCourse?: (courseId: string) => void;
+  onOpenCourse?: (_courseId: string) => void;
   onStartPomodoroStudy?: (courseCode: string, taskName: string) => void;
 }
 
@@ -50,21 +43,23 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
   initialQuizzes = MOCK_EXAMS_QUIZZES,
   currentUser,
   onUpdatePoints,
-  onOpenCourse,
-  onStartPomodoroStudy
+  _onOpenCourse,
+  onStartPomodoroStudy,
 }) => {
   const [quizzes, setQuizzes] = useState<ExamQuiz[]>(initialQuizzes);
   const [selectedQuiz, setSelectedQuiz] = useState<ExamQuiz | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'quizzes' | 'past_exams' | 'mistakes' | 'bookmarks' | 'history'>('all');
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-  const [selectedTermType, setSelectedTermType] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<
+    "all" | "quizzes" | "past_exams" | "mistakes" | "bookmarks" | "history"
+  >("all");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
+  const [selectedTermType, setSelectedTermType] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Bookmarks State (Saved Exam IDs and Saved Question IDs)
   const [bookmarkedExamIds, setBookmarkedExamIds] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem('enghub_bookmarked_exams');
+      const saved = localStorage.getItem("enghub_bookmarked_exams");
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch {
       return new Set();
@@ -73,7 +68,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
 
   const [bookmarkedQuestionIds, setBookmarkedQuestionIds] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem('enghub_bookmarked_questions');
+      const saved = localStorage.getItem("enghub_bookmarked_questions");
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch {
       return new Set();
@@ -91,24 +86,27 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
 
   // Submissions History & Mistakes Aggregator
   const [submissionsHistory, setSubmissionsHistory] = useState<QuizSubmission[]>([]);
-  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState<boolean>(true);
+  const [_isLoadingSubmissions, _setIsLoadingSubmissions] = useState<boolean>(true);
 
   // Fetch real submissions from the server on mount
   useEffect(() => {
     let cancelled = false;
-    setIsLoadingSubmissions(true);
-    fetch('/api/quiz/submissions', { credentials: 'include' })
-      .then((res) => res.ok ? res.json() : Promise.resolve({ submissions: [] }))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    _setIsLoadingSubmissions(true);
+    fetch("/api/quiz/submissions", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : Promise.resolve({ submissions: [] })))
       .then((data) => {
         if (cancelled) return;
         const subs: QuizSubmission[] = Array.isArray(data.submissions) ? data.submissions : [];
         setSubmissionsHistory(subs);
-        setIsLoadingSubmissions(false);
+        _setIsLoadingSubmissions(false);
       })
       .catch(() => {
-        if (!cancelled) setIsLoadingSubmissions(false);
+        if (!cancelled) _setIsLoadingSubmissions(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // AI Explanation State
@@ -123,39 +121,54 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
     isOpen: false,
     question: null,
     loading: false,
-    explanationText: null
+    explanationText: null,
   });
 
   // AI Practice Quiz Generator Form State
   const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
-  const [aiCourseCode, setAiCourseCode] = useState<string>(courses[0]?.code || 'AIE 103');
-  const [aiTopic, setAiTopic] = useState<string>('');
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [aiCourseCode, setAiCourseCode] = useState<string>(courses[0]?.code || "AIE 103");
+  const [aiTopic, setAiTopic] = useState<string>("");
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [aiQuestionCount, setAiQuestionCount] = useState<number>(4);
   const [isGeneratingAiQuiz, setIsGeneratingAiQuiz] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Save bookmarks to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('enghub_bookmarked_exams', JSON.stringify(Array.from(bookmarkedExamIds)));
-    } catch {}
+      localStorage.setItem(
+        "enghub_bookmarked_exams",
+        JSON.stringify(Array.from(bookmarkedExamIds)),
+      );
+    } catch {
+      // ignore localStorage errors
+    }
   }, [bookmarkedExamIds]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('enghub_bookmarked_questions', JSON.stringify(Array.from(bookmarkedQuestionIds)));
-    } catch {}
+      localStorage.setItem(
+        "enghub_bookmarked_questions",
+        JSON.stringify(Array.from(bookmarkedQuestionIds)),
+      );
+    } catch {
+      // ignore localStorage errors
+    }
   }, [bookmarkedQuestionIds]);
 
   // Aggregate mistake questions across past submissions
   const mistakeQuestionsList = useMemo(() => {
-    const wrongMap = new Map<string, { question: QuizQuestion; courseCode: string; quizTitle: string; selectedIndex: number }>();
+    const wrongMap = new Map<
+      string,
+      { question: QuizQuestion; courseCode: string; quizTitle: string; selectedIndex: number }
+    >();
 
     submissionsHistory.forEach((sub) => {
-      const matchedQuiz = quizzes.find((q) => q.id === sub.quizId || q.courseCode === sub.courseCode);
+      const matchedQuiz = quizzes.find(
+        (q) => q.id === sub.quizId || q.courseCode === sub.courseCode,
+      );
       if (!matchedQuiz) return;
 
       sub.answers.forEach((ans) => {
@@ -166,7 +179,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
               question: qObj,
               courseCode: sub.courseCode,
               quizTitle: sub.quizTitle,
-              selectedIndex: ans.selectedIndex
+              selectedIndex: ans.selectedIndex,
             });
           }
         }
@@ -185,7 +198,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
           list.push({
             question: q,
             courseCode: quiz.courseCode,
-            quizTitle: quiz.title
+            quizTitle: quiz.title,
           });
         }
       });
@@ -196,13 +209,18 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
   // Filter quizzes based on active tab and filters
   const filteredQuizzes = useMemo(() => {
     return quizzes.filter((quiz) => {
-      if (activeTab === 'quizzes' && quiz.isPastExam) return false;
-      if (activeTab === 'past_exams' && !quiz.isPastExam) return false;
-      if (activeTab === 'bookmarks' && !bookmarkedExamIds.has(quiz.id)) return false;
+      if (activeTab === "quizzes" && quiz.isPastExam) return false;
+      if (activeTab === "past_exams" && !quiz.isPastExam) return false;
+      if (activeTab === "bookmarks" && !bookmarkedExamIds.has(quiz.id)) return false;
 
-      if (selectedCourseFilter !== 'all' && quiz.courseId !== selectedCourseFilter && quiz.courseCode !== selectedCourseFilter) return false;
-      if (selectedDifficulty !== 'all' && quiz.difficulty !== selectedDifficulty) return false;
-      if (selectedTermType !== 'all' && quiz.term !== selectedTermType) return false;
+      if (
+        selectedCourseFilter !== "all" &&
+        quiz.courseId !== selectedCourseFilter &&
+        quiz.courseCode !== selectedCourseFilter
+      )
+        return false;
+      if (selectedDifficulty !== "all" && quiz.difficulty !== selectedDifficulty) return false;
+      if (selectedTermType !== "all" && quiz.term !== selectedTermType) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -213,7 +231,15 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
       }
       return true;
     });
-  }, [quizzes, activeTab, selectedCourseFilter, selectedDifficulty, selectedTermType, searchQuery, bookmarkedExamIds]);
+  }, [
+    quizzes,
+    activeTab,
+    selectedCourseFilter,
+    selectedDifficulty,
+    selectedTermType,
+    searchQuery,
+    bookmarkedExamIds,
+  ]);
 
   // Toggle Bookmark Exam
   const handleToggleBookmarkExam = (examId: string, e?: React.MouseEvent) => {
@@ -258,18 +284,18 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
 
     const customMistakesQuiz: ExamQuiz = {
       id: `mistakes-quiz-${Date.now()}`,
-      title: `اختبار إعادة حل الأخطاء — ${courseCodeFilter || 'مراجعة عامة'}`,
-      courseId: 'mistakes-rev',
-      courseCode: courseCodeFilter || targetMistakes[0]?.courseCode || 'ENG',
+      title: `اختبار إعادة حل الأخطاء — ${courseCodeFilter || "مراجعة عامة"}`,
+      courseId: "mistakes-rev",
+      courseCode: courseCodeFilter || targetMistakes[0]?.courseCode || "ENG",
       departmentId: currentUser.departmentId,
-      topic: 'إعادة حل وتثبيت المسائل غير الصحيحة',
-      difficulty: 'medium',
+      topic: "إعادة حل وتثبيت المسائل غير الصحيحة",
+      difficulty: "medium",
       durationMinutes: Math.max(5, targetMistakes.length * 3),
       questions: targetMistakes.map((m) => m.question),
-      createdAt: new Date().toISOString().split('T')[0],
-      term: 'Quiz',
+      createdAt: new Date().toISOString().split("T")[0],
+      term: "Quiz",
       totalAttempts: 1,
-      averageScore: 90
+      averageScore: 90,
     };
 
     handleStartQuiz(customMistakesQuiz);
@@ -286,6 +312,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
       setTimeLeftSeconds((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
+          // eslint-disable-next-line react-hooks/immutability
           handleAutoSubmit();
           return 0;
         }
@@ -296,6 +323,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedQuiz, isQuizSubmitted]);
 
   // Answer selection
@@ -303,7 +331,7 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
     if (isQuizSubmitted) return;
     setUserAnswers((prev) => ({
       ...prev,
-      [questionId]: optionIndex
+      [questionId]: optionIndex,
     }));
   };
 
@@ -317,10 +345,10 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
   };
 
   // Auto-submit or manual submit
-  const handleAutoSubmit = () => {
+  function handleAutoSubmit() {
     if (!selectedQuiz || isQuizSubmitted) return;
     submitQuizInternal();
-  };
+  }
 
   const handleSubmitQuiz = () => {
     if (!selectedQuiz) return;
@@ -344,20 +372,20 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
     const formattedAnswers = questions.map((q) => ({
       questionId: q.id,
       selectedIndex: userAnswers[q.id] !== undefined ? userAnswers[q.id] : -1,
-      correctIndex: q.correctIndex
+      correctIndex: q.correctIndex,
     }));
 
     try {
-      const res = await fetch('/api/quiz/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quizId: selectedQuiz.id,
           quizTitle: selectedQuiz.title,
           courseCode: selectedQuiz.courseCode,
           answers: formattedAnswers,
-          totalQuestions: questions.length
-        })
+          totalQuestions: questions.length,
+        }),
       });
 
       if (res.ok) {
@@ -387,9 +415,12 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
           percentage: pct,
           passed: pct >= 60,
           pointsEarned: pct >= 60 ? 15 : 5,
-          answers: formattedAnswers.map((a) => ({ ...a, isCorrect: a.selectedIndex === a.correctIndex })),
+          answers: formattedAnswers.map((a) => ({
+            ...a,
+            isCorrect: a.selectedIndex === a.correctIndex,
+          })),
           timeTakenSeconds: selectedQuiz.durationMinutes * 60 - timeLeftSeconds,
-          submittedAt: new Date().toISOString()
+          submittedAt: new Date().toISOString(),
         };
         setSubmissionResult(sub);
         setIsQuizSubmitted(true);
@@ -415,9 +446,12 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
         percentage: pct,
         passed: pct >= 60,
         pointsEarned: pct >= 60 ? 15 : 5,
-        answers: formattedAnswers.map((a) => ({ ...a, isCorrect: a.selectedIndex === a.correctIndex })),
+        answers: formattedAnswers.map((a) => ({
+          ...a,
+          isCorrect: a.selectedIndex === a.correctIndex,
+        })),
         timeTakenSeconds: selectedQuiz.durationMinutes * 60 - timeLeftSeconds,
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
       };
       setSubmissionResult(sub);
       setIsQuizSubmitted(true);
@@ -427,24 +461,31 @@ export const ExamsQuizzesEngine: React.FC<ExamsQuizzesEngineProps> = ({
   };
 
   // AI Tutor Explain Question Handler
-  const handleRequestAiExplanation = async (q: QuizQuestion, userSelectedIdx?: number, courseCode?: string) => {
-    const userSelectedText = userSelectedIdx !== undefined && userSelectedIdx >= 0 ? q.options[userSelectedIdx] : 'لم يُجب';
+  const handleRequestAiExplanation = async (
+    q: QuizQuestion,
+    userSelectedIdx?: number,
+    courseCode?: string,
+  ) => {
+    const userSelectedText =
+      userSelectedIdx !== undefined && userSelectedIdx >= 0
+        ? q.options[userSelectedIdx]
+        : "لم يُجب";
     const correctText = q.options[q.correctIndex];
 
     setAiExplanationModal({
       isOpen: true,
       question: q,
       userAnswerText: userSelectedText,
-      courseCode: courseCode || selectedQuiz?.courseCode || 'ENG',
+      courseCode: courseCode || selectedQuiz?.courseCode || "ENG",
       loading: true,
-      explanationText: null
+      explanationText: null,
     });
 
     try {
-      const prompt = `أنا طالب هندسة في مقرر ${courseCode || 'الهندسة'}.
+      const prompt = `أنا طالب هندسة في مقرر ${courseCode || "الهندسة"}.
 السؤال: ${q.question}
 الخيارات:
-${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}
+${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")}
 
 الإجابة الصحيحة: ${correctText}
 إجابتي التي اخترتها: ${userSelectedText}
@@ -454,14 +495,14 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
 2. أين يقع الخطأ في الإجابات الأخرى؟
 3. نصيحة عملية لتذكر هذا المفهوم في الامتحان.`;
 
-      const res = await fetch('/api/ai/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
           courseCode: courseCode || selectedQuiz?.courseCode,
-          courseTitle: selectedQuiz?.title
-        })
+          courseTitle: selectedQuiz?.title,
+        }),
       });
 
       if (res.ok) {
@@ -469,20 +510,23 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
         setAiExplanationModal((prev) => ({
           ...prev,
           loading: false,
-          explanationText: data.reply || data.answer || q.explanation
+          explanationText: data.reply || data.answer || q.explanation,
         }));
       } else {
         setAiExplanationModal((prev) => ({
           ...prev,
           loading: false,
-          explanationText: q.explanation || 'تعذر الاتصال بالمساعد الذكي حالياً، يرجى مراجعة الشرح النموذجي المرفق.'
+          explanationText:
+            q.explanation ||
+            "تعذر الاتصال بالمساعد الذكي حالياً، يرجى مراجعة الشرح النموذجي المرفق.",
         }));
       }
     } catch {
       setAiExplanationModal((prev) => ({
         ...prev,
         loading: false,
-        explanationText: q.explanation || 'تعذر الاتصال بالمساعد الذكي حالياً، يرجى مراجعة الشرح النموذجي المرفق.'
+        explanationText:
+          q.explanation || "تعذر الاتصال بالمساعد الذكي حالياً، يرجى مراجعة الشرح النموذجي المرفق.",
       }));
     }
   };
@@ -496,50 +540,50 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
     const matchedCourse = courses.find((c) => c.code === aiCourseCode) || courses[0];
 
     try {
-      const res = await fetch('/api/ai/generate-quiz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/ai/generate-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           courseCode: aiCourseCode,
-          courseTitle: matchedCourse?.title || 'الهندسة',
-          topic: aiTopic || 'مفاهيم المنهج الأساسية',
+          courseTitle: matchedCourse?.title || "الهندسة",
+          topic: aiTopic || "مفاهيم المنهج الأساسية",
           difficulty: aiDifficulty,
-          questionCount: aiQuestionCount
-        })
+          questionCount: aiQuestionCount,
+        }),
       });
 
       if (!res.ok) {
-        throw new Error('فشل توليد الاختبار من خادم الذكاء الاصطناعي');
+        throw new Error("فشل توليد الاختبار من خادم الذكاء الاصطناعي");
       }
 
       const data = await res.json();
       const questions: QuizQuestion[] = data.questions || data.quiz || [];
 
       if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error('لم يتم استلام أسئلة صالحة');
+        throw new Error("لم يتم استلام أسئلة صالحة");
       }
 
       const newQuiz: ExamQuiz = {
         id: `quiz-ai-${Date.now()}`,
         title: `اختبار ذكي: ${aiTopic || matchedCourse?.title || aiCourseCode}`,
-        courseId: matchedCourse?.id || 'course-general',
+        courseId: matchedCourse?.id || "course-general",
         courseCode: aiCourseCode,
         departmentId: matchedCourse?.departmentId || currentUser.departmentId,
-        topic: aiTopic || 'مراجعة وتدريب ذكي شامل',
+        topic: aiTopic || "مراجعة وتدريب ذكي شامل",
         difficulty: aiDifficulty,
         durationMinutes: Math.max(5, questions.length * 3),
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString().split("T")[0],
         totalAttempts: 1,
         averageScore: 85,
-        term: 'Quiz',
-        questions
+        term: "Quiz",
+        questions,
       };
 
       setQuizzes((prev) => [newQuiz, ...prev]);
       setIsAiModalOpen(false);
       handleStartQuiz(newQuiz);
     } catch (err: any) {
-      setAiError(err.message || 'حدث خطأ أثناء الاتصال بالمساعد الذكي');
+      setAiError(err.message || "حدث خطأ أثناء الاتصال بالمساعد الذكي");
     } finally {
       setIsGeneratingAiQuiz(false);
     }
@@ -548,48 +592,48 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Build tabs items for ScrollableTabs
   const navTabs: ScrollableTabItem[] = [
     {
-      id: 'all',
-      label: 'جميع الاختبارات',
+      id: "all",
+      label: "جميع الاختبارات",
       icon: <Layers className="w-4 h-4" />,
-      badge: quizzes.length
+      badge: quizzes.length,
     },
     {
-      id: 'quizzes',
-      label: 'كويزات تدريبية',
+      id: "quizzes",
+      label: "كويزات تدريبية",
       icon: <FileQuestion className="w-4 h-4" />,
-      badge: quizzes.filter((q) => !q.isPastExam).length
+      badge: quizzes.filter((q) => !q.isPastExam).length,
     },
     {
-      id: 'past_exams',
-      label: 'امتحانات سابقة محلولة',
+      id: "past_exams",
+      label: "امتحانات سابقة محلولة",
       icon: <FileText className="w-4 h-4" />,
-      badge: quizzes.filter((q) => q.isPastExam).length
+      badge: quizzes.filter((q) => q.isPastExam).length,
     },
     {
-      id: 'mistakes',
-      label: 'مراجعة أخطائي',
+      id: "mistakes",
+      label: "مراجعة أخطائي",
       icon: <AlertTriangle className="w-4 h-4 text-rose-400" />,
       badge: mistakeQuestionsList.length,
-      badgeColor: mistakeQuestionsList.length > 0 ? 'bg-rose-500 text-white' : undefined
+      badgeColor: mistakeQuestionsList.length > 0 ? "bg-rose-500 text-white" : undefined,
     },
     {
-      id: 'bookmarks',
-      label: 'المحفوظات',
+      id: "bookmarks",
+      label: "المحفوظات",
       icon: <Bookmark className="w-4 h-4 text-amber-400" />,
-      badge: bookmarkedExamIds.size + bookmarkedQuestionIds.size
+      badge: bookmarkedExamIds.size + bookmarkedQuestionIds.size,
     },
     {
-      id: 'history',
-      label: 'سجل محاولاتي',
+      id: "history",
+      label: "سجل محاولاتي",
       icon: <TrendingUp className="w-4 h-4" />,
-      badge: submissionsHistory.length
-    }
+      badge: submissionsHistory.length,
+    },
   ];
 
   // ----------------------------------------------------
@@ -598,7 +642,9 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
   if (selectedQuiz) {
     const currentQ = selectedQuiz.questions[currentQuestionIndex];
     const answeredCount = Object.keys(userAnswers).length;
-    const progressPercent = Math.round(((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100);
+    const progressPercent = Math.round(
+      ((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100,
+    );
     const isWarningTime = timeLeftSeconds > 0 && timeLeftSeconds <= 120;
 
     return (
@@ -611,7 +657,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                 {selectedQuiz.courseCode}
               </span>
               <span className="text-xs text-slate-400">
-                {selectedQuiz.term || 'اختبار تقييمي'} • {selectedQuiz.questions.length} أسئلة
+                {selectedQuiz.term || "اختبار تقييمي"} • {selectedQuiz.questions.length} أسئلة
               </span>
               {selectedQuiz.isPastExam && (
                 <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300">
@@ -622,9 +668,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
             <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
               {selectedQuiz.title}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300">
-              الموضوع: {selectedQuiz.topic}
-            </p>
+            <p className="text-xs sm:text-sm text-slate-300">الموضوع: {selectedQuiz.topic}</p>
           </div>
 
           {/* Timer & Actions */}
@@ -633,8 +677,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
               <div
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-base font-bold transition-colors ${
                   isWarningTime
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse'
-                    : 'bg-slate-800 text-emerald-400 border border-slate-700'
+                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse"
+                    : "bg-slate-800 text-emerald-400 border border-slate-700"
                 }`}
                 role="timer"
                 aria-live="polite"
@@ -650,14 +694,21 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                 className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5"
               >
                 <ListOrdered className="w-4 h-4 text-emerald-400" />
-                <span>مراجعة ({answeredCount}/{selectedQuiz.questions.length})</span>
+                <span>
+                  مراجعة ({answeredCount}/{selectedQuiz.questions.length})
+                </span>
               </button>
             )}
 
             <button
               onClick={() => {
                 if (!isQuizSubmitted && Object.keys(userAnswers).length > 0) {
-                  if (!window.confirm('هل تريد مغادرة الاختبار الحالي؟ سيتم فقدان إجاباتك غير المحفوظة.')) return;
+                  if (
+                    !window.confirm(
+                      "هل تريد مغادرة الاختبار الحالي؟ سيتم فقدان إجاباتك غير المحفوظة.",
+                    )
+                  )
+                    return;
                 }
                 setSelectedQuiz(null);
                 setIsQuizSubmitted(false);
@@ -677,8 +728,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
             <div
               className={`p-6 sm:p-8 rounded-3xl border ${
                 submissionResult.passed
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-100'
-                  : 'bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100'
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-100"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100"
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -686,18 +737,25 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                   <div
                     className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
                       submissionResult.passed
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                        : 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                        : "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
                     }`}
                   >
-                    {submissionResult.passed ? <Award className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
+                    {submissionResult.passed ? (
+                      <Award className="w-8 h-8" />
+                    ) : (
+                      <AlertCircle className="w-8 h-8" />
+                    )}
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                      {submissionResult.passed ? 'أحسنت! لقد اجتزت الاختبار بنجاح' : 'محاولة جيدة! راجع الأخطاء لتحسين مستواك'}
+                      {submissionResult.passed
+                        ? "أحسنت! لقد اجتزت الاختبار بنجاح"
+                        : "محاولة جيدة! راجع الأخطاء لتحسين مستواك"}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-300">
-                      حصلت على {submissionResult.score} من إجمالي {submissionResult.totalQuestions} إجابات صحيحة
+                      حصلت على {submissionResult.score} من إجمالي {submissionResult.totalQuestions}{" "}
+                      إجابات صحيحة
                     </p>
                   </div>
                 </div>
@@ -707,7 +765,9 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                     <div className="text-3xl font-extrabold text-slate-900 dark:text-white">
                       {submissionResult.percentage}%
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">النسبة المئوية</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      النسبة المئوية
+                    </div>
                   </div>
                   {submissionResult.pointsEarned && (
                     <div className="text-center px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
@@ -746,7 +806,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                     onClick={() =>
                       onStartPomodoroStudy(
                         selectedQuiz.courseCode,
-                        `مراجعة أخطاء ومفاهيم ${selectedQuiz.courseCode}`
+                        `مراجعة أخطاء ومفاهيم ${selectedQuiz.courseCode}`,
                       )
                     }
                     className="px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md transition-all flex items-center gap-2"
@@ -776,8 +836,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                       key={q.id}
                       className={`p-5 sm:p-6 rounded-3xl border transition-all ${
                         isCorrect
-                          ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40'
-                          : 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40'
+                          ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40"
+                          : "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4 mb-4">
@@ -788,13 +848,17 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                           <span
                             className={`text-xs font-semibold px-2.5 py-1 rounded-md ${
                               isCorrect
-                                ? 'bg-emerald-500 text-white'
+                                ? "bg-emerald-500 text-white"
                                 : isUnanswered
-                                ? 'bg-amber-500 text-white'
-                                : 'bg-rose-500 text-white'
+                                  ? "bg-amber-500 text-white"
+                                  : "bg-rose-500 text-white"
                             }`}
                           >
-                            {isCorrect ? 'إجابة صحيحة' : isUnanswered ? 'لم يتم الإجابة' : 'إجابة خاطئة'}
+                            {isCorrect
+                              ? "إجابة صحيحة"
+                              : isUnanswered
+                                ? "لم يتم الإجابة"
+                                : "إجابة خاطئة"}
                           </span>
                         </div>
 
@@ -803,16 +867,20 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                             onClick={() => handleToggleBookmarkQuestion(q.id)}
                             className={`p-1.5 rounded-lg transition-colors ${
                               bookmarkedQuestionIds.has(q.id)
-                                ? 'text-amber-500 bg-amber-500/10'
-                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                                ? "text-amber-500 bg-amber-500/10"
+                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             }`}
-                            title={bookmarkedQuestionIds.has(q.id) ? 'إلغاء حفظ السؤال' : 'حفظ السؤال'}
+                            title={
+                              bookmarkedQuestionIds.has(q.id) ? "إلغاء حفظ السؤال" : "حفظ السؤال"
+                            }
                           >
                             <Bookmark className="w-4 h-4 fill-current" />
                           </button>
 
                           <button
-                            onClick={() => handleRequestAiExplanation(q, userAnsIdx, selectedQuiz.courseCode)}
+                            onClick={() =>
+                              handleRequestAiExplanation(q, userAnsIdx, selectedQuiz.courseCode)
+                            }
                             className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 transition-colors border border-purple-500/20"
                           >
                             <Bot className="w-3.5 h-3.5" />
@@ -830,11 +898,14 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                           const isThisCorrect = optIdx === q.correctIndex;
                           const isThisUserSelected = optIdx === userAnsIdx;
 
-                          let optionClass = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';
+                          let optionClass =
+                            "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300";
                           if (isThisCorrect) {
-                            optionClass = 'bg-emerald-500/10 border-emerald-500 text-emerald-900 dark:text-emerald-200 font-semibold ring-1 ring-emerald-500/30';
+                            optionClass =
+                              "bg-emerald-500/10 border-emerald-500 text-emerald-900 dark:text-emerald-200 font-semibold ring-1 ring-emerald-500/30";
                           } else if (isThisUserSelected && !isThisCorrect) {
-                            optionClass = 'bg-rose-500/10 border-rose-500 text-rose-900 dark:text-rose-200 font-semibold ring-1 ring-rose-500/30';
+                            optionClass =
+                              "bg-rose-500/10 border-rose-500 text-rose-900 dark:text-rose-200 font-semibold ring-1 ring-rose-500/30";
                           }
 
                           return (
@@ -848,8 +919,12 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                                 </span>
                                 <span>{opt}</span>
                               </div>
-                              {isThisCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
-                              {isThisUserSelected && !isThisCorrect && <XCircle className="w-4 h-4 text-rose-500 shrink-0" />}
+                              {isThisCorrect && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                              )}
+                              {isThisUserSelected && !isThisCorrect && (
+                                <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                              )}
                             </div>
                           );
                         })}
@@ -895,14 +970,14 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                       onClick={() => handleToggleBookmarkQuestion(currentQ.id)}
                       className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                         bookmarkedQuestionIds.has(currentQ.id)
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          ? "bg-amber-500 text-white shadow-sm"
+                          : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                       }`}
                       title="حفظ السؤال في المحفوظات"
                     >
                       <Bookmark className="w-3.5 h-3.5 fill-current" />
                       <span className="hidden sm:inline">
-                        {bookmarkedQuestionIds.has(currentQ.id) ? 'محفوظ' : 'حفظ'}
+                        {bookmarkedQuestionIds.has(currentQ.id) ? "محفوظ" : "حفظ"}
                       </span>
                     </button>
 
@@ -910,12 +985,12 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                       onClick={() => handleToggleFlag(currentQ.id)}
                       className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                         flaggedQuestions.has(currentQ.id)
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          ? "bg-amber-500 text-white shadow-sm"
+                          : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                       }`}
                     >
                       <Flag className="w-3.5 h-3.5" />
-                      <span>{flaggedQuestions.has(currentQ.id) ? 'مُميّز للمراجعة' : 'تمييز'}</span>
+                      <span>{flaggedQuestions.has(currentQ.id) ? "مُميّز للمراجعة" : "تمييز"}</span>
                     </button>
                   </div>
                 </div>
@@ -938,16 +1013,16 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         onClick={() => handleSelectOption(currentQ.id, optIdx)}
                         className={`w-full p-4 rounded-2xl border text-right transition-all flex items-center justify-between group ${
                           isSelected
-                            ? 'bg-emerald-500/10 border-emerald-500 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 font-semibold'
-                            : 'bg-slate-50/70 hover:bg-slate-100/80 dark:bg-slate-800/60 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 font-semibold"
+                            : "bg-slate-50/70 hover:bg-slate-100/80 dark:bg-slate-800/60 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <span
                             className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
                               isSelected
-                                ? 'bg-emerald-500 text-white'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 group-hover:bg-emerald-500 group-hover:text-white'
+                                ? "bg-emerald-500 text-white"
+                                : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 group-hover:bg-emerald-500 group-hover:text-white"
                             }`}
                           >
                             {String.fromCharCode(65 + optIdx)}
@@ -958,8 +1033,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         <div
                           className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                             isSelected
-                              ? 'border-emerald-500 bg-emerald-500 text-white'
-                              : 'border-slate-300 dark:border-slate-600'
+                              ? "border-emerald-500 bg-emerald-500 text-white"
+                              : "border-slate-300 dark:border-slate-600"
                           }`}
                         >
                           {isSelected && <CheckCircle2 className="w-4 h-4" />}
@@ -1002,7 +1077,11 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
 
                     {currentQuestionIndex < selectedQuiz.questions.length - 1 ? (
                       <button
-                        onClick={() => setCurrentQuestionIndex((prev) => Math.min(selectedQuiz.questions.length - 1, prev + 1))}
+                        onClick={() =>
+                          setCurrentQuestionIndex((prev) =>
+                            Math.min(selectedQuiz.questions.length - 1, prev + 1),
+                          )
+                        }
                         className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-colors flex items-center gap-1.5"
                       >
                         التالي
@@ -1050,13 +1129,16 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                     const isAnswered = userAnswers[q.id] !== undefined;
                     const isFlagged = flaggedQuestions.has(q.id);
 
-                    let buttonClass = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+                    let buttonClass =
+                      "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
                     if (isCurrent) {
-                      buttonClass = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-500/40 border-emerald-600';
+                      buttonClass =
+                        "bg-emerald-600 text-white font-bold ring-2 ring-emerald-500/40 border-emerald-600";
                     } else if (isFlagged) {
-                      buttonClass = 'bg-amber-500 text-white font-semibold border-amber-600';
+                      buttonClass = "bg-amber-500 text-white font-semibold border-amber-600";
                     } else if (isAnswered) {
-                      buttonClass = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-semibold';
+                      buttonClass =
+                        "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-semibold";
                     }
 
                     return (
@@ -1128,7 +1210,10 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
               {answeredCount < selectedQuiz.questions.length && (
                 <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>تنبيه: لديك {selectedQuiz.questions.length - answeredCount} أسئلة لم تُجب عليها بعد.</span>
+                  <span>
+                    تنبيه: لديك {selectedQuiz.questions.length - answeredCount} أسئلة لم تُجب عليها
+                    بعد.
+                  </span>
                 </div>
               )}
 
@@ -1164,11 +1249,11 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             isAnswered
-                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                              : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                              ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                              : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
                           }`}
                         >
-                          {isAnswered ? 'تمت الإجابة' : 'معلق'}
+                          {isAnswered ? "تمت الإجابة" : "معلق"}
                         </span>
                       </div>
                     </div>
@@ -1214,7 +1299,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
             بنك الامتحانات والاختبارات القصيرة (Exams & Quizzes)
           </h2>
           <p className="text-emerald-100 text-sm sm:text-base leading-relaxed">
-            تدرب على نماذج امتحانات منتصف الفصل والنهائي لجميع مقررات الهندسة، واختبر مهاراتك مع الشرح النموذجي، وراجع أخطاءك، وذاكر نقاط ضعفك مباشرة عبر حلقة المذاكرة الذكية.
+            تدرب على نماذج امتحانات منتصف الفصل والنهائي لجميع مقررات الهندسة، واختبر مهاراتك مع
+            الشرح النموذجي، وراجع أخطاءك، وذاكر نقاط ضعفك مباشرة عبر حلقة المذاكرة الذكية.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -1228,7 +1314,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
 
             {mistakeQuestionsList.length > 0 && (
               <button
-                onClick={() => setActiveTab('mistakes')}
+                onClick={() => setActiveTab("mistakes")}
                 className="px-4 py-2.5 rounded-xl bg-rose-500/30 hover:bg-rose-500/40 text-white font-bold text-sm backdrop-blur-sm border border-rose-400/40 transition-colors flex items-center gap-2"
               >
                 <AlertTriangle className="w-4 h-4 text-rose-200" />
@@ -1252,7 +1338,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
         />
 
         {/* Filters Bar (Shown on All, Quizzes, Past Exams, Bookmarks) */}
-        {activeTab !== 'history' && activeTab !== 'mistakes' && (
+        {activeTab !== "history" && activeTab !== "mistakes" && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex-1 min-w-[200px] relative">
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
@@ -1308,7 +1394,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
       {/* ---------------------------------------------------- */}
       {/* 1. MISTAKES REVIEW VIEW (مراجعة أخطائي)               */}
       {/* ---------------------------------------------------- */}
-      {activeTab === 'mistakes' && (
+      {activeTab === "mistakes" && (
         <div className="space-y-6">
           {/* Mistakes Header & Study Loop Actions */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1318,7 +1404,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                 سجل الأسئلة التي تحتاج إلى مراجعة وتثبيت ({mistakeQuestionsList.length})
               </h3>
               <p className="text-xs text-slate-500">
-                هنا يتم تجميع الأسئلة التي تمت الإجابة عليها بشكل خاطئ في محاولاتك السابقة لتتمكن من إعادة حلها ومذاكرتها.
+                هنا يتم تجميع الأسئلة التي تمت الإجابة عليها بشكل خاطئ في محاولاتك السابقة لتتمكن من
+                إعادة حلها ومذاكرتها.
               </p>
             </div>
 
@@ -1344,10 +1431,11 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                 رائع جداً! لا توجد أسئلة غير صحيحة مسجلة حالياً
               </h4>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                عند حل الاختبارات وظهور أي خطأ، سيتم إدراجه هنا تلقائياً لكي تتمكن من مراجعته وتثبيته.
+                عند حل الاختبارات وظهور أي خطأ، سيتم إدراجه هنا تلقائياً لكي تتمكن من مراجعته
+                وتثبيته.
               </p>
               <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => setActiveTab("all")}
                 className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold"
               >
                 تصفح بنك الاختبارات
@@ -1355,7 +1443,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
             </div>
           ) : (
             <div className="space-y-4">
-              {mistakeQuestionsList.map((item, idx) => (
+              {mistakeQuestionsList.map((item, _idx) => (
                 <div
                   key={item.question.id}
                   className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
@@ -1375,8 +1463,8 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         onClick={() => handleToggleBookmarkQuestion(item.question.id)}
                         className={`p-1.5 rounded-lg transition-colors ${
                           bookmarkedQuestionIds.has(item.question.id)
-                            ? 'text-amber-500 bg-amber-500/10'
-                            : 'text-slate-400 hover:text-slate-600'
+                            ? "text-amber-500 bg-amber-500/10"
+                            : "text-slate-400 hover:text-slate-600"
                         }`}
                         title="حفظ السؤال"
                       >
@@ -1384,7 +1472,13 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                       </button>
 
                       <button
-                        onClick={() => handleRequestAiExplanation(item.question, item.selectedIndex, item.courseCode)}
+                        onClick={() =>
+                          handleRequestAiExplanation(
+                            item.question,
+                            item.selectedIndex,
+                            item.courseCode,
+                          )
+                        }
                         className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 transition-colors border border-purple-500/20"
                       >
                         <Bot className="w-3.5 h-3.5" />
@@ -1396,7 +1490,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                           onClick={() =>
                             onStartPomodoroStudy(
                               item.courseCode,
-                              `مذاكرة مسألة: ${item.question.question.substring(0, 30)}...`
+                              `مذاكرة مسألة: ${item.question.question.substring(0, 30)}...`,
                             )
                           }
                           className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-colors border border-amber-500/20"
@@ -1417,20 +1511,30 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                       const isCorrect = optIdx === item.question.correctIndex;
                       const isSelectedByUser = optIdx === item.selectedIndex;
 
-                      let optClass = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300';
+                      let optClass =
+                        "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300";
                       if (isCorrect) {
-                        optClass = 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold';
+                        optClass =
+                          "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold";
                       } else if (isSelectedByUser) {
-                        optClass = 'bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
+                        optClass =
+                          "bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-300 font-bold";
                       }
 
                       return (
-                        <div key={optIdx} className={`p-2.5 rounded-xl border flex items-center justify-between ${optClass}`}>
+                        <div
+                          key={optIdx}
+                          className={`p-2.5 rounded-xl border flex items-center justify-between ${optClass}`}
+                        >
                           <span>
                             {String.fromCharCode(65 + optIdx)}) {opt}
                           </span>
-                          {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
-                          {isSelectedByUser && <XCircle className="w-4 h-4 text-rose-500 shrink-0" />}
+                          {isCorrect && (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          )}
+                          {isSelectedByUser && (
+                            <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                          )}
                         </div>
                       );
                     })}
@@ -1452,7 +1556,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
       {/* ---------------------------------------------------- */}
       {/* 2. BOOKMARKS VIEW (المحفوظات)                        */}
       {/* ---------------------------------------------------- */}
-      {activeTab === 'bookmarks' && (
+      {activeTab === "bookmarks" && (
         <div className="space-y-6">
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1551,7 +1655,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
       {/* ---------------------------------------------------- */}
       {/* 3. SUBMISSIONS HISTORY VIEW                          */}
       {/* ---------------------------------------------------- */}
-      {activeTab === 'history' && (
+      {activeTab === "history" && (
         <div className="space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-emerald-500" />
@@ -1570,7 +1674,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                 لما تجاوب على أي اختبار، هتظهر نتيجتك هنا عشان تقدر تراجع أداءك.
               </p>
               <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => setActiveTab("all")}
                 className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold"
               >
                 تصفح بنك الاختبارات
@@ -1589,16 +1693,17 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         {sub.courseCode}
                       </span>
                       <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-md ${sub.passed ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-md ${sub.passed ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}
                       >
-                        {sub.passed ? 'ناجح' : 'يحتاج مراجعة'}
+                        {sub.passed ? "ناجح" : "يحتاج مراجعة"}
                       </span>
                     </div>
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
                       {sub.quizTitle}
                     </h4>
                     <p className="text-xs text-slate-500">
-                      الدرجة: {sub.score} / {sub.totalQuestions} ({sub.percentage}%) • +{sub.pointsEarned} نقطة
+                      الدرجة: {sub.score} / {sub.totalQuestions} ({sub.percentage}%) • +
+                      {sub.pointsEarned} نقطة
                     </p>
                   </div>
 
@@ -1615,7 +1720,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
       {/* ---------------------------------------------------- */}
       {/* 4. MAIN EXAM CARDS CATALOG (All, Quizzes, Past Exams) */}
       {/* ---------------------------------------------------- */}
-      {activeTab !== 'mistakes' && activeTab !== 'bookmarks' && activeTab !== 'history' && (
+      {activeTab !== "mistakes" && activeTab !== "bookmarks" && activeTab !== "history" && (
         <div className="space-y-6">
           {filteredQuizzes.length === 0 ? (
             <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
@@ -1628,10 +1733,10 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
               </p>
               <button
                 onClick={() => {
-                  setSelectedCourseFilter('all');
-                  setSelectedDifficulty('all');
-                  setSelectedTermType('all');
-                  setSearchQuery('');
+                  setSelectedCourseFilter("all");
+                  setSelectedDifficulty("all");
+                  setSelectedTermType("all");
+                  setSearchQuery("");
                 }}
                 className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold"
               >
@@ -1643,14 +1748,18 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
               {filteredQuizzes.map((quiz) => {
                 const isBookmarked = bookmarkedExamIds.has(quiz.id);
                 const difficultyBadge =
-                  quiz.difficulty === 'hard'
-                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                    : quiz.difficulty === 'medium'
-                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+                  quiz.difficulty === "hard"
+                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                    : quiz.difficulty === "medium"
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
 
                 const difficultyText =
-                  quiz.difficulty === 'hard' ? 'متقدم' : quiz.difficulty === 'medium' ? 'متوسط' : 'أساسي';
+                  quiz.difficulty === "hard"
+                    ? "متقدم"
+                    : quiz.difficulty === "medium"
+                      ? "متوسط"
+                      : "أساسي";
 
                 return (
                   <div
@@ -1664,7 +1773,9 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                         </span>
 
                         <div className="flex items-center gap-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${difficultyBadge}`}>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${difficultyBadge}`}
+                          >
                             {difficultyText}
                           </span>
                           {quiz.isPastExam && (
@@ -1677,10 +1788,10 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                             onClick={(e) => handleToggleBookmarkExam(quiz.id, e)}
                             className={`p-1.5 rounded-lg transition-colors ${
                               isBookmarked
-                                ? 'text-amber-500 bg-amber-500/10'
-                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                ? "text-amber-500 bg-amber-500/10"
+                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                             }`}
-                            title={isBookmarked ? 'إلغاء الحفظ' : 'حفظ في المحفوظات'}
+                            title={isBookmarked ? "إلغاء الحفظ" : "حفظ في المحفوظات"}
                           >
                             <Bookmark className="w-4 h-4 fill-current" />
                           </button>
@@ -1871,9 +1982,7 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                     الشرح والتفسير الهندسي للمسألة
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    مقرر {aiExplanationModal.courseCode}
-                  </p>
+                  <p className="text-xs text-slate-500">مقرر {aiExplanationModal.courseCode}</p>
                 </div>
               </div>
               <button

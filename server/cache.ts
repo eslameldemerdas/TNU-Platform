@@ -1,4 +1,4 @@
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { RedisOptions } from "ioredis";
 
 /**
  * Robust Hybrid Cache Manager supporting Redis with In-Memory fallback.
@@ -29,7 +29,9 @@ export class HybridCacheService {
 
   private initRedis() {
     if (!this.redisUrl) {
-      console.log('[Cache] REDIS_URL not configured. Operating in high-performance in-memory cache mode.');
+      console.log(
+        "[Cache] REDIS_URL not configured. Operating in high-performance in-memory cache mode.",
+      );
       return;
     }
 
@@ -38,39 +40,45 @@ export class HybridCacheService {
         maxRetriesPerRequest: 2,
         retryStrategy: (times) => {
           if (times > 5) {
-            console.warn('[Cache] Redis reconnect attempts exceeded limit. Falling back to in-memory cache.');
+            console.warn(
+              "[Cache] Redis reconnect attempts exceeded limit. Falling back to in-memory cache.",
+            );
             return null;
           }
           return Math.min(times * 200, 2000);
         },
         enableReadyCheck: true,
-        lazyConnect: true
+        lazyConnect: true,
       };
 
       this.redisClient = new Redis(this.redisUrl, options);
 
-      this.redisClient.on('connect', () => {
+      this.redisClient.on("connect", () => {
         this.isRedisConnected = true;
-        console.log('[Cache] Successfully connected to Redis distributed cache.');
+        console.log("[Cache] Successfully connected to Redis distributed cache.");
       });
 
-      this.redisClient.on('ready', () => {
+      this.redisClient.on("ready", () => {
         this.isRedisConnected = true;
       });
 
-      this.redisClient.on('error', (err) => {
+      this.redisClient.on("error", (err) => {
         this.isRedisConnected = false;
-        console.warn(`[Cache] Redis connection issue (${err.message}). Using local cache fallback.`);
+        console.warn(
+          `[Cache] Redis connection issue (${err.message}). Using local cache fallback.`,
+        );
       });
 
-      this.redisClient.on('close', () => {
+      this.redisClient.on("close", () => {
         this.isRedisConnected = false;
       });
 
       // Non-blocking connection attempt
       this.redisClient.connect().catch((err) => {
         this.isRedisConnected = false;
-        console.warn(`[Cache] Initial Redis connection failed: ${err.message}. Running on local cache.`);
+        console.warn(
+          `[Cache] Initial Redis connection failed: ${err.message}. Running on local cache.`,
+        );
       });
     } catch (err: any) {
       console.warn(`[Cache] Failed to initialize Redis client: ${err?.message}`);
@@ -143,7 +151,7 @@ export class HybridCacheService {
     this.memoryCache.set(key, {
       value,
       expiresAt: Date.now() + ttlSeconds * 1000,
-      tags
+      tags,
     });
   }
 
@@ -255,12 +263,14 @@ export class HybridCacheService {
   getStats() {
     const totalRequests = this.hitCount + this.missCount;
     return {
-      provider: this.isRedisConnected ? 'Redis Distributed Cache' : 'In-Memory High-Performance Cache',
+      provider: this.isRedisConnected
+        ? "Redis Distributed Cache"
+        : "In-Memory High-Performance Cache",
       isRedisConnected: this.isRedisConnected,
       memorySize: this.memoryCache.size,
       hits: this.hitCount,
       misses: this.missCount,
-      hitRatio: totalRequests > 0 ? (this.hitCount / totalRequests).toFixed(3) : '0.000'
+      hitRatio: totalRequests > 0 ? (this.hitCount / totalRequests).toFixed(3) : "0.000",
     };
   }
 

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Course, Department, AcademicLevel, Semester } from '../../types';
-import { X, BookOpen, Layers, User, Mail, Calendar, MapPin, FileText, Image, Sparkles, Check, Upload, Trash2, RefreshCw } from 'lucide-react';
-import { getCourseCoverSvg } from '../../utils/courseCovers';
+import { X, BookOpen, Check, Upload, Trash2, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Course, Department, AcademicLevel, Semester } from "../../types";
+import { getCourseCoverSvg } from "../../utils/courseCovers";
 
 interface CourseFormModalProps {
   isOpen: boolean;
@@ -16,29 +16,29 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
   onClose,
   onSubmit,
   initialCourse,
-  departments
+  departments,
 }) => {
-  const [code, setCode] = useState('');
-  const [title, setTitle] = useState('');
-  const [departmentId, setDepartmentId] = useState(departments[0]?.id || 'dept-cmp-01');
-  const [level, setLevel] = useState<AcademicLevel>('Year 1 (Freshman)');
-  const [semester, setSemester] = useState<Semester>('Fall 2026');
+  const [code, setCode] = useState("");
+  const [title, setTitle] = useState("");
+  const [departmentId, setDepartmentId] = useState(departments[0]?.id || "dept-cmp-01");
+  const [level, setLevel] = useState<AcademicLevel>("Year 1 (Freshman)");
+  const [semester, setSemester] = useState<Semester>("Fall 2026");
   const [credits, setCredits] = useState<number>(3);
-  const [instructor, setInstructor] = useState('');
-  const [instructorEmail, setInstructorEmail] = useState('');
-  const [scheduleDayTime, setScheduleDayTime] = useState('');
-  const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
-  const [syllabusText, setSyllabusText] = useState('');
-  const [bannerImage, setBannerImage] = useState('');
+  const [instructor, setInstructor] = useState("");
+  const [instructorEmail, setInstructorEmail] = useState("");
+  const [scheduleDayTime, setScheduleDayTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [syllabusText, setSyllabusText] = useState("");
+  const [bannerImage, setBannerImage] = useState("");
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const [isBannerDragging, setIsBannerDragging] = useState(false);
-  const [bannerFileName, setBannerFileName] = useState('');
+  const [bannerFileName, setBannerFileName] = useState("");
 
   const handleBannerFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('يرجى اختيار ملف صورة صالح (PNG, JPG, WebP)');
+    if (!file.type.startsWith("image/")) {
+      alert("يرجى اختيار ملف صورة صالح (PNG, JPG, WebP)");
       return;
     }
     setBannerFileName(file.name);
@@ -53,33 +53,38 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
 
   useEffect(() => {
     if (initialCourse) {
-      setCode(initialCourse.code || '');
-      setTitle(initialCourse.title || '');
-      setDepartmentId(initialCourse.departmentId || departments[0]?.id || 'dept-cmp-01');
-      setLevel(initialCourse.level || 'Year 1 (Freshman)');
-      setSemester(initialCourse.semester || 'Fall 2026');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCode(initialCourse.code || "");
+      setTitle(initialCourse.title || "");
+      setDepartmentId(initialCourse.departmentId || departments[0]?.id || "dept-cmp-01");
+      setLevel(initialCourse.level || "Year 1 (Freshman)");
+      setSemester(initialCourse.semester || "Fall 2026");
       setCredits(initialCourse.credits || 3);
-      setInstructor(initialCourse.instructor || '');
-      setInstructorEmail(initialCourse.instructorEmail || '');
-      setScheduleDayTime(initialCourse.scheduleDayTime || '');
-      setLocation(initialCourse.location || '');
-      setDescription(initialCourse.description || '');
-      setSyllabusText(Array.isArray(initialCourse.syllabus) ? initialCourse.syllabus.join('\n') : '');
-      setBannerImage(initialCourse.bannerImage || '');
+      setInstructor(initialCourse.instructor || "");
+      setInstructorEmail(initialCourse.instructorEmail || "");
+      setScheduleDayTime(initialCourse.scheduleDayTime || "");
+      setLocation(initialCourse.location || "");
+      setDescription(initialCourse.description || "");
+      setSyllabusText(
+        Array.isArray(initialCourse.syllabus) ? initialCourse.syllabus.join("\n") : "",
+      );
+      setBannerImage(initialCourse.bannerImage || "");
     } else {
-      setCode('');
-      setTitle('');
-      setDepartmentId(departments[0]?.id || 'dept-cmp-01');
-      setLevel('Year 1 (Freshman)');
-      setSemester('Fall 2026');
+      setCode("");
+      setTitle("");
+      setDepartmentId(departments[0]?.id || "dept-cmp-01");
+      setLevel("Year 1 (Freshman)");
+      setSemester("Fall 2026");
       setCredits(3);
-      setInstructor('');
-      setInstructorEmail('');
-      setScheduleDayTime('Mon/Wed 10:00 - 11:30 AM');
-      setLocation('مدرج 1 - كلية الهندسة');
-      setDescription('');
-      setSyllabusText('مقدمة في المادة\nالمفاهيم الأساسية\nالتطبيقات والتمارين المعملية\nالتقييم النهائي');
-      setBannerImage('');
+      setInstructor("");
+      setInstructorEmail("");
+      setScheduleDayTime("Mon/Wed 10:00 - 11:30 AM");
+      setLocation("مدرج 1 - كلية الهندسة");
+      setDescription("");
+      setSyllabusText(
+        "مقدمة في المادة\nالمفاهيم الأساسية\nالتطبيقات والتمارين المعملية\nالتقييم النهائي",
+      );
+      setBannerImage("");
     }
   }, [initialCourse, isOpen, departments]);
 
@@ -90,7 +95,7 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
     if (!code.trim() || !title.trim()) return;
 
     const syllabusArray = syllabusText
-      .split('\n')
+      .split("\n")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
 
@@ -103,13 +108,13 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
       level,
       semester,
       credits: Number(credits) || 3,
-      instructor: instructor.trim() || 'أستاذ غير محدد',
-      instructorEmail: instructorEmail.trim() || 'faculty@eng.gnu.edu',
-      scheduleDayTime: scheduleDayTime.trim() || 'Mon/Wed 10:00 - 11:30 AM',
-      location: location.trim() || 'كلية الهندسة',
-      description: description.trim() || 'مقرر دراسي أكاديمي بملتقى الهندسة.',
+      instructor: instructor.trim() || "أستاذ غير محدد",
+      instructorEmail: instructorEmail.trim() || "faculty@eng.gnu.edu",
+      scheduleDayTime: scheduleDayTime.trim() || "Mon/Wed 10:00 - 11:30 AM",
+      location: location.trim() || "كلية الهندسة",
+      description: description.trim() || "مقرر دراسي أكاديمي بملتقى الهندسة.",
       syllabus: syllabusArray,
-      bannerImage: finalBanner
+      bannerImage: finalBanner,
     });
 
     onClose();
@@ -128,10 +133,12 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-black text-slate-900 dark:text-slate-100">
-                {isEdit ? `تعديل بيانات المقرر (${initialCourse?.code})` : 'إضافة مقرر دراسي جديد'}
+                {isEdit ? `تعديل بيانات المقرر (${initialCourse?.code})` : "إضافة مقرر دراسي جديد"}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isEdit ? 'تعديل تفاصيل المادة وأستاذ المقرر وتخصيص الساعات' : 'إضافة مادة هندسية جديدة لدليل المقررات لمختلف السنوات والأقسام'}
+                {isEdit
+                  ? "تعديل تفاصيل المادة وأستاذ المقرر وتخصيص الساعات"
+                  : "إضافة مادة هندسية جديدة لدليل المقررات لمختلف السنوات والأقسام"}
               </p>
             </div>
           </div>
@@ -145,7 +152,10 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 space-y-4 text-xs max-h-[75vh] overflow-y-auto"
+        >
           {/* Row 1: Code & Title */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -206,7 +216,9 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="Year 1 (Freshman)">السنة الأولى (إعدادي)</option>
-                <option value="Year 2 (Sophomore)">السنة الثانية - الفصل الدراسي الأول (الترم الأول)</option>
+                <option value="Year 2 (Sophomore)">
+                  السنة الثانية - الفصل الدراسي الأول (الترم الأول)
+                </option>
               </select>
             </div>
           </div>
@@ -221,10 +233,10 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
                 type="number"
                 min={1}
                 max={6}
-                value={Number.isNaN(credits) || credits === undefined ? '' : credits}
+                value={Number.isNaN(credits) || credits === undefined ? "" : credits}
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
-                  setCredits(Number.isNaN(val) ? ('' as any) : val);
+                  setCredits(Number.isNaN(val) ? ("" as any) : val);
                 }}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-indigo-500"
               />
@@ -358,7 +370,7 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block truncate">
-                    {bannerFileName || 'صورة غلاف المادة'}
+                    {bannerFileName || "صورة غلاف المادة"}
                   </span>
                   <span className="text-[11px] text-indigo-600 dark:text-indigo-400">
                     تم اختيار الغلاف من جهازك
@@ -376,9 +388,9 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setBannerImage('');
-                      setBannerFileName('');
-                      if (bannerInputRef.current) bannerInputRef.current.value = '';
+                      setBannerImage("");
+                      setBannerFileName("");
+                      if (bannerInputRef.current) bannerInputRef.current.value = "";
                     }}
                     className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition-all"
                     title="إزالة الغلاف"
@@ -403,8 +415,8 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
                 }}
                 className={`border-2 border-dashed rounded-2xl p-3.5 text-center cursor-pointer transition-all ${
                   isBannerDragging
-                    ? 'border-indigo-500 bg-indigo-500/10'
-                    : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-indigo-50/50 hover:border-indigo-400'
+                    ? "border-indigo-500 bg-indigo-500/10"
+                    : "border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-indigo-50/50 hover:border-indigo-400"
                 }`}
               >
                 <div className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
@@ -433,7 +445,7 @@ export const CourseFormModal: React.FC<CourseFormModalProps> = ({
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all active:scale-95"
             >
               <Check className="w-4 h-4" />
-              <span>{isEdit ? 'حفظ التعديلات' : 'إنشاء المقرر الآن'}</span>
+              <span>{isEdit ? "حفظ التعديلات" : "إنشاء المقرر الآن"}</span>
             </button>
           </div>
         </form>

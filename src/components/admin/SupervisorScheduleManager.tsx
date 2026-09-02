@@ -1,9 +1,5 @@
-import React, { useState } from 'react';
-import { ScheduleItem, Course, Department, UserProfile } from '../../types';
-import { isWithinSupervisorScope, getSupervisorScopeLabel } from '../../utils/permissionUtils';
 import {
   Calendar,
-  Clock,
   Plus,
   MapPin,
   User,
@@ -14,24 +10,24 @@ import {
   ShieldCheck,
   Lock,
   Search,
-  Filter,
-  CheckCircle2,
+  Clock,
   X,
-  Sparkles,
-  BookOpen
-} from 'lucide-react';
+} from "lucide-react";
+import React, { useState } from "react";
+import { ScheduleItem, Course, Department, UserProfile } from "../../types";
+import { isWithinSupervisorScope, getSupervisorScopeLabel } from "../../utils/permissionUtils";
 
 interface SupervisorScheduleManagerProps {
   user: UserProfile | null;
   schedule: ScheduleItem[];
   courses: Course[];
   departments: Department[];
-  onAddScheduleItem: (item: Omit<ScheduleItem, 'id'>) => void;
+  onAddScheduleItem: (item: Omit<ScheduleItem, "id">) => void;
   onUpdateScheduleItem: (id: string, item: Partial<ScheduleItem>) => void;
   onDeleteScheduleItem: (id: string) => void;
 }
 
-const DEFAULT_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const DEFAULT_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps> = ({
   user,
@@ -40,11 +36,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
   departments,
   onAddScheduleItem,
   onUpdateScheduleItem,
-  onDeleteScheduleItem
+  onDeleteScheduleItem,
 }) => {
-  const [activeDayFilter, setActiveDayFilter] = useState<string>('all');
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeDayFilter, setActiveDayFilter] = useState<string>("all");
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [customDays, setCustomDays] = useState<string[]>(DEFAULT_DAYS);
 
   // Modal State
@@ -52,17 +48,17 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
 
   // Form Fields
-  const [fCourseId, setFCourseId] = useState('');
-  const [fTitle, setFTitle] = useState('');
-  const [fType, setFType] = useState<ScheduleItem['type']>('lecture');
-  const [fDayOfWeek, setFDayOfWeek] = useState('الإثنين');
-  const [fStartTime, setFStartTime] = useState('09:00');
-  const [fEndTime, setFEndTime] = useState('11:00');
-  const [fLocation, setFLocation] = useState('');
-  const [fInstructor, setFInstructor] = useState('');
-  const [fAttendanceNotes, setFAttendanceNotes] = useState('');
-  const [newCustomDayInput, setNewCustomDayInput] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [fCourseId, setFCourseId] = useState("");
+  const [fTitle, setFTitle] = useState("");
+  const [fType, setFType] = useState<ScheduleItem["type"]>("lecture");
+  const [fDayOfWeek, setFDayOfWeek] = useState("الإثنين");
+  const [fStartTime, setFStartTime] = useState("09:00");
+  const [fEndTime, setFEndTime] = useState("11:00");
+  const [fLocation, setFLocation] = useState("");
+  const [fInstructor, setFInstructor] = useState("");
+  const [fAttendanceNotes, setFAttendanceNotes] = useState("");
+  const [newCustomDayInput, setNewCustomDayInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const scopeLabel = getSupervisorScopeLabel(user, departments);
 
@@ -71,8 +67,8 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
     isWithinSupervisorScope(user, {
       departmentId: c.departmentId,
       level: c.level,
-      courseId: c.id
-    })
+      courseId: c.id,
+    }),
   );
 
   const handleAddCustomDay = () => {
@@ -82,22 +78,22 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
       setCustomDays([...customDays, cleanDay]);
       setActiveDayFilter(cleanDay);
     }
-    setNewCustomDayInput('');
+    setNewCustomDayInput("");
   };
 
   const openCreateModal = (presetDay?: string) => {
     setEditingItem(null);
     const defaultCourse = allowedCourses[0] || courses[0];
-    setFCourseId(defaultCourse?.id || '');
-    setFTitle(defaultCourse ? `محاضرة ${defaultCourse.title}` : '');
-    setFType('lecture');
-    setFDayOfWeek(presetDay || (activeDayFilter !== 'all' ? activeDayFilter : 'الإثنين'));
-    setFStartTime('09:00');
-    setFEndTime('11:00');
-    setFLocation(defaultCourse?.location || 'مدرج 1 - مبنى الحاسب');
-    setFInstructor(defaultCourse?.instructor || 'د. أستاذ المقرر');
-    setFAttendanceNotes('نسبة الحضور إجبارية 85% - تسجيل الغياب الكتروني');
-    setErrorMessage('');
+    setFCourseId(defaultCourse?.id || "");
+    setFTitle(defaultCourse ? `محاضرة ${defaultCourse.title}` : "");
+    setFType("lecture");
+    setFDayOfWeek(presetDay || (activeDayFilter !== "all" ? activeDayFilter : "الإثنين"));
+    setFStartTime("09:00");
+    setFEndTime("11:00");
+    setFLocation(defaultCourse?.location || "مدرج 1 - مبنى الحاسب");
+    setFInstructor(defaultCourse?.instructor || "د. أستاذ المقرر");
+    setFAttendanceNotes("نسبة الحضور إجبارية 85% - تسجيل الغياب الكتروني");
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
@@ -106,53 +102,53 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
     const canEdit = isWithinSupervisorScope(user, {
       departmentId: item.departmentId || course?.departmentId,
       level: item.level || course?.level,
-      courseId: item.courseId
+      courseId: item.courseId,
     });
 
     if (!canEdit) {
-      alert('عذراً، هذا السكشن/المحاضرة يقع خارج نطاق صلاحية إشرافك.');
+      alert("عذراً، هذا السكشن/المحاضرة يقع خارج نطاق صلاحية إشرافك.");
       return;
     }
 
     setEditingItem(item);
     setFCourseId(item.courseId);
     setFTitle(item.title);
-    setFType(item.type || 'lecture');
+    setFType(item.type || "lecture");
     setFDayOfWeek(item.dayOfWeek);
     setFStartTime(item.startTime);
     setFEndTime(item.endTime);
     setFLocation(item.location);
     setFInstructor(item.instructor);
-    setFAttendanceNotes(item.attendanceNotes || '');
-    setErrorMessage('');
+    setFAttendanceNotes(item.attendanceNotes || "");
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fTitle.trim()) {
-      setErrorMessage('يرجى كتابة عنوان المادة/المحاضرة.');
+      setErrorMessage("يرجى كتابة عنوان المادة/المحاضرة.");
       return;
     }
 
     const selectedCourse = courses.find((c) => c.id === fCourseId);
     if (!selectedCourse) {
-      setErrorMessage('يرجى تحديد المقرر الأكاديمي المرتبط.');
+      setErrorMessage("يرجى تحديد المقرر الأكاديمي المرتبط.");
       return;
     }
 
     const canManage = isWithinSupervisorScope(user, {
       departmentId: selectedCourse.departmentId,
       level: selectedCourse.level,
-      courseId: selectedCourse.id
+      courseId: selectedCourse.id,
     });
 
     if (!canManage) {
-      setErrorMessage('ليس لديك صلاحية لإشراف وتعديل جداول هذا القسم/المقرر.');
+      setErrorMessage("ليس لديك صلاحية لإشراف وتعديل جداول هذا القسم/المقرر.");
       return;
     }
 
-    const payload: Omit<ScheduleItem, 'id'> = {
+    const payload: Omit<ScheduleItem, "id"> = {
       courseId: selectedCourse.id,
       courseCode: selectedCourse.code,
       title: fTitle.trim(),
@@ -160,11 +156,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
       dayOfWeek: fDayOfWeek,
       startTime: fStartTime,
       endTime: fEndTime,
-      location: fLocation.trim() || 'كلية الهندسة',
+      location: fLocation.trim() || "كلية الهندسة",
       instructor: fInstructor.trim() || selectedCourse.instructor,
       departmentId: selectedCourse.departmentId,
       level: selectedCourse.level,
-      attendanceNotes: fAttendanceNotes.trim() || undefined
+      attendanceNotes: fAttendanceNotes.trim() || undefined,
     };
 
     if (editingItem) {
@@ -181,11 +177,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
     const canDelete = isWithinSupervisorScope(user, {
       departmentId: item.departmentId || course?.departmentId,
       level: item.level || course?.level,
-      courseId: item.courseId
+      courseId: item.courseId,
     });
 
     if (!canDelete) {
-      alert('ليس لديك صلاحية لحذف محاضرة خارج اختصاصك.');
+      alert("ليس لديك صلاحية لحذف محاضرة خارج اختصاصك.");
       return;
     }
 
@@ -211,8 +207,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
   // Filtered Schedule
   const filteredSchedule = schedule.filter((item) => {
     const course = courses.find((c) => c.id === item.courseId);
-    const matchesDay = activeDayFilter === 'all' || item.dayOfWeek === activeDayFilter;
-    const matchesDept = selectedDeptId === 'all' || course?.departmentId === selectedDeptId || item.departmentId === selectedDeptId;
+    const matchesDay = activeDayFilter === "all" || item.dayOfWeek === activeDayFilter;
+    const matchesDept =
+      selectedDeptId === "all" ||
+      course?.departmentId === selectedDeptId ||
+      item.departmentId === selectedDeptId;
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -230,30 +229,54 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
     });
     icsContent += "END:VCALENDAR";
 
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', 'الجدول_الدراسي_الرسمي.ics');
+    link.setAttribute("download", "الجدول_الدراسي_الرسمي.ics");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const getTypeBadge = (type: ScheduleItem['type']) => {
+  const getTypeBadge = (type: ScheduleItem["type"]) => {
     switch (type) {
-      case 'lecture':
-        return <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-[10px]">محاضرة نظرية</span>;
-      case 'section':
-        return <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">سكشن تمارين</span>;
-      case 'lab':
-        return <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-[10px]">معمل تطبيقي</span>;
-      case 'office_hour':
-        return <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold text-[10px]">ساعات مكتبية</span>;
-      case 'exam':
-        return <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[10px]">امتحان / اختبار</span>;
+      case "lecture":
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+            محاضرة نظرية
+          </span>
+        );
+      case "section":
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+            سكشن تمارين
+          </span>
+        );
+      case "lab":
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-[10px]">
+            معمل تطبيقي
+          </span>
+        );
+      case "office_hour":
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold text-[10px]">
+            ساعات مكتبية
+          </span>
+        );
+      case "exam":
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+            امتحان / اختبار
+          </span>
+        );
       default:
-        return <span className="px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-600 font-bold text-[10px]">حصّة</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-600 font-bold text-[10px]">
+            حصّة
+          </span>
+        );
     }
   };
 
@@ -267,7 +290,9 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
               <Calendar className="w-5 h-5 text-blue-300" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">إدارة وتعديل الجدول الأسبوعي ومحاضرات الحضور</h2>
+              <h2 className="text-sm font-bold text-white">
+                إدارة وتعديل الجدول الأسبوعي ومحاضرات الحضور
+              </h2>
               <p className="text-xs text-blue-200 mt-0.5">{scopeLabel}</p>
             </div>
           </div>
@@ -302,7 +327,10 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
           <ul className="list-disc list-inside space-y-1 text-[11px] text-amber-800 dark:text-amber-300">
             {conflicts.slice(0, 3).map((c, idx) => (
               <li key={idx}>
-                تضارب في القاعة <strong>"{c.item1.location}"</strong> يوم <strong>{c.item1.dayOfWeek}</strong> بين "{c.item1.courseCode}" ({c.item1.startTime}-{c.item1.endTime}) و "{c.item2.courseCode}" ({c.item2.startTime}-{c.item2.endTime}).
+                تضارب في القاعة <strong>&quot;{c.item1.location}&quot;</strong> يوم{" "}
+                <strong>{c.item1.dayOfWeek}</strong> بين &quot;{c.item1.courseCode}&quot; (
+                {c.item1.startTime}-{c.item1.endTime}) و &quot;{c.item2.courseCode}&quot; (
+                {c.item2.startTime}-{c.item2.endTime}).
               </li>
             ))}
           </ul>
@@ -320,11 +348,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
 
           <div className="flex flex-wrap items-center gap-1.5">
             <button
-              onClick={() => setActiveDayFilter('all')}
+              onClick={() => setActiveDayFilter("all")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeDayFilter === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                activeDayFilter === "all"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
               }`}
             >
               عرض كافة أيام الأسبوع
@@ -338,8 +366,8 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
                   onClick={() => setActiveDayFilter(day)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     activeDayFilter === day
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                   }`}
                 >
                   <span>{day}</span>
@@ -403,7 +431,7 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
 
       {/* Systematic Grid Schedule Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        {(activeDayFilter === 'all' ? customDays : [activeDayFilter]).map((day) => {
+        {(activeDayFilter === "all" ? customDays : [activeDayFilter]).map((day) => {
           const dayItems = filteredSchedule
             .filter((s) => s.dayOfWeek === day)
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -429,14 +457,16 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
 
               <div className="space-y-2.5 flex-1">
                 {dayItems.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic py-6 text-center">لا توجد محاضرات مجدولة لهذا اليوم.</p>
+                  <p className="text-[11px] text-slate-400 italic py-6 text-center">
+                    لا توجد محاضرات مجدولة لهذا اليوم.
+                  </p>
                 ) : (
                   dayItems.map((item) => {
                     const course = courses.find((c) => c.id === item.courseId);
                     const canManage = isWithinSupervisorScope(user, {
                       departmentId: item.departmentId || course?.departmentId,
                       level: item.level || course?.level,
-                      courseId: item.courseId
+                      courseId: item.courseId,
                     });
 
                     return (
@@ -458,12 +488,16 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
                         <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3 text-blue-500" />
-                            <span>{item.startTime} - {item.endTime}</span>
+                            <span>
+                              {item.startTime} - {item.endTime}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-indigo-500" />
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{item.location}</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {item.location}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-1">
@@ -526,7 +560,9 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                  {editingItem ? 'تعديل موعد الحصة بالجدول' : 'إضافة حِصّة / محاضرة جديدة للجدول الأسبوعي'}
+                  {editingItem
+                    ? "تعديل موعد الحصة بالجدول"
+                    : "إضافة حِصّة / محاضرة جديدة للجدول الأسبوعي"}
                 </h3>
               </div>
               <button
@@ -569,11 +605,11 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
                     const isAllowed = isWithinSupervisorScope(user, {
                       departmentId: c.departmentId,
                       level: c.level,
-                      courseId: c.id
+                      courseId: c.id,
                     });
                     return (
                       <option key={c.id} value={c.id} disabled={!isAllowed}>
-                        {c.code} - {c.title} {!isAllowed ? '(خارج نطاق إشرافك)' : ''}
+                        {c.code} - {c.title} {!isAllowed ? "(خارج نطاق إشرافك)" : ""}
                       </option>
                     );
                   })}
@@ -719,7 +755,7 @@ export const SupervisorScheduleManager: React.FC<SupervisorScheduleManagerProps>
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg transition-all"
                 >
-                  {editingItem ? 'تحديث الحصة' : 'حفظ بالجدول الرسمى'}
+                  {editingItem ? "تحديث الحصة" : "حفظ بالجدول الرسمى"}
                 </button>
               </div>
             </form>

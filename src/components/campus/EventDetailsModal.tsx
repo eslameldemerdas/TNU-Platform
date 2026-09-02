@@ -1,5 +1,3 @@
-import React from 'react';
-import { CampusEvent } from '../../types';
 import {
   X,
   Calendar,
@@ -15,8 +13,10 @@ import {
   Tag,
   CheckCircle2,
   Share2,
-  Sparkles
-} from 'lucide-react';
+  Sparkles,
+} from "lucide-react";
+import React from "react";
+import { CampusEvent } from "../../types";
 
 interface EventDetailsModalProps {
   event: CampusEvent | null;
@@ -31,7 +31,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   isOpen,
   onClose,
   onToggleRSVP,
-  userEmail
+  _userEmail,
 }) => {
   if (!isOpen || !event) return null;
 
@@ -43,21 +43,22 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: `انضم إلى فعالية "${event.title}" في ${event.location}`,
-        url: window.location.href
-      }).catch(() => {});
+      navigator
+        .share({
+          title: event.title,
+          text: `انضم إلى فعالية "${event.title}" في ${event.location}`,
+          url: window.location.href,
+        })
+        .catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('تم نسخ رابط الفعالية إلى الحافظة!');
+      alert("تم نسخ رابط الفعالية إلى الحافظة!");
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto">
-        
         {/* Banner Header */}
         <div className="relative h-44 sm:h-56 bg-slate-950 shrink-0">
           {event.image ? (
@@ -71,7 +72,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               <Sparkles className="w-16 h-16 text-indigo-400/30" />
             </div>
           )}
-          
+
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-5 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-500 text-white shadow-md uppercase tracking-wide">
@@ -109,7 +110,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
         {/* Scrollable Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200">
-          
           {/* Logistics Grid Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3.5 rounded-2xl bg-indigo-500/5 dark:bg-indigo-950/30 border border-indigo-500/20 flex items-center gap-3">
@@ -117,9 +117,15 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">التاريخ والوقت</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{event.date}</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">{event.time}</span>
+                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">
+                  التاريخ والوقت
+                </span>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  {event.date}
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                  {event.time}
+                </span>
               </div>
             </div>
 
@@ -128,8 +134,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">الموقع / القاعة</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{event.location}</span>
+                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">
+                  الموقع / القاعة
+                </span>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  {event.location}
+                </span>
               </div>
             </div>
 
@@ -138,10 +148,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">السعة والحضور</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{currentRsvp} / {maxCap} مسجل</span>
+                <span className="text-[10px] font-extrabold text-slate-400 block uppercase">
+                  السعة والحضور
+                </span>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  {currentRsvp} / {maxCap} مسجل
+                </span>
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">
-                  {seatsLeft > 0 ? `متبقي ${seatsLeft} مقعد` : 'اكتمل العدد'}
+                  {seatsLeft > 0 ? `متبقي ${seatsLeft} مقعد` : "اكتمل العدد"}
                 </span>
               </div>
             </div>
@@ -150,17 +164,21 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Capacity Progress Bar */}
           <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-700 dark:text-slate-300">نسبة المقاعد المحجوزة</span>
-              <span className="font-bold text-indigo-600 dark:text-indigo-400">{capacityPercent}%</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                نسبة المقاعد المحجوزة
+              </span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                {capacityPercent}%
+              </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   capacityPercent >= 100
-                    ? 'bg-rose-500'
+                    ? "bg-rose-500"
                     : capacityPercent >= 80
-                    ? 'bg-amber-500'
-                    : 'bg-indigo-600'
+                      ? "bg-amber-500"
+                      : "bg-indigo-600"
                 }`}
                 style={{ width: `${capacityPercent}%` }}
               />
@@ -197,8 +215,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {event.targetAudience && (
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-1">
-                  <span className="text-[11px] font-bold text-indigo-500 block uppercase">الفئة المستهدفة</span>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{event.targetAudience}</p>
+                  <span className="text-[11px] font-bold text-indigo-500 block uppercase">
+                    الفئة المستهدفة
+                  </span>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    {event.targetAudience}
+                  </p>
                 </div>
               )}
 
@@ -208,7 +230,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     <AlertCircle className="w-3.5 h-3.5" />
                     <span>المتطلبات المسبقة</span>
                   </span>
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{event.requirements}</p>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {event.requirements}
+                  </p>
                 </div>
               )}
             </div>
@@ -225,8 +249,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 {event.agenda.map((item, idx) => (
                   <div key={idx} className="relative pr-4">
                     <div className="absolute right-[-17px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-500 border-2 border-white dark:border-slate-900" />
-                    <span className="text-[11px] font-extrabold text-indigo-500 block">{item.time}</span>
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{item.topic}</p>
+                    <span className="text-[11px] font-extrabold text-indigo-500 block">
+                      {item.time}
+                    </span>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {item.topic}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -252,13 +280,19 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {(event.contactEmail || event.contactPhone) && (
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800">
               {event.contactEmail && (
-                <a href={`mailto:${event.contactEmail}`} className="flex items-center gap-1.5 hover:text-indigo-500 transition-colors">
+                <a
+                  href={`mailto:${event.contactEmail}`}
+                  className="flex items-center gap-1.5 hover:text-indigo-500 transition-colors"
+                >
                   <Mail className="w-3.5 h-3.5" />
                   <span>{event.contactEmail}</span>
                 </a>
               )}
               {event.contactPhone && (
-                <a href={`tel:${event.contactPhone}`} className="flex items-center gap-1.5 hover:text-indigo-500 transition-colors">
+                <a
+                  href={`tel:${event.contactPhone}`}
+                  className="flex items-center gap-1.5 hover:text-indigo-500 transition-colors"
+                >
                   <Phone className="w-3.5 h-3.5" />
                   <span>{event.contactPhone}</span>
                 </a>
@@ -292,10 +326,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             disabled={isFull}
             className={`px-6 py-2.5 rounded-xl text-xs font-black shadow-lg transition-all flex items-center gap-2 min-h-[42px] ${
               event.hasRsvped
-                ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30"
                 : isFull
-                ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-indigo-500/20'
+                  ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-indigo-500/20"
             }`}
           >
             {event.hasRsvped ? (

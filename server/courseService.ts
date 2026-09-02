@@ -1,4 +1,4 @@
-import { prisma, connectPrisma } from './prisma';
+import { prisma, connectPrisma } from "./prisma";
 
 export class CourseService {
   static async getAllCourses(filter: {
@@ -11,21 +11,21 @@ export class CourseService {
   }) {
     await connectPrisma();
     const where: any = { archivedAt: null };
-    if (filter.departmentId && filter.departmentId !== 'all') {
+    if (filter.departmentId && filter.departmentId !== "all") {
       where.departmentId = filter.departmentId;
     }
-    if (filter.level && filter.level !== 'all') {
+    if (filter.level && filter.level !== "all") {
       where.level = filter.level;
     }
-    if (filter.semester && filter.semester !== 'all') {
+    if (filter.semester && filter.semester !== "all") {
       where.semester = filter.semester;
     }
     if (filter.q) {
       const q = filter.q.toLowerCase();
       where.OR = [
-        { code: { contains: q, mode: 'insensitive' } },
-        { title: { contains: q, mode: 'insensitive' } },
-        { instructor: { contains: q, mode: 'insensitive' } },
+        { code: { contains: q, mode: "insensitive" } },
+        { title: { contains: q, mode: "insensitive" } },
+        { instructor: { contains: q, mode: "insensitive" } },
       ];
     }
 
@@ -34,7 +34,7 @@ export class CourseService {
     const skip = (page - 1) * limit;
 
     const [courses, total] = await Promise.all([
-      prisma.course.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      prisma.course.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" } }),
       prisma.course.count({ where }),
     ]);
 
@@ -114,12 +114,12 @@ export class CourseService {
         title: data.title,
         description: data.description,
         credits: data.credits ?? 3,
-        category: data.category || 'CORE',
-        universityId: data.universityId || 'uni-gnue-01',
-        facultyId: data.facultyId || 'fac-eng-01',
+        category: data.category || "CORE",
+        universityId: data.universityId || "uni-gnue-01",
+        facultyId: data.facultyId || "fac-eng-01",
         departmentId: data.departmentId,
-        levelId: data.levelId || 'lvl-y1',
-        semesterId: data.semesterId || 'sem-fall-2026',
+        levelId: data.levelId || "lvl-y1",
+        semesterId: data.semesterId || "sem-fall-2026",
         instructorId: data.instructorId,
         instructor: data.instructor,
         instructorEmail: data.instructorEmail,
@@ -140,11 +140,25 @@ export class CourseService {
     await connectPrisma();
     const updateData: any = {};
     const allowed = [
-      'code', 'title', 'description', 'credits', 'category',
-      'departmentId', 'levelId', 'semesterId', 'instructorId',
-      'instructor', 'instructorEmail', 'level', 'semester',
-      'syllabus', 'scheduleDayTime', 'location', 'prerequisites',
-      'gradingScheme', 'bannerImage'
+      "code",
+      "title",
+      "description",
+      "credits",
+      "category",
+      "departmentId",
+      "levelId",
+      "semesterId",
+      "instructorId",
+      "instructor",
+      "instructorEmail",
+      "level",
+      "semester",
+      "syllabus",
+      "scheduleDayTime",
+      "location",
+      "prerequisites",
+      "gradingScheme",
+      "bannerImage",
     ];
     for (const key of allowed) {
       if (data[key] !== undefined) {

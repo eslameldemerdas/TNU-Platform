@@ -1,23 +1,18 @@
-import React, { useState } from 'react';
-import { Assignment, ScheduleItem, Course, UserProfile } from '../../types';
 import {
   Calendar,
   CheckSquare,
   GraduationCap,
-  Plus,
   Download,
-  Trash2,
   Check,
-  Award,
   Clock,
-  Target,
   FileQuestion,
   Flame,
-  Layers
-} from 'lucide-react';
-import { ExamsQuizzesEngine } from './ExamsQuizzesEngine';
-import { PomodoroFocusTimer } from './PomodoroFocusTimer';
-import { ScrollableTabs, ScrollableTabItem } from '../common/ScrollableTabs';
+} from "lucide-react";
+import React, { useState } from "react";
+import { Assignment, ScheduleItem, Course, UserProfile } from "../../types";
+import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import { ExamsQuizzesEngine } from "./ExamsQuizzesEngine";
+import { PomodoroFocusTimer } from "./PomodoroFocusTimer";
 
 interface StudyToolsViewProps {
   assignments: Assignment[];
@@ -25,7 +20,7 @@ interface StudyToolsViewProps {
   courses: Course[];
   user?: UserProfile | null;
   onAddAssignment: (asgn: Partial<Assignment>) => void;
-  onUpdateAssignmentStatus: (id: string, status: Assignment['status']) => void;
+  onUpdateAssignmentStatus: (id: string, status: Assignment["status"]) => void;
   onUpdatePoints?: (points: number) => void;
 }
 
@@ -34,13 +29,13 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
   schedule,
   courses,
   user,
-  onAddAssignment,
+  _onAddAssignment,
   onUpdateAssignmentStatus,
-  onUpdatePoints
+  onUpdatePoints,
 }) => {
   const [activeSubTool, setActiveSubTool] = useState<
-    'exams' | 'pomodoro' | 'assignments' | 'calendar' | 'graduation'
-  >('exams');
+    "exams" | "pomodoro" | "assignments" | "calendar" | "graduation"
+  >("exams");
 
   // Study Loop Bridge State (when jumping from Exam review / mistakes to Pomodoro)
   const [pomodoroPreload, setPomodoroPreload] = useState<{
@@ -50,39 +45,40 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
 
   // Fallback user object if not passed
   const currentUser: UserProfile = user || {
-    id: 'usr-current',
-    email: 'student@enghub.edu',
-    name: 'Alex Vance',
-    role: 'student',
-    level: 'Year 2 (Sophomore)',
-    departmentId: 'dept-cmp',
-    departmentName: 'هندسة الحاسب والذكاء الاصطناعي',
+    id: "usr-current",
+    email: "student@enghub.edu",
+    name: "Alex Vance",
+    role: "student",
+    level: "Year 2 (Sophomore)",
+    departmentId: "dept-cmp",
+    departmentName: "هندسة الحاسب والذكاء الاصطناعي",
     points: 120,
-    studentId: '20230145',
-    universityId: 'uni-helwan',
-    facultyId: 'fac-eng-h',
-    semester: 'Fall 2026',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    bio: 'طالب هندسة حاسبات مهتم بالذكاء الاصطناعي والأنظمة المدمجة',
+    studentId: "20230145",
+    universityId: "uni-helwan",
+    facultyId: "fac-eng-h",
+    semester: "Fall 2026",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    bio: "طالب هندسة حاسبات مهتم بالذكاء الاصطناعي والأنظمة المدمجة",
     badges: [],
     savedBookmarks: [],
     enrolledCourseIds: [],
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 
   // Study Loop Bridge State (when jumping from Exam review / mistakes to Pomodoro)
   const exportICS = () => {
     let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//EngHub Student Platform//AR\n";
     schedule.forEach((item) => {
-      icsContent += `BEGIN:VEVENT\nSUMMARY:${item.courseCode} - ${item.title}\nLOCATION:${item.location}\nDESCRIPTION:أستاذ المقرر: ${item.instructor || 'قسم الهندسة'}\nEND:VEVENT\n`;
+      icsContent += `BEGIN:VEVENT\nSUMMARY:${item.courseCode} - ${item.title}\nLOCATION:${item.location}\nDESCRIPTION:أستاذ المقرر: ${item.instructor || "قسم الهندسة"}\nEND:VEVENT\n`;
     });
     icsContent += "END:VCALENDAR";
 
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', 'جدول_المحاضرات_الهندسي.ics');
+    link.setAttribute("download", "جدول_المحاضرات_الهندسي.ics");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -91,31 +87,31 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
   // Study Tools Navigation Tabs Definitions
   const studyToolTabs: ScrollableTabItem[] = [
     {
-      id: 'exams',
-      label: 'بنك الامتحانات والاختبارات (Exams/Quizzes)',
-      icon: <FileQuestion className="w-4 h-4 text-emerald-400" />
+      id: "exams",
+      label: "بنك الامتحانات والاختبارات (Exams/Quizzes)",
+      icon: <FileQuestion className="w-4 h-4 text-emerald-400" />,
     },
     {
-      id: 'pomodoro',
-      label: 'مؤقت التركيز الهندسي (Pomodoro)',
-      icon: <Flame className="w-4 h-4 text-amber-400" />
+      id: "pomodoro",
+      label: "مؤقت التركيز الهندسي (Pomodoro)",
+      icon: <Flame className="w-4 h-4 text-amber-400" />,
     },
     {
-      id: 'assignments',
-      label: 'جدول التكليفات والمواعيد',
+      id: "assignments",
+      label: "جدول التكليفات والمواعيد",
       icon: <CheckSquare className="w-4 h-4" />,
-      badge: assignments.filter((a) => a.status !== 'submitted' && a.status !== 'graded').length
+      badge: assignments.filter((a) => a.status !== "submitted" && a.status !== "graded").length,
     },
     {
-      id: 'calendar',
-      label: 'الجدول الدراسي والتقويم (.ics)',
-      icon: <Calendar className="w-4 h-4" />
+      id: "calendar",
+      label: "الجدول الدراسي والتقويم (.ics)",
+      icon: <Calendar className="w-4 h-4" />,
     },
     {
-      id: 'graduation',
-      label: 'متطلبات التخرج والدرجة العلمية',
-      icon: <GraduationCap className="w-4 h-4" />
-    }
+      id: "graduation",
+      label: "متطلبات التخرج والدرجة العلمية",
+      icon: <GraduationCap className="w-4 h-4" />,
+    },
   ];
 
   return (
@@ -133,14 +129,14 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 1. EXAMS & QUIZZES ENGINE                       */}
       {/* ------------------------------------------------ */}
-      {activeSubTool === 'exams' && (
+      {activeSubTool === "exams" && (
         <ExamsQuizzesEngine
           courses={courses}
           currentUser={currentUser}
           onUpdatePoints={onUpdatePoints}
           onStartPomodoroStudy={(courseCode, taskName) => {
             setPomodoroPreload({ courseCode, taskName });
-            setActiveSubTool('pomodoro');
+            setActiveSubTool("pomodoro");
           }}
         />
       )}
@@ -148,21 +144,21 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 2. POMODORO FOCUS TIMER                         */}
       {/* ------------------------------------------------ */}
-      {activeSubTool === 'pomodoro' && (
+      {activeSubTool === "pomodoro" && (
         <PomodoroFocusTimer
           courses={courses}
           currentUser={currentUser}
           onUpdatePoints={onUpdatePoints}
           initialCourseCode={pomodoroPreload?.courseCode}
           initialTask={pomodoroPreload?.taskName}
-          onBackToExams={() => setActiveSubTool('exams')}
+          onBackToExams={() => setActiveSubTool("exams")}
         />
       )}
 
       {/* ------------------------------------------------ */}
       {/* 4. ASSIGNMENTS & DEADLINES                      */}
       {/* ------------------------------------------------ */}
-      {activeSubTool === 'assignments' && (
+      {activeSubTool === "assignments" && (
         <div className="space-y-6">
           <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
@@ -184,14 +180,18 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 dark:text-slate-100">{asgn.title}</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">
+                        {asgn.title}
+                      </span>
                       <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">
                         {asgn.courseCode}
                       </span>
                     </div>
                     <p className="text-slate-500">{asgn.description}</p>
                     <div className="text-[11px] text-slate-400 flex items-center gap-3">
-                      <span>موعد التسليم: {new Date(asgn.dueDate).toLocaleDateString('ar-EG')}</span>
+                      <span>
+                        موعد التسليم: {new Date(asgn.dueDate).toLocaleDateString("ar-EG")}
+                      </span>
                       <span>الدرجة: {asgn.totalPoints} درجة</span>
                     </div>
                   </div>
@@ -201,16 +201,16 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
                       onClick={() =>
                         onUpdateAssignmentStatus(
                           asgn.id,
-                          asgn.status === 'submitted' ? 'todo' : 'submitted'
+                          asgn.status === "submitted" ? "todo" : "submitted",
                         )
                       }
                       className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
-                        asgn.status === 'submitted'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        asgn.status === "submitted"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                       }`}
                     >
-                      {asgn.status === 'submitted' ? '✓ تم التسليم' : 'معلق'}
+                      {asgn.status === "submitted" ? "✓ تم التسليم" : "معلق"}
                     </button>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 5. SCHEDULE & .ICS EXPORT                        */}
       {/* ------------------------------------------------ */}
-      {activeSubTool === 'calendar' && (
+      {activeSubTool === "calendar" && (
         <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -258,7 +258,7 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
                 </div>
                 <div className="font-semibold text-slate-800 dark:text-slate-200">{item.title}</div>
                 <div className="text-slate-500 text-[11px]">
-                  القاعة: {item.location} • المحاضر: {item.instructor || 'قسم الهندسة'}
+                  القاعة: {item.location} • المحاضر: {item.instructor || "قسم الهندسة"}
                 </div>
               </div>
             ))}
@@ -269,14 +269,15 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* ------------------------------------------------ */}
       {/* 6. GRADUATION TRACKER                            */}
       {/* ------------------------------------------------ */}
-      {activeSubTool === 'graduation' && (
+      {activeSubTool === "graduation" && (
         <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
           <div className="space-y-2">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
               متابع خريجي وتراكمي بكالوريوس الهندسة
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              الساعات المطلوبة: 140 ساعة معتمدة إجمالية (المواد الأساسية + الرياضيات + مواد التخصص + مشروع التخرج)
+              الساعات المطلوبة: 140 ساعة معتمدة إجمالية (المواد الأساسية + الرياضيات + مواد التخصص +
+              مشروع التخرج)
             </p>
           </div>
 
@@ -293,7 +294,9 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2">
-              <h4 className="font-bold text-slate-900 dark:text-slate-100">متطلبات الخطة الدراسية والأقسام</h4>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100">
+                متطلبات الخطة الدراسية والأقسام
+              </h4>
               <ul className="space-y-1.5 text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-1.5 text-emerald-500 font-semibold">
                   <Check className="w-3.5 h-3.5" /> العلوم الأساسية والرياضيات (32/32 ساعة)

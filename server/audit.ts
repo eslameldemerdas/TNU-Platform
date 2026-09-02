@@ -3,8 +3,9 @@
  * Tracks security-relevant, administrative, authentication, and moderation activities.
  */
 
-export type AuditCategory = 'authentication' | 'security' | 'administration' | 'moderation' | 'ai' | 'system';
-export type AuditSeverity = 'info' | 'warning' | 'critical';
+export type AuditCategory =
+  "authentication" | "security" | "administration" | "moderation" | "ai" | "system";
+export type AuditSeverity = "info" | "warning" | "critical";
 
 export interface AuditEvent {
   id: string;
@@ -39,7 +40,7 @@ const AUDIT_LOGS_DB: AuditEvent[] = [
     targetType: "system",
     ipAddress: "127.0.0.1",
     metadata: { version: "2026.8.18", modules: ["auth", "audit", "cache", "ai"] },
-    timestamp: new Date(Date.now() - 3600 * 1000 * 48).toISOString()
+    timestamp: new Date(Date.now() - 3600 * 1000 * 48).toISOString(),
   },
   {
     id: "audit-init-02",
@@ -53,7 +54,7 @@ const AUDIT_LOGS_DB: AuditEvent[] = [
     ipAddress: "192.168.1.100",
     userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0",
     metadata: { method: "password" },
-    timestamp: new Date(Date.now() - 3600 * 1000 * 24).toISOString()
+    timestamp: new Date(Date.now() - 3600 * 1000 * 24).toISOString(),
   },
   {
     id: "audit-init-03",
@@ -69,7 +70,7 @@ const AUDIT_LOGS_DB: AuditEvent[] = [
     previousState: { role: "student" },
     newState: { role: "moderator" },
     ipAddress: "192.168.1.100",
-    timestamp: new Date(Date.now() - 3600 * 1000 * 18).toISOString()
+    timestamp: new Date(Date.now() - 3600 * 1000 * 18).toISOString(),
   },
   {
     id: "audit-init-04",
@@ -84,15 +85,15 @@ const AUDIT_LOGS_DB: AuditEvent[] = [
     targetName: "K-Map Don't Care Conditions",
     newState: { verifiedSolutionCommentId: "cmt-101", solverId: "usr-alex-101" },
     ipAddress: "192.168.1.142",
-    timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString()
-  }
+    timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
+  },
 ];
 
 export class AuditLogger {
   /**
    * Record a new audit event (Immutable)
    */
-  static log(eventData: Omit<AuditEvent, 'id' | 'timestamp'>): AuditEvent {
+  static log(eventData: Omit<AuditEvent, "id" | "timestamp">): AuditEvent {
     // Sanitization: Ensure sensitive data like passwords or tokens are never logged
     const sanitizedMetadata = eventData.metadata ? { ...eventData.metadata } : undefined;
     if (sanitizedMetadata) {
@@ -107,7 +108,7 @@ export class AuditLogger {
       id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       ...eventData,
       metadata: sanitizedMetadata,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     AUDIT_LOGS_DB.unshift(event);
@@ -118,7 +119,9 @@ export class AuditLogger {
     }
 
     // Structured server log for observability
-    console.log(`[AUDIT] [${event.severity.toUpperCase()}] [${event.category}] ${event.eventType} by ${event.actorName} (${event.actorRole}) on ${event.targetType || 'system'}`);
+    console.log(
+      `[AUDIT] [${event.severity.toUpperCase()}] [${event.category}] ${event.eventType} by ${event.actorName} (${event.actorRole}) on ${event.targetType || "system"}`,
+    );
 
     return event;
   }
@@ -148,20 +151,20 @@ export class AuditLogger {
       startDate,
       endDate,
       page = 1,
-      limit = 20
+      limit = 20,
     } = params;
 
     let filtered = [...AUDIT_LOGS_DB];
 
-    if (category && category !== 'all') {
+    if (category && category !== "all") {
       filtered = filtered.filter((e) => e.category === category);
     }
 
-    if (eventType && eventType !== 'all') {
+    if (eventType && eventType !== "all") {
       filtered = filtered.filter((e) => e.eventType === eventType);
     }
 
-    if (severity && severity !== 'all') {
+    if (severity && severity !== "all") {
       filtered = filtered.filter((e) => e.severity === severity);
     }
 
@@ -195,7 +198,7 @@ export class AuditLogger {
           e.actorName.toLowerCase().includes(q) ||
           (e.targetName && e.targetName.toLowerCase().includes(q)) ||
           (e.actorEmail && e.actorEmail.toLowerCase().includes(q)) ||
-          e.ipAddress.includes(q)
+          e.ipAddress.includes(q),
       );
     }
 
@@ -211,7 +214,7 @@ export class AuditLogger {
       page: pageNum,
       limit: limitNum,
       totalPages: Math.ceil(total / limitNum) || 1,
-      hasMore: offset + limitNum < total
+      hasMore: offset + limitNum < total,
     };
   }
 
@@ -220,12 +223,16 @@ export class AuditLogger {
    */
   static getMetrics() {
     const totalEvents = AUDIT_LOGS_DB.length;
-    const failedLogins = AUDIT_LOGS_DB.filter((e) => e.eventType === 'auth.login.failure').length;
-    const successfulLogins = AUDIT_LOGS_DB.filter((e) => e.eventType === 'auth.login.success').length;
-    const roleChanges = AUDIT_LOGS_DB.filter((e) => e.eventType === 'admin.role.updated').length;
-    const rateLimitTrips = AUDIT_LOGS_DB.filter((e) => e.eventType === 'security.rate_limited').length;
-    const aiQueries = AUDIT_LOGS_DB.filter((e) => e.category === 'ai').length;
-    const criticalEvents = AUDIT_LOGS_DB.filter((e) => e.severity === 'critical').length;
+    const failedLogins = AUDIT_LOGS_DB.filter((e) => e.eventType === "auth.login.failure").length;
+    const successfulLogins = AUDIT_LOGS_DB.filter(
+      (e) => e.eventType === "auth.login.success",
+    ).length;
+    const roleChanges = AUDIT_LOGS_DB.filter((e) => e.eventType === "admin.role.updated").length;
+    const rateLimitTrips = AUDIT_LOGS_DB.filter(
+      (e) => e.eventType === "security.rate_limited",
+    ).length;
+    const aiQueries = AUDIT_LOGS_DB.filter((e) => e.category === "ai").length;
+    const criticalEvents = AUDIT_LOGS_DB.filter((e) => e.severity === "critical").length;
 
     return {
       totalEvents,
@@ -234,7 +241,7 @@ export class AuditLogger {
       roleChanges,
       rateLimitTrips,
       aiQueries,
-      criticalEvents
+      criticalEvents,
     };
   }
 }

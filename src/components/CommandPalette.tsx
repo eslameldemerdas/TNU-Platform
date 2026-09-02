@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Search, BookOpen, FileText, MessageSquare, AlertCircle, X, ArrowRight, CornerDownLeft } from 'lucide-react';
-import { Course, StudyFile, DiscussionThread, Announcement } from '../types';
+import {
+  Search,
+  FileText,
+  MessageSquare,
+  AlertCircle,
+  ArrowRight,
+  CornerDownLeft,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import React, { useState, useEffect } from "react";
+import { Course, StudyFile, DiscussionThread, Announcement } from "../types";
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -21,28 +28,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   courses,
   files,
   discussions,
-  announcements,
+  _announcements,
   onSelectCourse,
   onOpenFile,
-  onSelectDiscussion
+  onSelectDiscussion,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         if (isOpen) onClose();
         else {
           /* handled externally or here */
         }
       }
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -58,13 +65,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         (f) =>
           f.title.toLowerCase().includes(q) ||
           f.description.toLowerCase().includes(q) ||
-          (f.tags || []).some((t) => t.toLowerCase().includes(q))
+          (f.tags || []).some((t) => t.toLowerCase().includes(q)),
       )
     : files.slice(0, 3);
 
   const filteredDiscussions = q
     ? discussions.filter(
-        (d) => d.title.toLowerCase().includes(q) || d.content.toLowerCase().includes(q)
+        (d) => d.title.toLowerCase().includes(q) || d.content.toLowerCase().includes(q),
       )
     : discussions.slice(0, 2);
 
@@ -72,7 +79,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <AnimatePresence>
-      <div 
+      <div
         className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/60 backdrop-blur-sm"
         onClick={onClose}
       >
@@ -97,7 +104,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             />
             {query && (
               <button
-                onClick={() => setQuery('')}
+                onClick={() => setQuery("")}
                 className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 Clear
@@ -113,8 +120,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             {totalResults === 0 ? (
               <div className="py-10 text-center space-y-2">
                 <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No matching items found</p>
-                <p className="text-xs text-slate-400">Try searching for CS201, PID Tuning, Solved Exams, or AVL Trees</p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  No matching items found
+                </p>
+                <p className="text-xs text-slate-400">
+                  Try searching for CS201, PID Tuning, Solved Exams, or AVL Trees
+                </p>
               </div>
             ) : (
               <>
@@ -232,8 +243,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Footer Navigation Hints */}
           <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400">
             <div className="flex items-center gap-3">
-              <span>Navigation: <kbd className="px-1 bg-slate-200 dark:bg-slate-800 rounded">↑↓</kbd> to move</span>
-              <span>Selection: <kbd className="px-1 bg-slate-200 dark:bg-slate-800 rounded">↵</kbd> to open</span>
+              <span>
+                Navigation: <kbd className="px-1 bg-slate-200 dark:bg-slate-800 rounded">↑↓</kbd> to
+                move
+              </span>
+              <span>
+                Selection: <kbd className="px-1 bg-slate-200 dark:bg-slate-800 rounded">↵</kbd> to
+                open
+              </span>
             </div>
             <span>EngHub Search Engine</span>
           </div>

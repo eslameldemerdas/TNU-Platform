@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Course, ResourceCategory, StudyFile } from '../types';
-import { X, Upload, Award, FileText, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { X, Upload, Award, AlertCircle, ShieldCheck } from "lucide-react";
+import { motion } from "motion/react";
+import React, { useState } from "react";
+import { Course, ResourceCategory, StudyFile } from "../types";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -17,19 +17,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   onClose,
   courses,
   preselectedCourseId,
-  userRole = 'student',
-  onUploadSubmit
+  userRole = "student",
+  onUploadSubmit,
 }) => {
-  const isStudent = userRole === 'student';
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [courseId, setCourseId] = useState(preselectedCourseId || courses[0]?.id || '');
-  const [category, setCategory] = useState<ResourceCategory>('summary');
-  const [academicYear, setAcademicYear] = useState('Year 2 (Sophomore)');
-  const [semester, setSemester] = useState('Fall 2026');
-  const [fileType, setFileType] = useState<'pdf' | 'docx' | 'pptx' | 'zip' | 'code' | 'image'>('pdf');
-  const [tagsInput, setTagsInput] = useState('');
-  const [previewText, setPreviewText] = useState('');
+  const isStudent = userRole === "student";
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [courseId, setCourseId] = useState(preselectedCourseId || courses[0]?.id || "");
+  const [category, setCategory] = useState<ResourceCategory>("summary");
+  const [academicYear, setAcademicYear] = useState("Year 2 (Sophomore)");
+  const [semester, setSemester] = useState("Fall 2026");
+  const [fileType, setFileType] = useState<"pdf" | "docx" | "pptx" | "zip" | "code" | "image">(
+    "pdf",
+  );
+  const [tagsInput, setTagsInput] = useState("");
+  const [previewText, setPreviewText] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileDataBase64, setFileDataBase64] = useState<string | null>(null);
@@ -43,45 +45,89 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        const base64 = result.includes(',') ? result.split(',')[1] : result;
+        const base64 = result.includes(",") ? result.split(",")[1] : result;
         resolve(base64);
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onerror = () => reject(new Error("Failed to read file"));
       reader.readAsDataURL(file);
     });
   };
 
   const handleFileSelect = async (file: File) => {
     setFileName(file.name);
-    if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ''));
+    if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ""));
     try {
       const base64 = await readFileAsBase64(file);
       setFileDataBase64(base64);
       setFileSizeBytes(file.size);
-    } catch (err) {
-      setSubmitError('Failed to read file. Please try again.');
+    } catch {
+      setSubmitError("Failed to read file. Please try again.");
     }
   };
 
   if (!isOpen) return null;
 
   const allCategories: { id: ResourceCategory; label: string; description: string }[] = [
-    { id: 'summary', label: 'ملخص وقوانين مركزة (Summary & Formulas)', description: 'تلخيص شامل ومكثف للمقرر والقوانين والمعادلات' },
-    { id: 'cheat_sheet', label: 'ورقة مراجعة وقوانين (Cheat Sheet)', description: 'ورقة سريعة تضم القوانين والمعادلات والرسوم البيانية' },
-    { id: 'study_guide', label: 'دليل دراسي وقواعد فهم (Study Guide)', description: 'إرشادات مراجعة ومفاتيح فهم وشرح أفكار المقرر' },
-    { id: 'previous_exam', label: 'امتحانات سابقة ونماذج حل (Past Exam)', description: 'ميدتيرم، فاينال، أو كويزات سابقة مع الحلول' },
-    { id: 'notes', label: 'ملاحظات وتفريغ محاضرات (Lecture Notes)', description: 'تفريغ وتلخيص لشرح المحاضرات الأسبوعية' },
-    { id: 'lab_material', label: 'دليل المعمل والتجارب (Lab Material)', description: 'أكواد المعمل، تقارير التجارب، وملفات المحاكاة' },
-    { id: 'practice_material', label: 'بنك أسئلة وتدريبات (Practice Material)', description: 'مسائل إضافية وتمارين وتطبيقات' },
-    { id: 'reference', label: 'مراجع وكتب تخصصية (Reference)', description: 'كتب ومراجع أكاديمية موثوقة' },
-    { id: 'other', label: 'أخرى (Other)', description: 'أي مصادر دراسية هندسية أخرى' }
+    {
+      id: "summary",
+      label: "ملخص وقوانين مركزة (Summary & Formulas)",
+      description: "تلخيص شامل ومكثف للمقرر والقوانين والمعادلات",
+    },
+    {
+      id: "cheat_sheet",
+      label: "ورقة مراجعة وقوانين (Cheat Sheet)",
+      description: "ورقة سريعة تضم القوانين والمعادلات والرسوم البيانية",
+    },
+    {
+      id: "study_guide",
+      label: "دليل دراسي وقواعد فهم (Study Guide)",
+      description: "إرشادات مراجعة ومفاتيح فهم وشرح أفكار المقرر",
+    },
+    {
+      id: "previous_exam",
+      label: "امتحانات سابقة ونماذج حل (Past Exam)",
+      description: "ميدتيرم، فاينال، أو كويزات سابقة مع الحلول",
+    },
+    {
+      id: "notes",
+      label: "ملاحظات وتفريغ محاضرات (Lecture Notes)",
+      description: "تفريغ وتلخيص لشرح المحاضرات الأسبوعية",
+    },
+    {
+      id: "lab_material",
+      label: "دليل المعمل والتجارب (Lab Material)",
+      description: "أكواد المعمل، تقارير التجارب، وملفات المحاكاة",
+    },
+    {
+      id: "practice_material",
+      label: "بنك أسئلة وتدريبات (Practice Material)",
+      description: "مسائل إضافية وتمارين وتطبيقات",
+    },
+    {
+      id: "reference",
+      label: "مراجع وكتب تخصصية (Reference)",
+      description: "كتب ومراجع أكاديمية موثوقة",
+    },
+    { id: "other", label: "أخرى (Other)", description: "أي مصادر دراسية هندسية أخرى" },
   ];
 
   // For students, ONLY summaries and rules are permitted across all courses
   const studentCategories: { id: ResourceCategory; label: string; description: string }[] = [
-    { id: 'summary', label: 'ملخص وقوانين مركزة (Summary & Formulas)', description: 'تلخيص شامل ومكثف للمقرر والقوانين والمعادلات' },
-    { id: 'cheat_sheet', label: 'ورقة مراجعة وقوانين (Cheat Sheet)', description: 'ورقة سريعة تضم القوانين والمعادلات والرسوم البيانية' },
-    { id: 'study_guide', label: 'دليل دراسي وقواعد فهم (Study Guide)', description: 'إرشادات مراجعة ومفاتيح فهم وشرح أفكار المقرر' }
+    {
+      id: "summary",
+      label: "ملخص وقوانين مركزة (Summary & Formulas)",
+      description: "تلخيص شامل ومكثف للمقرر والقوانين والمعادلات",
+    },
+    {
+      id: "cheat_sheet",
+      label: "ورقة مراجعة وقوانين (Cheat Sheet)",
+      description: "ورقة سريعة تضم القوانين والمعادلات والرسوم البيانية",
+    },
+    {
+      id: "study_guide",
+      label: "دليل دراسي وقواعد فهم (Study Guide)",
+      description: "إرشادات مراجعة ومفاتيح فهم وشرح أفكار المقرر",
+    },
   ];
 
   const categories = isStudent ? studentCategories : allCategories;
@@ -91,21 +137,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     setSubmitError(null);
 
     if (!title.trim() || title.trim().length < 5) {
-      setSubmitError('يجب أن يكون عنوان الملف 5 أحرف على الأقل.');
+      setSubmitError("يجب أن يكون عنوان الملف 5 أحرف على الأقل.");
       return;
     }
     if (!description.trim() || description.trim().length < 10) {
-      setSubmitError('يرجى كتابة وصف توضيحي للملف لا يقل عن 10 أحرف لتسهيل اعتماده.');
+      setSubmitError("يرجى كتابة وصف توضيحي للملف لا يقل عن 10 أحرف لتسهيل اعتماده.");
       return;
     }
     if (!courseId) {
-      setSubmitError('يرجى اختيار المقرر الدراسي المناسب للملف.');
+      setSubmitError("يرجى اختيار المقرر الدراسي المناسب للملف.");
       return;
     }
 
     const selectedCourse = courses.find((c) => c.id === courseId);
     const tags = tagsInput
-      .split(',')
+      .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
 
@@ -116,33 +162,34 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         title: title.trim(),
         description: description.trim(),
         courseId,
-        courseCode: selectedCourse?.code || 'ENG',
+        courseCode: selectedCourse?.code || "ENG",
         category,
         fileType,
-        fileName: fileName || `${title.replace(/\s+/g, '_')}.${fileType}`,
-        fileSize: fileSizeBytes ? `${(fileSizeBytes / (1024 * 1024)).toFixed(1)} MB` : '3.4 MB',
+        fileName: fileName || `${title.replace(/\s+/g, "_")}.${fileType}`,
+        fileSize: fileSizeBytes ? `${(fileSizeBytes / (1024 * 1024)).toFixed(1)} MB` : "3.4 MB",
         fileSizeBytes: fileSizeBytes || 3565158,
         fileData: fileDataBase64 || undefined,
-        tags: tags.length ? tags : [selectedCourse?.code || 'Engineering', category],
-        previewContent: previewText || `# ${title}\n\n${description}\n\n*محتوى أكاديمي مرفوع للدراسة.*`
+        tags: tags.length ? tags : [selectedCourse?.code || "Engineering", category],
+        previewContent:
+          previewText || `# ${title}\n\n${description}\n\n*محتوى أكاديمي مرفوع للدراسة.*`,
       });
 
       // Reset and close
-      setTitle('');
-      setDescription('');
-      setTagsInput('');
-      setPreviewText('');
+      setTitle("");
+      setDescription("");
+      setTagsInput("");
+      setPreviewText("");
       setFileName(null);
       onClose();
-    } catch (err: any) {
-      setSubmitError(err.message || 'حدث خطأ أثناء رفع الملف، يرجى المحاولة مرة أخرى.');
+    } catch {
+      setSubmitError("حدث خطأ أثناء رفع الملف، يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
       onClick={onClose}
     >
@@ -159,12 +206,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {isStudent ? 'مساهمة طلابية: رفع ملخص أو ورقة قوانين' : 'رفع وتوثيق ملف أكاديمي للمقرر'}
+                {isStudent
+                  ? "مساهمة طلابية: رفع ملخص أو ورقة قوانين"
+                  : "رفع وتوثيق ملف أكاديمي للمقرر"}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {isStudent
-                  ? 'متاح لجميع المواد: تقتصر مشاركات الطلاب على الملخصات والقوانين وتُرسل للإشراف للاعتماد (+15 نقطة فور القبول).'
-                  : 'رفع المحاضرات، السلايدات، بنوك الأسئلة، والتكليفات الرسمية المعتمدة للطلاب.'}
+                  ? "متاح لجميع المواد: تقتصر مشاركات الطلاب على الملخصات والقوانين وتُرسل للإشراف للاعتماد (+15 نقطة فور القبول)."
+                  : "رفع المحاضرات، السلايدات، بنوك الأسئلة، والتكليفات الرسمية المعتمدة للطلاب."}
               </p>
             </div>
           </div>
@@ -182,7 +231,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             <div className="space-y-0.5">
               <span className="font-bold block">ضوابط المساهمات الطلابية:</span>
               <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-                يُسمح للطلاب والمستخدمين برفع <strong>الملخصات وأوراق القوانين المركزة</strong> فقط لجميع المقررات المتاحة. يتم إرسال الملف فوراً كإشعار للمشرفين وإدارة الكلية للمراجعة والاعتماد، وتتم إضافة <strong>+15 نقطة</strong> لحسابك فور الموافقة!
+                يُسمح للطلاب والمستخدمين برفع <strong>الملخصات وأوراق القوانين المركزة</strong> فقط
+                لجميع المقررات المتاحة. يتم إرسال الملف فوراً كإشعار للمشرفين وإدارة الكلية للمراجعة
+                والاعتماد، وتتم إضافة <strong>+15 نقطة</strong> لحسابك فور الموافقة!
               </p>
             </div>
           </div>
@@ -213,8 +264,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             onClick={() => fileInputRef.current?.click()}
             className={`p-6 rounded-xl border-2 border-dashed text-center transition-colors cursor-pointer ${
               dragOver
-                ? 'border-orange-500 bg-orange-500/10'
-                : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-slate-300 dark:hover:border-slate-700'
+                ? "border-orange-500 bg-orange-500/10"
+                : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
             <input
@@ -231,12 +282,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             <Upload className="w-8 h-8 text-orange-500 mx-auto mb-2" />
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {fileName ? (
-                <span className="text-orange-600 dark:text-orange-400 font-bold">الملف المختار: {fileName}</span>
+                <span className="text-orange-600 dark:text-orange-400 font-bold">
+                  الملف المختار: {fileName}
+                </span>
               ) : (
-                'اسحب الملف وأسقطه هنا، أو اضغط للتصفح والاختيار من الجهاز'
+                "اسحب الملف وأسقطه هنا، أو اضغط للتصفح والاختيار من الجهاز"
               )}
             </p>
-            <p className="text-[11px] text-slate-400 mt-1">يدعم ملفات PDF, DOCX, PPTX, ZIP, C/C++, MATLAB (حجم أقصى 25 ميجابايت)</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              يدعم ملفات PDF, DOCX, PPTX, ZIP, C/C++, MATLAB (حجم أقصى 25 ميجابايت)
+            </p>
           </div>
 
           {/* Title & Course Selection */}
@@ -392,7 +447,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           <div className="p-3 rounded-xl bg-orange-50/50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40 text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-orange-500 shrink-0" />
             <span>
-              نظام ضمان الجودة الأكاديمية: يتم تدقيق الملفات بواسطة مشرفي المواد قبل نشرها للعموم لضمان صحة المحتوى الهندسي.
+              نظام ضمان الجودة الأكاديمية: يتم تدقيق الملفات بواسطة مشرفي المواد قبل نشرها للعموم
+              لضمان صحة المحتوى الهندسي.
             </span>
           </div>
 
@@ -420,8 +476,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   <Upload className="w-4 h-4" />
                   <span>
                     {isStudent
-                      ? 'إرسال الملخص للإدارة والمشرفين للتدقيق (+15 نقطة)'
-                      : 'نشر وتوثيق الملف الأكاديمي'}
+                      ? "إرسال الملخص للإدارة والمشرفين للتدقيق (+15 نقطة)"
+                      : "نشر وتوثيق الملف الأكاديمي"}
                   </span>
                 </>
               )}
@@ -432,4 +488,3 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     </div>
   );
 };
-

@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.pgdata
+uploads
+prisma/migrations
+tests
+*.lock
+*.log
+*.json
+*.config.ts
+*.mjs
+*.cjs
+index.html
+metadata.json
