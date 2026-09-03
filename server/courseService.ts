@@ -108,6 +108,8 @@ export class CourseService {
 
   static async createCourse(data: any) {
     await connectPrisma();
+    const resolvedUniversityId = data.universityId || (await prisma.university.findFirst())?.id || "uni-gnue-01";
+    const resolvedFacultyId = data.facultyId || (await prisma.faculty.findFirst({ where: { universityId: resolvedUniversityId } }))?.id || "fac-eng-01";
     const course = await prisma.course.create({
       data: {
         code: data.code,
@@ -115,8 +117,8 @@ export class CourseService {
         description: data.description,
         credits: data.credits ?? 3,
         category: data.category || "CORE",
-        universityId: data.universityId || "uni-gnue-01",
-        facultyId: data.facultyId || "fac-eng-01",
+        universityId: resolvedUniversityId,
+        facultyId: resolvedFacultyId,
         departmentId: data.departmentId,
         levelId: data.levelId || "lvl-y1",
         semesterId: data.semesterId || "sem-fall-2026",

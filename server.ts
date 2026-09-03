@@ -31,6 +31,7 @@ import {
 import { validateFileMagicBytes } from "./server/fileValidation";
 import { startEmbeddedDb, needsEmbeddedDb } from "./server/pglite-server";
 import { connectPrisma, prisma } from "./server/prisma";
+import { checkRateLimit, resetRateLimit } from "./server/rateLimiter";
 import * as store from "./server/store";
 import {
   validate,
@@ -165,30 +166,6 @@ const _requireElevated = requireRole([
 ]);
 const requireSuperAdmin = requireRole(["super_admin"]);
 
-// Per-process rate limiting. Deployment model is a single Node process
-// (faculty scale); for multi-instance deployments move this to Redis.
-interface RateBucket {
-  count: number;
-  resetAt: number;
-}
-const RATE_LIMIT_BUCKETS = new Map<string, RateBucket>();
-function checkRateLimit(key: string, maxAttempts: number, windowMs: number) {
-  const now = Date.now();
-  let bucket = RATE_LIMIT_BUCKETS.get(key);
-  if (!bucket || now > bucket.resetAt) {
-    bucket = { count: 0, resetAt: now + windowMs };
-    RATE_LIMIT_BUCKETS.set(key, bucket);
-  }
-  if (bucket.count >= maxAttempts) {
-    return { allowed: false, remainingSeconds: Math.ceil((bucket.resetAt - now) / 1000) };
-  }
-  bucket.count += 1;
-  return { allowed: true, remainingSeconds: 0 };
-}
-function resetRateLimit(key: string) {
-  RATE_LIMIT_BUCKETS.delete(key);
-}
-
 const MIME_BY_EXT: Record<string, string> = {
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -305,7 +282,7 @@ async function startServer() {
     async (req: Request, res: Response, next: NextFunction) => {
       const clientIp = getClientIp(req);
       const rateKey = `signup:${clientIp}`;
-      const rate = checkRateLimit(rateKey, 5, 15 * 60 * 1000);
+      const rate = await checkRateLimit(rateKey, 5, 15 * 60 * 1000);
       if (!rate.allowed) {
         store.writeAudit({
           category: "security",
@@ -414,7 +391,7 @@ async function startServer() {
           "Academic onboarding completion",
         );
 
-        resetRateLimit(rateKey);
+        await resetRateLimit(rateKey);
         const { token } = await store.createSession(user.id, clientIp, req.headers["user-agent"]);
         setAuthCookie(res, token);
 
@@ -428,6 +405,8 @@ async function startServer() {
           actorEmail: user.email,
           ipAddress: clientIp,
         });
+
+        await serverCache.invalidateTag("admin");
 
         const safe = store.toSafeUser({ ...user, points: (user.points ?? 0) + 25 });
         res.status(201).json({
@@ -448,7 +427,7 @@ async function startServer() {
     async (req: Request, res: Response, next: NextFunction) => {
       const clientIp = getClientIp(req);
       const rateKey = `login:${clientIp}`;
-      const rate = checkRateLimit(rateKey, 5, 15 * 60 * 1000);
+      const rate = await checkRateLimit(rateKey, 5, 15 * 60 * 1000);
       if (!rate.allowed) {
         return next(
           new RateLimitError(
@@ -493,7 +472,8 @@ async function startServer() {
             new UnauthorizedError("Invalid email or password. Please verify your credentials."),
           );
         }
-        resetRateLimit(rateKey);
+
+        await resetRateLimit(rateKey);
         const { token } = await store.createSession(user.id, clientIp, req.headers["user-agent"]);
         setAuthCookie(res, token);
         await store.writeAudit({
@@ -873,6 +853,16 @@ async function startServer() {
             new UnauthorizedError("You must be logged in to contribute academic resources."),
           );
 
+        const uploadRate = await checkRateLimit(`upload:${user.id}`, 5, 15 * 60 * 1000);
+        if (!uploadRate.allowed) {
+          return next(
+            new RateLimitError(
+              `Too many file uploads. Please retry in ${uploadRate.remainingSeconds} seconds.`,
+              uploadRate.remainingSeconds,
+            ),
+          );
+        }
+
         const {
           title,
           description,
@@ -1020,6 +1010,8 @@ async function startServer() {
           },
           ipAddress: getClientIp(req),
         });
+
+        await serverCache.invalidateTag("admin");
 
         res.status(201).json({
           success: true,
@@ -1435,8 +1427,15 @@ async function startServer() {
   // --------------------------------------------------------------------
   app.get("/api/leaderboard", async (req: Request, res: Response) => {
     const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit || "20"), 10) || 20));
+    const cacheKey = `leaderboard:top:${limit}`;
+
+    const cached = await serverCache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     const leaderboard = await store.getLeaderboard(limit);
-    res.json({ leaderboard, total: leaderboard.length, generatedAt: new Date().toISOString() });
+    const payload = { leaderboard, total: leaderboard.length, generatedAt: new Date().toISOString() };
+    await serverCache.set(cacheKey, payload, 120, ["leaderboard"]);
+    res.json(payload);
   });
 
   // --------------------------------------------------------------------
@@ -1461,7 +1460,7 @@ async function startServer() {
     "/api/honor-board",
     validate({
       body: {
-        userId: Validators.string(1, 100),
+        userId: Validators.optional(Validators.string(1, 100)),
         name: Validators.string(1, 200),
         studentId: Validators.optional(Validators.string(1, 50)),
         email: Validators.optional(Validators.email()),
@@ -1633,7 +1632,7 @@ async function startServer() {
     async (req: Request, res: Response, next: NextFunction) => {
       const user = await getSessionUser(req);
       const clientIp = getClientIp(req);
-      const rate = checkRateLimit(`ai:${user?.id || clientIp}`, 20, 60 * 1000);
+      const rate = await checkRateLimit(`ai:${user?.id || clientIp}`, 20, 60 * 1000);
       if (!rate.allowed)
         return next(
           new RateLimitError(
@@ -1984,14 +1983,26 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
   // --------------------------------------------------------------------
   app.get("/api/courses", async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const dept = (req.query.departmentId as string) || "all";
+      const level = (req.query.level as string) || "all";
+      const semester = (req.query.semester as string) || "all";
+      const q = ((req.query.q as string) || "").toLowerCase().substring(0, 100);
+      const page = String(parseInt(req.query.page as string, 10) || 1);
+      const limit = String(parseInt(req.query.limit as string, 10) || 50);
+      const cacheKey = `courses:list:${dept}:${level}:${semester}:${q}:${page}:${limit}`;
+
+      const cached = await serverCache.get(cacheKey);
+      if (cached) return res.json(cached);
+
       const result = await CourseService.getAllCourses({
-        departmentId: (req.query.departmentId as string) || "all",
-        level: (req.query.level as string) || "all",
-        semester: (req.query.semester as string) || "all",
+        departmentId: dept,
+        level,
+        semester,
         q: (req.query.q as string) || "",
-        page: parseInt(req.query.page as string, 10) || 1,
-        limit: parseInt(req.query.limit as string, 10) || 50,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
       });
+      await serverCache.set(cacheKey, result, 180, ["courses"]);
       res.json(result);
     } catch (err) {
       next(err);
@@ -2000,8 +2011,13 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
 
   app.get("/api/courses/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const cacheKey = `courses:detail:${req.params.id}`;
+      const cached = await serverCache.get(cacheKey);
+      if (cached) return res.json(cached);
+
       const course = await CourseService.getCourseById(req.params.id);
       if (!course) return next(new NotFoundError("Course not found"));
+      await serverCache.set(cacheKey, course, 180, ["courses"]);
       res.json(course);
     } catch (err) {
       next(err);
@@ -2018,6 +2034,7 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
       try {
         const saved = await CourseService.createCourse(req.body);
         await serverCache.invalidatePattern("courses:");
+        await serverCache.invalidateTag("admin");
         await store.writeAudit({
           category: "administration",
           eventType: "admin.create_course",
@@ -2049,6 +2066,7 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
       try {
         const updated = await CourseService.updateCourse(req.params.id, req.body);
         await serverCache.invalidatePattern("courses:");
+        await serverCache.invalidateTag("admin");
         await store.writeAudit({
           category: "administration",
           eventType: "admin.update_course",
@@ -2075,6 +2093,7 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
       try {
         await CourseService.deleteCourse(req.params.id); // soft-delete only, by design
         await serverCache.invalidatePattern("courses:");
+        await serverCache.invalidateTag("admin");
         await store.writeAudit({
           category: "administration",
           eventType: "admin.delete_course",
@@ -2373,11 +2392,18 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = (req as any).user;
+        const cacheKey = "admin:stats";
+
+        const cached = await serverCache.get<Record<string, any>>(cacheKey);
+        if (cached) return res.json({ ...cached, role: user.role });
+
         const [stats, securityMetrics] = await Promise.all([
           store.platformStats(),
           store.auditMetrics(),
         ]);
-        res.json({ ...stats, role: user.role, securityMetrics });
+        const payload = { ...stats, securityMetrics };
+        await serverCache.set(cacheKey, payload, 120, ["admin"]);
+        res.json({ ...payload, role: user.role });
       } catch (err) {
         next(err);
       }
@@ -2581,6 +2607,436 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
   });
 
   // --------------------------------------------------------------------
+  // ANNOUNCEMENTS
+  // --------------------------------------------------------------------
+  app.get(
+    "/api/announcements",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const entries = await store.listAnnouncements({
+          scope: req.query.scope as string | undefined,
+          targetId: req.query.targetId as string | undefined,
+        });
+        res.json({ announcements: entries, total: entries.length });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.post(
+    "/api/announcements",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      body: {
+        scope: Validators.enum(["university", "faculty", "department", "course"]),
+        targetId: Validators.optional(Validators.string(1, 100)),
+        title: Validators.string(2, 200),
+        content: Validators.string(2, 5000),
+        authorName: Validators.string(1, 200),
+        authorRole: Validators.string(1, 50),
+        date: Validators.string(1, 50),
+        isPinned: Validators.optional(Validators.boolean()),
+        priority: Validators.enum(["low", "normal", "urgent"]),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const entry = await store.createAnnouncement({
+          ...req.body,
+          authorName: user.name,
+          authorRole: user.role,
+        });
+        await serverCache.invalidateTag("announcements");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.announcement.created",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: entry.id,
+          targetType: "announcement",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.status(201).json({ success: true, announcement: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.patch(
+    "/api/announcements/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      params: { id: Validators.string(1, 100) },
+      body: {
+        title: Validators.optional(Validators.string(2, 200)),
+        content: Validators.optional(Validators.string(2, 5000)),
+        isPinned: Validators.optional(Validators.boolean()),
+        priority: Validators.optional(Validators.enum(["low", "normal", "urgent"])),
+        scope: Validators.optional(Validators.enum(["university", "faculty", "department", "course"])),
+        targetId: Validators.optional(Validators.string(1, 100)),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.announcement.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Announcement not found."));
+        const entry = await store.updateAnnouncement(req.params.id, req.body);
+        await serverCache.invalidateTag("announcements");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.announcement.updated",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "announcement",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, announcement: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/announcements/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({ params: { id: Validators.string(1, 100) } }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.announcement.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Announcement not found."));
+        await store.deleteAnnouncement(req.params.id);
+        await serverCache.invalidateTag("announcements");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.announcement.deleted",
+          severity: "warning",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "announcement",
+          targetName: existing.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, message: "Announcement deleted." });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // --------------------------------------------------------------------
+  // CAMPUS EVENTS
+  // --------------------------------------------------------------------
+  app.get(
+    "/api/events",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const entries = await store.listEvents({
+          category: req.query.category as string | undefined,
+          status: req.query.status as string | undefined,
+          date: req.query.date as string | undefined,
+        });
+        res.json({ events: entries, total: entries.length });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.post(
+    "/api/events",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      body: {
+        title: Validators.string(2, 200),
+        organizer: Validators.string(1, 200),
+        departmentId: Validators.optional(Validators.string(1, 100)),
+        date: Validators.string(1, 50),
+        time: Validators.string(1, 50),
+        location: Validators.string(2, 200),
+        description: Validators.string(2, 5000),
+        category: Validators.enum(["workshop", "hackathon", "guest_lecture", "social", "competition", "field_trip", "seminar"]),
+        image: Validators.optional(Validators.string(1, 10000000)),
+        maxCapacity: Validators.optional(Validators.integer(1, 10000)),
+        speaker: Validators.optional(Validators.string(1, 200)),
+        speakerTitle: Validators.optional(Validators.string(1, 200)),
+        targetAudience: Validators.optional(Validators.string(1, 500)),
+        requirements: Validators.optional(Validators.string(1, 1000)),
+        contactEmail: Validators.optional(Validators.email()),
+        contactPhone: Validators.optional(Validators.string(1, 50)),
+        tags: Validators.optional(Validators.array(Validators.string(1, 50), 0, 20)),
+        status: Validators.optional(Validators.enum(["published", "draft", "cancelled"])),
+        registeredStudents: Validators.optional(Validators.array(Validators.object())),
+        agenda: Validators.optional(Validators.array(Validators.object())),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const entry = await store.createEvent(req.body);
+        await serverCache.invalidateTag("events");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.event.created",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: entry.id,
+          targetType: "campus_event",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.status(201).json({ success: true, event: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.patch(
+    "/api/events/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      params: { id: Validators.string(1, 100) },
+      body: {
+        title: Validators.optional(Validators.string(2, 200)),
+        organizer: Validators.optional(Validators.string(1, 200)),
+        departmentId: Validators.optional(Validators.string(1, 100)),
+        date: Validators.optional(Validators.string(1, 50)),
+        time: Validators.optional(Validators.string(1, 50)),
+        location: Validators.optional(Validators.string(2, 200)),
+        description: Validators.optional(Validators.string(2, 5000)),
+        category: Validators.optional(Validators.enum(["workshop", "hackathon", "guest_lecture", "social", "competition", "field_trip", "seminar"])),
+        image: Validators.optional(Validators.string(1, 10000000)),
+        maxCapacity: Validators.optional(Validators.integer(1, 10000)),
+        speaker: Validators.optional(Validators.string(1, 200)),
+        speakerTitle: Validators.optional(Validators.string(1, 200)),
+        targetAudience: Validators.optional(Validators.string(1, 500)),
+        requirements: Validators.optional(Validators.string(1, 1000)),
+        contactEmail: Validators.optional(Validators.email()),
+        contactPhone: Validators.optional(Validators.string(1, 50)),
+        tags: Validators.optional(Validators.array(Validators.string(1, 50), 0, 20)),
+        status: Validators.optional(Validators.enum(["published", "draft", "cancelled"])),
+        registeredStudents: Validators.optional(Validators.array(Validators.object())),
+        agenda: Validators.optional(Validators.array(Validators.object())),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.campusEvent.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Event not found."));
+        const entry = await store.updateEvent(req.params.id, req.body);
+        await serverCache.invalidateTag("events");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.event.updated",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "campus_event",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, event: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/events/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({ params: { id: Validators.string(1, 100) } }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.campusEvent.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Event not found."));
+        await store.deleteEvent(req.params.id);
+        await serverCache.invalidateTag("events");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.event.deleted",
+          severity: "warning",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "campus_event",
+          targetName: existing.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, message: "Event deleted." });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // --------------------------------------------------------------------
+  // ASSIGNMENTS
+  // --------------------------------------------------------------------
+  app.get(
+    "/api/assignments",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const entries = await store.listAssignments({
+          courseId: req.query.courseId as string | undefined,
+          departmentId: req.query.departmentId as string | undefined,
+          status: req.query.status as string | undefined,
+        });
+        res.json({ assignments: entries, total: entries.length });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.post(
+    "/api/assignments",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      body: {
+        courseId: Validators.string(1, 50),
+        courseCode: Validators.string(1, 20),
+        title: Validators.string(2, 200),
+        description: Validators.string(2, 5000),
+        dueDate: Validators.string(1, 50),
+        totalPoints: Validators.integer(1, 1000),
+        weightPercent: Validators.integer(0, 100),
+        status: Validators.optional(Validators.enum(["todo", "in_progress", "submitted", "graded"])),
+        gradeAchieved: Validators.optional(Validators.integer(0, 1000)),
+        submissionNotes: Validators.optional(Validators.string(1, 2000)),
+        attachmentUrl: Validators.optional(Validators.string(1, 10000000)),
+        attachmentName: Validators.optional(Validators.string(1, 500)),
+        departmentId: Validators.optional(Validators.string(1, 100)),
+        level: Validators.optional(Validators.string(1, 50)),
+        createdByName: Validators.optional(Validators.string(1, 200)),
+        createdByRole: Validators.optional(Validators.string(1, 50)),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const entry = await store.createAssignment({
+          ...req.body,
+          createdByName: user.name,
+          createdByRole: user.role,
+        });
+        await serverCache.invalidateTag("assignments");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.assignment.created",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: entry.id,
+          targetType: "assignment",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.status(201).json({ success: true, assignment: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.patch(
+    "/api/assignments/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({
+      params: { id: Validators.string(1, 100) },
+      body: {
+        title: Validators.optional(Validators.string(2, 200)),
+        description: Validators.optional(Validators.string(2, 5000)),
+        dueDate: Validators.optional(Validators.string(1, 50)),
+        totalPoints: Validators.optional(Validators.integer(1, 1000)),
+        weightPercent: Validators.optional(Validators.integer(0, 100)),
+        status: Validators.optional(Validators.enum(["todo", "in_progress", "submitted", "graded"])),
+        gradeAchieved: Validators.optional(Validators.integer(0, 1000)),
+        submissionNotes: Validators.optional(Validators.string(1, 2000)),
+        attachmentUrl: Validators.optional(Validators.string(1, 10000000)),
+        attachmentName: Validators.optional(Validators.string(1, 500)),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.assignment.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Assignment not found."));
+        const entry = await store.updateAssignment(req.params.id, req.body);
+        await serverCache.invalidateTag("assignments");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.assignment.updated",
+          severity: "info",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "assignment",
+          targetName: entry.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, assignment: entry });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/assignments/:id",
+    requireRole(["super_admin", "department_admin", "supervisor"]),
+    validate({ params: { id: Validators.string(1, 100) } }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = (req as any).user;
+        const existing = await prisma.assignment.findUnique({ where: { id: req.params.id } });
+        if (!existing) return next(new NotFoundError("Assignment not found."));
+        await store.deleteAssignment(req.params.id);
+        await serverCache.invalidateTag("assignments");
+        await store.writeAudit({
+          category: "administration",
+          eventType: "admin.assignment.deleted",
+          severity: "warning",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: req.params.id,
+          targetType: "assignment",
+          targetName: existing.title,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, message: "Assignment deleted." });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // --------------------------------------------------------------------
   // FILES — real bytes stored on disk, streamed back on download
   // --------------------------------------------------------------------
   app.get(
@@ -2667,12 +3123,16 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
   // --------------------------------------------------------------------
   app.get("/api/analytics", async (_req: Request, res: Response, next: NextFunction) => {
     try {
+      const cacheKey = "analytics:stats";
+      const cached = await serverCache.get(cacheKey);
+      if (cached) return res.json(cached);
+
       const stats = await store.platformStats();
       const [cmp, mtr] = await Promise.all([
         prisma.resource.count({ where: { departmentId: "dept-cmp", status: "approved" } }),
         prisma.resource.count({ where: { departmentId: "dept-mtr", status: "approved" } }),
       ]);
-      res.json({
+      const payload = {
         activeStudents: stats.students,
         totalCourses: stats.totalCourses,
         totalStudyFiles: stats.approvedFiles,
@@ -2682,7 +3142,9 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
           { name: "Computer Engineering", files: cmp },
           { name: "Mechatronics Engineering", files: mtr },
         ],
-      });
+      };
+      await serverCache.set(cacheKey, payload, 120, ["admin"]);
+      res.json(payload);
     } catch (err) {
       next(err);
     }

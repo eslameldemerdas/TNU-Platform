@@ -5,6 +5,7 @@
  */
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import { serverCache } from "./cache";
 import { prisma } from "./prisma";
 
 export type Role = "student" | "moderator" | "department_admin" | "supervisor" | "super_admin";
@@ -85,7 +86,7 @@ export async function addPoints(
   referenceId?: string,
   reason?: string,
 ) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const entry = await tx.pointsLedger.create({
       data: { userId, type: type as any, points, referenceId, reason },
     });
@@ -95,6 +96,9 @@ export async function addPoints(
     });
     return entry;
   });
+  serverCache.invalidateTag("leaderboard").catch(() => {});
+  serverCache.invalidateTag("admin").catch(() => {});
+  return result;
 }
 
 export async function getLeaderboard(limit = 20) {
@@ -165,7 +169,7 @@ export async function getHonorBoard(filters?: {
 }
 
 export async function createHonorEntry(data: {
-  userId: string;
+  userId?: string;
   name: string;
   studentId?: string;
   email?: string;
@@ -197,7 +201,7 @@ export async function createHonorEntry(data: {
   });
   return {
     id: entry.id,
-    userId: entry.userId,
+    userId: entry.userId ?? undefined,
     name: entry.name,
     studentId: entry.studentId,
     email: entry.email,
@@ -883,13 +887,354 @@ export async function platformStats() {
     ]);
   return {
     totalUsers,
-    students,
-    approvedFiles,
-    pendingQueue,
-    totalCourses,
-    totalDownloads: downloadsAgg._sum.downloadsCount ?? 0,
-    systemStatus: "healthy" as const,
+  students,
+  approvedFiles,
+  pendingQueue,
+  totalCourses,
+  totalDownloads: downloadsAgg._sum.downloadsCount ?? 0,
+  systemStatus: "healthy" as const,
+};
+}
+
+// ==================================================================
+// ANNOUNCEMENTS
+// ==================================================================
+export async function createAnnouncement(data: {
+  scope: string;
+  targetId?: string;
+  title: string;
+  content: string;
+  authorName: string;
+  authorRole: string;
+  date: string;
+  isPinned?: boolean;
+  priority?: string;
+}) {
+  const entry = await prisma.announcement.create({ data });
+  return {
+    id: entry.id,
+    scope: entry.scope,
+    targetId: entry.targetId,
+    title: entry.title,
+    content: entry.content,
+    authorName: entry.authorName,
+    authorRole: entry.authorRole,
+    date: entry.date,
+    isPinned: entry.isPinned,
+    priority: entry.priority,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
   };
+}
+
+export async function updateAnnouncement(id: string, data: {
+  title?: string;
+  content?: string;
+  isPinned?: boolean;
+  priority?: string;
+  scope?: string;
+  targetId?: string;
+}) {
+  const entry = await prisma.announcement.update({ where: { id }, data });
+  return {
+    id: entry.id,
+    scope: entry.scope,
+    targetId: entry.targetId,
+    title: entry.title,
+    content: entry.content,
+    authorName: entry.authorName,
+    authorRole: entry.authorRole,
+    date: entry.date,
+    isPinned: entry.isPinned,
+    priority: entry.priority,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export async function deleteAnnouncement(id: string) {
+  await prisma.announcement.delete({ where: { id } });
+  return { success: true };
+}
+
+export async function listAnnouncements(filters?: { scope?: string; targetId?: string }) {
+  const where: any = {};
+  if (filters?.scope) where.scope = filters.scope;
+  if (filters?.targetId) where.targetId = filters.targetId;
+  const entries = await prisma.announcement.findMany({ where, orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }] });
+  return entries.map((e) => ({
+    id: e.id,
+    scope: e.scope,
+    targetId: e.targetId,
+    title: e.title,
+    content: e.content,
+    authorName: e.authorName,
+    authorRole: e.authorRole,
+    date: e.date,
+    isPinned: e.isPinned,
+    priority: e.priority,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+  }));
+}
+
+// ==================================================================
+// CAMPUS EVENTS
+// ==================================================================
+export async function createEvent(data: {
+  title: string;
+  organizer: string;
+  departmentId?: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  category: string;
+  image?: string;
+  maxCapacity?: number;
+  speaker?: string;
+  speakerTitle?: string;
+  targetAudience?: string;
+  requirements?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  tags?: string[];
+  status?: string;
+  registeredStudents?: any[];
+  agenda?: any[];
+}) {
+  const entry = await prisma.campusEvent.create({ data: data as any });
+  return {
+    id: entry.id,
+    title: entry.title,
+    organizer: entry.organizer,
+    departmentId: entry.departmentId,
+    date: entry.date,
+    time: entry.time,
+    location: entry.location,
+    description: entry.description,
+    category: entry.category,
+    rsvpCount: entry.rsvpCount,
+    image: entry.image,
+    maxCapacity: entry.maxCapacity,
+    speaker: entry.speaker,
+    speakerTitle: entry.speakerTitle,
+    targetAudience: entry.targetAudience,
+    requirements: entry.requirements,
+    contactEmail: entry.contactEmail,
+    contactPhone: entry.contactPhone,
+    tags: entry.tags,
+    status: entry.status,
+    registeredStudents: entry.registeredStudents,
+    agenda: entry.agenda,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export async function updateEvent(id: string, data: {
+  title?: string;
+  organizer?: string;
+  departmentId?: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  description?: string;
+  category?: string;
+  image?: string;
+  maxCapacity?: number;
+  speaker?: string;
+  speakerTitle?: string;
+  targetAudience?: string;
+  requirements?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  tags?: string[];
+  status?: string;
+  registeredStudents?: any[];
+  agenda?: any[];
+}) {
+  const entry = await prisma.campusEvent.update({ where: { id }, data: data as any });
+  return {
+    id: entry.id,
+    title: entry.title,
+    organizer: entry.organizer,
+    departmentId: entry.departmentId,
+    date: entry.date,
+    time: entry.time,
+    location: entry.location,
+    description: entry.description,
+    category: entry.category,
+    rsvpCount: entry.rsvpCount,
+    image: entry.image,
+    maxCapacity: entry.maxCapacity,
+    speaker: entry.speaker,
+    speakerTitle: entry.speakerTitle,
+    targetAudience: entry.targetAudience,
+    requirements: entry.requirements,
+    contactEmail: entry.contactEmail,
+    contactPhone: entry.contactPhone,
+    tags: entry.tags,
+    status: entry.status,
+    registeredStudents: entry.registeredStudents,
+    agenda: entry.agenda,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export async function deleteEvent(id: string) {
+  await prisma.campusEvent.delete({ where: { id } });
+  return { success: true };
+}
+
+export async function listEvents(filters?: { category?: string; status?: string; date?: string }) {
+  const where: any = {};
+  if (filters?.category) where.category = filters.category;
+  if (filters?.status) where.status = filters.status;
+  if (filters?.date) where.date = filters.date;
+  const entries = await prisma.campusEvent.findMany({ where, orderBy: [{ date: "desc" }, { createdAt: "desc" }] });
+  return entries.map((e) => ({
+    id: e.id,
+    title: e.title,
+    organizer: e.organizer,
+    departmentId: e.departmentId,
+    date: e.date,
+    time: e.time,
+    location: e.location,
+    description: e.description,
+    category: e.category,
+    rsvpCount: e.rsvpCount,
+    image: e.image,
+    maxCapacity: e.maxCapacity,
+    speaker: e.speaker,
+    speakerTitle: e.speakerTitle,
+    targetAudience: e.targetAudience,
+    requirements: e.requirements,
+    contactEmail: e.contactEmail,
+    contactPhone: e.contactPhone,
+    tags: e.tags,
+    status: e.status,
+    registeredStudents: e.registeredStudents,
+    agenda: e.agenda,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+  }));
+}
+
+// ==================================================================
+// ASSIGNMENTS
+// ==================================================================
+export async function createAssignment(data: {
+  courseId: string;
+  courseCode: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  totalPoints: number;
+  weightPercent: number;
+  status?: string;
+  gradeAchieved?: number;
+  submissionNotes?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  departmentId?: string;
+  level?: string;
+  createdByName?: string;
+  createdByRole?: string;
+}) {
+  const entry = await prisma.assignment.create({ data: data as any });
+  return {
+    id: entry.id,
+    courseId: entry.courseId,
+    courseCode: entry.courseCode,
+    title: entry.title,
+    description: entry.description,
+    dueDate: entry.dueDate,
+    totalPoints: entry.totalPoints,
+    weightPercent: entry.weightPercent,
+    status: entry.status,
+    gradeAchieved: entry.gradeAchieved,
+    submissionNotes: entry.submissionNotes,
+    attachmentUrl: entry.attachmentUrl,
+    attachmentName: entry.attachmentName,
+    departmentId: entry.departmentId,
+    level: entry.level,
+    createdByName: entry.createdByName,
+    createdByRole: entry.createdByRole,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export async function updateAssignment(id: string, data: {
+  title?: string;
+  description?: string;
+  dueDate?: string;
+  totalPoints?: number;
+  weightPercent?: number;
+  status?: string;
+  gradeAchieved?: number;
+  submissionNotes?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+}) {
+  const entry = await prisma.assignment.update({ where: { id }, data: data as any });
+  return {
+    id: entry.id,
+    courseId: entry.courseId,
+    courseCode: entry.courseCode,
+    title: entry.title,
+    description: entry.description,
+    dueDate: entry.dueDate,
+    totalPoints: entry.totalPoints,
+    weightPercent: entry.weightPercent,
+    status: entry.status,
+    gradeAchieved: entry.gradeAchieved,
+    submissionNotes: entry.submissionNotes,
+    attachmentUrl: entry.attachmentUrl,
+    attachmentName: entry.attachmentName,
+    departmentId: entry.departmentId,
+    level: entry.level,
+    createdByName: entry.createdByName,
+    createdByRole: entry.createdByRole,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+export async function deleteAssignment(id: string) {
+  await prisma.assignment.delete({ where: { id } });
+  return { success: true };
+}
+
+export async function listAssignments(filters?: { courseId?: string; departmentId?: string; status?: string }) {
+  const where: any = {};
+  if (filters?.courseId) where.courseId = filters.courseId;
+  if (filters?.departmentId) where.departmentId = filters.departmentId;
+  if (filters?.status) where.status = filters.status;
+  const entries = await prisma.assignment.findMany({ where, orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }] });
+  return entries.map((e) => ({
+    id: e.id,
+    courseId: e.courseId,
+    courseCode: e.courseCode,
+    title: e.title,
+    description: e.description,
+    dueDate: e.dueDate,
+    totalPoints: e.totalPoints,
+    weightPercent: e.weightPercent,
+    status: e.status,
+    gradeAchieved: e.gradeAchieved,
+    submissionNotes: e.submissionNotes,
+    attachmentUrl: e.attachmentUrl,
+    attachmentName: e.attachmentName,
+    departmentId: e.departmentId,
+    level: e.level,
+    createdByName: e.createdByName,
+    createdByRole: e.createdByRole,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+  }));
 }
 
 export { bcrypt, toSafeResource };

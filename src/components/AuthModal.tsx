@@ -96,11 +96,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setIsLoading(true);
 
-    // Timeout safety protection (6 seconds max)
+    // Timeout safety protection (30 seconds max — accommodates Neon DB cold-start latency)
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
       setErrorMessage("انتهت مهلة الطلب. يرجى التحقق من اتصال الشبكة وإعادة المحاولة.");
-    }, 6000);
+    }, 30000);
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -171,10 +171,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setIsLoading(true);
 
+    // Timeout safety protection (30 seconds max — accommodates Neon DB cold-start latency)
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
       setErrorMessage("انتهت مهلة الإنشاء. يرجى إعادة المحاولة.");
-    }, 6000);
+    }, 30000);
 
     try {
       const res = await fetch("/api/auth/signup", {

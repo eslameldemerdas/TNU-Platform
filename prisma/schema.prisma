@@ -103,6 +103,23 @@ enum ModerationActionType {
   warn
 }
 
+enum EventCategory {
+  workshop
+  hackathon
+  guest_lecture
+  social
+  competition
+  field_trip
+  seminar
+}
+
+enum AssignmentStatus {
+  todo
+  in_progress
+  submitted
+  graded
+}
+
 // ==========================================
 // HIERARCHY TABLES
 // University -> Faculty -> Department -> AcademicLevel -> Semester -> Course
@@ -738,8 +755,8 @@ model Notification {
 
 model HonorStudent {
   id               String         @id @default(uuid())
-  userId           String
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   name             String
   studentId        String?
@@ -775,5 +792,83 @@ model HonorStudent {
   @@index([departmentId])
   @@index([category])
   @@index([featured])
+  @@index([createdAt])
+}
+
+model Announcement {
+  id          String    @id @default(uuid())
+  scope       String    @default("department") // university, faculty, department, course
+  targetId    String?   // departmentId or courseId
+  title       String
+  content     String
+  authorName  String
+  authorRole  String
+  date        String
+  isPinned    Boolean   @default(false)
+  priority    String    @default("normal") // low, normal, urgent
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([scope])
+  @@index([targetId])
+  @@index([createdAt])
+}
+
+model CampusEvent {
+  id                  String          @id @default(uuid())
+  title               String
+  organizer           String
+  departmentId        String?
+  date                String
+  time                String
+  location            String
+  description         String
+  category            EventCategory
+  rsvpCount           Int             @default(0)
+  image               String?
+  maxCapacity         Int?
+  speaker             String?
+  speakerTitle        String?
+  targetAudience      String?
+  requirements        String?
+  contactEmail        String?
+  contactPhone        String?
+  tags                String[]        @default([])
+  status              String          @default("published") // published, draft, cancelled
+  registeredStudents  Json            @default("[]")
+  agenda              Json?           @default("[]")
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([category])
+  @@index([date])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Assignment {
+  id              String           @id @default(uuid())
+  courseId        String
+  courseCode      String
+  title           String
+  description     String
+  dueDate         String
+  totalPoints     Int
+  weightPercent   Int
+  status          AssignmentStatus @default(todo)
+  gradeAchieved   Int?
+  submissionNotes String?
+  attachmentUrl   String?
+  attachmentName  String?
+  departmentId    String?
+  level           String?
+  createdByName   String?
+  createdByRole   String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([courseId])
+  @@index([departmentId])
+  @@index([status])
   @@index([createdAt])
 }

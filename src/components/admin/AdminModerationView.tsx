@@ -93,11 +93,11 @@ interface AdminModerationViewProps {
   onAddCourse: (course: Partial<Course>) => void;
   onUpdateCourse?: (courseId: string, courseData: Partial<Course>) => void;
   onDeleteCourse?: (courseId: string) => void;
-  onAddAnnouncement?: (announcement: Omit<Announcement, "id" | "date">) => void;
+  onAddAnnouncement?: (announcement: Omit<Announcement, "id" | "date">) => Promise<void>;
   onDeleteAnnouncement?: (announcementId: string) => void;
   onTogglePinAnnouncement?: (announcementId: string) => void;
-  onAddEvent?: (event: Omit<CampusEvent, "id" | "rsvpCount">) => void;
-  onUpdateEvent?: (eventId: string, event: Partial<CampusEvent>) => void;
+  onAddEvent?: (event: Omit<CampusEvent, "id" | "rsvpCount">) => Promise<void>;
+  onUpdateEvent?: (eventId: string, event: Partial<CampusEvent>) => Promise<void>;
   onDeleteEvent?: (eventId: string) => void;
   onToggleEventStatus?: (eventId: string) => void;
   onAddAssignment?: (asgn: Partial<Assignment>) => void;
@@ -463,7 +463,7 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     }
 
     try {
-      await fetch("/api/admin/update-role", {
+      const res = await fetch("/api/admin/update-role", {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
@@ -475,8 +475,15 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
           supervisorScope: newScope,
         }),
       });
-    } catch {
-      // Local state is updated
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || data.error?.message || "فشل تحديث صلاحيات المشرف.");
+      }
+    } catch (err: any) {
+      setRoleMessage({
+        text: err.message || "حدث خطأ أثناء تحديث الصلاحيات في قاعدة البيانات.",
+        type: "error",
+      });
     }
 
     setShowSupervisorModal(false);
@@ -487,14 +494,35 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     setSupervisorToDelete({ id: supId, name: supName });
   };
 
-  const handleConfirmRemoveSupervisor = () => {
+  const handleConfirmRemoveSupervisor = async () => {
     if (!supervisorToDelete) return;
     const { id: supId, name: supName } = supervisorToDelete;
-    setSupervisorsList((prev) => prev.filter((s) => s.id !== supId));
-    setRoleMessage({
-      text: `تم إلغاء صفة المشرف عن (${supName}) وعودته كطالب عادي.`,
-      type: "success",
-    });
+
+    try {
+      const res = await fetch("/api/admin/update-role", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          targetUserId: supId,
+          newRole: "student",
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || data.error?.message || "فشل إزالة صلاحيات المشرف.");
+      }
+      setSupervisorsList((prev) => prev.filter((s) => s.id !== supId));
+      setRoleMessage({
+        text: `تم إلغاء صفة المشرف عن (${supName}) وعودته كطالب عادي.`,
+        type: "success",
+      });
+    } catch (err: any) {
+      setRoleMessage({
+        text: err.message || "حدث خطأ أثناء إزالة صلاحيات المشرف.",
+        type: "error",
+      });
+    }
     setSupervisorToDelete(null);
     setTimeout(() => setRoleMessage(null), 4000);
   };
@@ -700,34 +728,42 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     }
   };
 
-  const handlePublishAnnouncement = (e: React.FormEvent) => {
+  const handlePublishAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ancTitle.trim() || !ancContent.trim()) return;
 
-    if (onAddAnnouncement) {
-      onAddAnnouncement({
-        title: ancTitle.trim(),
-        content: ancContent.trim(),
-        priority: ancPriority,
-        scope: ancScope,
-        targetId: ancScope === "department" ? ancTargetDept : undefined,
-        isPinned: ancIsPinned,
-        authorName:
-          userRole === "super_admin"
-            ? language === "ar"
-              ? "إدارة الكلية"
-              : "Faculty Administration"
-            : language === "ar"
-              ? "عمادة ومجلس الإشراف"
-              : "Supervisory Board",
-        authorRole: userRole,
-      });
+    try {
+      if (onAddAnnouncement) {
+        await onAddAnnouncement({
+          title: ancTitle.trim(),
+          content: ancContent.trim(),
+          priority: ancPriority,
+          scope: ancScope,
+          targetId: ancScope === "department" ? ancTargetDept : undefined,
+          isPinned: ancIsPinned,
+          authorName:
+            userRole === "super_admin"
+              ? language === "ar"
+                ? "إدارة الكلية"
+                : "Faculty Administration"
+              : language === "ar"
+                ? "عمادة ومجلس الإشراف"
+                : "Supervisory Board",
+          authorRole: userRole,
+        });
+      }
 
       setAncTitle("");
       setAncContent("");
       setAncPriority("urgent");
       setAncIsPinned(true);
       setRoleMessage({ text: t.admin.announcementPublished, type: "success" });
+      setTimeout(() => setRoleMessage(null), 5000);
+    } catch (err: any) {
+      setRoleMessage({
+        text: err.message || "فشل نشر الإعلان.",
+        type: "error",
+      });
       setTimeout(() => setRoleMessage(null), 5000);
     }
   };
@@ -781,7 +817,7 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     setShowEventModal(true);
   };
 
-  const handleSaveEvent = (e: React.FormEvent) => {
+  const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!evtTitle.trim() || !evtLocation.trim()) return;
 
@@ -790,57 +826,65 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
       .map((t) => t.trim())
       .filter(Boolean);
 
-    if (editingEventId) {
-      if (onUpdateEvent) {
-        onUpdateEvent(editingEventId, {
-          title: evtTitle.trim(),
-          category: evtCategory,
-          organizer: evtOrganizer.trim(),
-          date: evtDate,
-          time: evtTime,
-          location: evtLocation.trim(),
-          description: evtDescription.trim(),
-          speaker: evtSpeaker.trim() || undefined,
-          speakerTitle: evtSpeakerTitle.trim() || undefined,
-          maxCapacity: evtMaxCapacity,
-          targetAudience: evtTargetAudience.trim() || undefined,
-          requirements: evtRequirements.trim() || undefined,
-          contactEmail: evtContactEmail.trim() || undefined,
-          contactPhone: evtContactPhone.trim() || undefined,
-          tags: parsedTags,
-          image: evtImage,
-          status: evtStatus,
-        });
+    try {
+      if (editingEventId) {
+        if (onUpdateEvent) {
+          await onUpdateEvent(editingEventId, {
+            title: evtTitle.trim(),
+            category: evtCategory,
+            organizer: evtOrganizer.trim(),
+            date: evtDate,
+            time: evtTime,
+            location: evtLocation.trim(),
+            description: evtDescription.trim(),
+            speaker: evtSpeaker.trim() || undefined,
+            speakerTitle: evtSpeakerTitle.trim() || undefined,
+            maxCapacity: evtMaxCapacity,
+            targetAudience: evtTargetAudience.trim() || undefined,
+            requirements: evtRequirements.trim() || undefined,
+            contactEmail: evtContactEmail.trim() || undefined,
+            contactPhone: evtContactPhone.trim() || undefined,
+            tags: parsedTags,
+            image: evtImage,
+            status: evtStatus,
+          });
+        }
         setRoleMessage({ text: "تم تحديث بيانات الفعالية بنجاح!", type: "success" });
-      }
-    } else {
-      if (onAddEvent) {
-        onAddEvent({
-          title: evtTitle.trim(),
-          category: evtCategory,
-          organizer: evtOrganizer.trim(),
-          date: evtDate,
-          time: evtTime,
-          location: evtLocation.trim(),
-          description: evtDescription.trim(),
-          speaker: evtSpeaker.trim() || undefined,
-          speakerTitle: evtSpeakerTitle.trim() || undefined,
-          maxCapacity: evtMaxCapacity,
-          targetAudience: evtTargetAudience.trim() || undefined,
-          requirements: evtRequirements.trim() || undefined,
-          contactEmail: evtContactEmail.trim() || undefined,
-          contactPhone: evtContactPhone.trim() || undefined,
-          tags: parsedTags,
-          image: evtImage,
-          status: evtStatus,
-          registeredStudents: [],
-        });
+      } else {
+        if (onAddEvent) {
+          await onAddEvent({
+            title: evtTitle.trim(),
+            category: evtCategory,
+            organizer: evtOrganizer.trim(),
+            date: evtDate,
+            time: evtTime,
+            location: evtLocation.trim(),
+            description: evtDescription.trim(),
+            speaker: evtSpeaker.trim() || undefined,
+            speakerTitle: evtSpeakerTitle.trim() || undefined,
+            maxCapacity: evtMaxCapacity,
+            targetAudience: evtTargetAudience.trim() || undefined,
+            requirements: evtRequirements.trim() || undefined,
+            contactEmail: evtContactEmail.trim() || undefined,
+            contactPhone: evtContactPhone.trim() || undefined,
+            tags: parsedTags,
+            image: evtImage,
+            status: evtStatus,
+            registeredStudents: [],
+          });
+        }
         setRoleMessage({ text: "تم نشر الفعالية/النشاط الطلابي بنجاح!", type: "success" });
       }
-    }
 
-    setShowEventModal(false);
-    setTimeout(() => setRoleMessage(null), 4000);
+      setShowEventModal(false);
+      setTimeout(() => setRoleMessage(null), 4000);
+    } catch (err: any) {
+      setRoleMessage({
+        text: err.message || "فشل حفظ الفعالية.",
+        type: "error",
+      });
+      setTimeout(() => setRoleMessage(null), 4000);
+    }
   };
 
   return (

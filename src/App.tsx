@@ -569,50 +569,76 @@ export default function App() {
       }
     } catch (err) {
       console.error("[Frontend handleDeleteCourse] Network error:", err);
-      setCourses((prev) => prev.filter((c) => c.id !== courseId));
-      if (selectedCourseId === courseId) {
-        setSelectedCourseId(null);
-      }
-      addToast("info", "تم حذف المادة", `تم حذف المقرر ${courseToDelete?.code || ""}.`);
+      addToast("error", "خطأ في الاتصال", "تعذر حذف المقرر. لم يتم حذف المادة من قاعدة البيانات.");
     }
   };
 
   // Official Announcements Handlers
-  const handleAddAnnouncement = (ancData: Omit<Announcement, "id" | "date">) => {
-    const newAnc: Announcement = {
-      id: `anc-${Date.now()}`,
-      ...ancData,
-      date: new Date().toISOString().split("T")[0],
-    };
-    setAnnouncements((prev) => {
-      const updated = [newAnc, ...prev];
-      EngHubStorage.saveAnnouncements(updated);
-      return updated;
-    });
-    addToast(
-      "success",
-      "تم نشر الإعلان الرسمي",
-      `تم تعميم: "${newAnc.title}" على جميع المستخدمين.`,
-    );
+  const handleAddAnnouncement = async (ancData: Omit<Announcement, "id" | "date">) => {
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(ancData),
+      });
+      const data = await res.json();
+      if (res.ok && data.announcement) {
+        setAnnouncements((prev) => [data.announcement, ...prev]);
+        addToast(
+          "success",
+          "تم نشر الإعلان الرسمي",
+          `تم تعميم: "${data.announcement.title}" على جميع المستخدمين.`,
+        );
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل نشر الإعلان.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر نشر الإعلان. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleDeleteAnnouncement = (announcementId: string) => {
-    setAnnouncements((prev) => {
-      const updated = prev.filter((a) => a.id !== announcementId);
-      EngHubStorage.saveAnnouncements(updated);
-      return updated;
-    });
-    addToast("info", "تم حذف الإعلان", "تم إزالة الإعلان بنجاح.");
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    try {
+      const res = await fetch(`/api/announcements/${announcementId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+        addToast("info", "تم حذف الإعلان", "تم إزالة الإعلان بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الإعلان.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر حذف الإعلان. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleTogglePinAnnouncement = (announcementId: string) => {
-    setAnnouncements((prev) => {
-      const updated = prev.map((a) =>
-        a.id === announcementId ? { ...a, isPinned: !a.isPinned } : a,
-      );
-      EngHubStorage.saveAnnouncements(updated);
-      return updated;
-    });
+  const handleTogglePinAnnouncement = async (announcementId: string) => {
+    try {
+      const announcement = announcements.find((a) => a.id === announcementId);
+      if (!announcement) return;
+      const res = await fetch(`/api/announcements/${announcementId}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ isPinned: !announcement.isPinned }),
+      });
+      const data = await res.json();
+      if (res.ok && data.announcement) {
+        setAnnouncements((prev) =>
+          prev.map((a) => (a.id === announcementId ? data.announcement : a)),
+        );
+        addToast("success", "تم تحديث الإعلان", "تم تغيير حالة التثبيت بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الإعلان.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تحديث الإعلان. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   // Discussion & Comments Handlers
@@ -760,133 +786,272 @@ export default function App() {
   };
 
   // Study Tools Assignments
-  const handleAddAssignment = (asgnData: Partial<Assignment>) => {
-    const newAsgn: Assignment = {
-      id: `asgn-${Date.now()}`,
-      courseId: asgnData.courseId || courses[0].id,
-      courseCode: asgnData.courseCode || "ENG",
-      title: asgnData.title || "New Assignment",
-      description: asgnData.description || "",
-      dueDate: asgnData.dueDate || new Date().toISOString().split("T")[0],
-      totalPoints: asgnData.totalPoints || 20,
-      weightPercent: asgnData.weightPercent || 10,
-      status: "todo",
-      attachmentUrl: asgnData.attachmentUrl,
-      attachmentName: asgnData.attachmentName,
-      departmentId: asgnData.departmentId,
-      level: asgnData.level,
-      createdByName: asgnData.createdByName,
-      createdByRole: asgnData.createdByRole,
-    };
-    setAssignments((prev) => {
-      const updated = [newAsgn, ...prev];
-      EngHubStorage.saveAssignments(updated);
-      return updated;
-    });
-    addToast("success", "تم نشر التكليف بنجاح", `تم تعميم التكليف "${newAsgn.title}" للمقرر.`);
+  const handleAddAssignment = async (asgnData: Partial<Assignment>) => {
+    try {
+      const payload = {
+        courseId: asgnData.courseId || courses[0].id,
+        courseCode: asgnData.courseCode || "ENG",
+        title: asgnData.title || "New Assignment",
+        description: asgnData.description || "",
+        dueDate: asgnData.dueDate || new Date().toISOString().split("T")[0],
+        totalPoints: asgnData.totalPoints || 20,
+        weightPercent: asgnData.weightPercent || 10,
+        status: "todo",
+        attachmentUrl: asgnData.attachmentUrl,
+        attachmentName: asgnData.attachmentName,
+        departmentId: asgnData.departmentId,
+        level: asgnData.level,
+      };
+      const res = await fetch("/api/assignments", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.assignment) {
+        setAssignments((prev) => [data.assignment, ...prev]);
+        addToast("success", "تم نشر التكليف بنجاح", `تم تعميم التكليف "${data.assignment.title}" للمقرر.`);
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل إضافة التكليف.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر إضافة التكليف. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleUpdateAssignment = (id: string, asgnData: Partial<Assignment>) => {
-    setAssignments((prev) => {
-      const updated = prev.map((a) => (a.id === id ? { ...a, ...asgnData } : a));
-      EngHubStorage.saveAssignments(updated);
-      return updated;
-    });
-    addToast("success", "تم تعديل التكليف", "تم تحديث بيانات الشيت/الواجب بنجاح.");
+  const handleUpdateAssignment = async (id: string, asgnData: Partial<Assignment>) => {
+    try {
+      const res = await fetch(`/api/assignments/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(asgnData),
+      });
+      const data = await res.json();
+      if (res.ok && data.assignment) {
+        setAssignments((prev) => prev.map((a) => (a.id === id ? data.assignment : a)));
+        addToast("success", "تم تعديل التكليف", "تم تحديث بيانات الشيت/الواجب بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل التكليف.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تعديل التكليف. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleDeleteAssignment = (id: string) => {
-    setAssignments((prev) => {
-      const updated = prev.filter((a) => a.id !== id);
-      EngHubStorage.saveAssignments(updated);
-      return updated;
-    });
-    addToast("info", "تم حذف التكليف", "تم إزالة الواجب الدراسي بنجاح.");
+  const handleDeleteAssignment = async (id: string) => {
+    try {
+      const res = await fetch(`/api/assignments/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAssignments((prev) => prev.filter((a) => a.id !== id));
+        addToast("info", "تم حذف التكليف", "تم إزالة الواجب الدراسي بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف التكليف.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر حذف التكليف. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleUpdateAssignmentStatus = (id: string, status: Assignment["status"]) => {
-    setAssignments((prev) => {
-      const updated = prev.map((a) => (a.id === id ? { ...a, status } : a));
-      EngHubStorage.saveAssignments(updated);
-      return updated;
-    });
-    addToast("info", "تحديث حالة التسليم", `تم تغيير الحالة إلى ${status}.`);
+  const handleUpdateAssignmentStatus = async (id: string, status: Assignment["status"]) => {
+    try {
+      const res = await fetch(`/api/assignments/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (res.ok && data.assignment) {
+        setAssignments((prev) => prev.map((a) => (a.id === id ? data.assignment : a)));
+        addToast("info", "تحديث حالة التسليم", `تم تغيير الحالة إلى ${status}.`);
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الحالة.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تحديث الحالة. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   // Schedule Handlers
-  const handleAddScheduleItem = (itemData: Omit<ScheduleItem, "id">) => {
-    const newItem: ScheduleItem = {
-      id: `sch-${Date.now()}`,
-      ...itemData,
-    };
-    setSchedule((prev) => {
-      const updated = [...prev, newItem];
-      EngHubStorage.saveSchedule(updated);
-      return updated;
-    });
-    addToast(
-      "success",
-      "تم إضافة المحاضرة للجدول",
-      `تم توثيق حصة "${newItem.courseCode}" يوم ${newItem.dayOfWeek}`,
-    );
+  const handleAddScheduleItem = async (itemData: Omit<ScheduleItem, "id">) => {
+    try {
+      const payload = {
+        courseId: itemData.courseId,
+        courseCode: itemData.courseCode,
+        courseTitle: itemData.title,
+        instructor: itemData.instructor,
+        dayOfWeek: itemData.dayOfWeek,
+        startTime: itemData.startTime,
+        endTime: itemData.endTime,
+        hall: itemData.location,
+        type: itemData.type,
+        departmentId: itemData.departmentId,
+        level: itemData.level,
+      };
+      const res = await fetch("/api/schedules", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.schedule) {
+        setSchedule((prev) => [...prev, data.schedule]);
+        addToast(
+          "success",
+          "تم إضافة المحاضرة للجدول",
+          `تم توثيق حصة "${data.schedule.courseCode}" يوم ${data.schedule.dayOfWeek}`,
+        );
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل إضافة الحصة.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر إضافة الحصة. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleUpdateScheduleItem = (id: string, itemData: Partial<ScheduleItem>) => {
-    setSchedule((prev) => {
-      const updated = prev.map((s) => (s.id === id ? { ...s, ...itemData } : s));
-      EngHubStorage.saveSchedule(updated);
-      return updated;
-    });
-    addToast("success", "تم تعديل الجدول الأسبوعي", "تم تحديث الموعد والقاعة بنجاح.");
+  const handleUpdateScheduleItem = async (id: string, itemData: Partial<ScheduleItem>) => {
+    try {
+      const payload: any = {};
+      if (itemData.title) payload.courseTitle = itemData.title;
+      if (itemData.instructor) payload.instructor = itemData.instructor;
+      if (itemData.dayOfWeek) payload.dayOfWeek = itemData.dayOfWeek;
+      if (itemData.startTime) payload.startTime = itemData.startTime;
+      if (itemData.endTime) payload.endTime = itemData.endTime;
+      if (itemData.location) payload.hall = itemData.location;
+      if (itemData.type) payload.type = itemData.type;
+      if (itemData.departmentId) payload.departmentId = itemData.departmentId;
+      if (itemData.level) payload.level = itemData.level;
+
+      const res = await fetch(`/api/schedules/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.schedule) {
+        setSchedule((prev) => prev.map((s) => (s.id === id ? data.schedule : s)));
+        addToast("success", "تم تعديل الجدول الأسبوعي", "تم تحديث الموعد والقاعة بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل الحصة.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تعديل الحصة. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleDeleteScheduleItem = (id: string) => {
-    setSchedule((prev) => {
-      const updated = prev.filter((s) => s.id !== id);
-      EngHubStorage.saveSchedule(updated);
-      return updated;
-    });
-    addToast("info", "تم حذف المحاضرة من الجدول", "تم إزالة الحصة الدراسية بنجاح.");
+  const handleDeleteScheduleItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/schedules/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSchedule((prev) => prev.filter((s) => s.id !== id));
+        addToast("info", "تم حذف المحاضرة من الجدول", "تم إزالة الحصة الدراسية بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الحصة.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر حذف الحصة. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   // Campus Events CRUD & RSVP Handlers
-  const handleAddEvent = (eventData: Omit<CampusEvent, "id" | "rsvpCount" | "hasRsvped">) => {
-    const newEvt: CampusEvent = {
-      id: `evt-${Date.now()}`,
-      ...eventData,
-      rsvpCount: 0,
-      hasRsvped: false,
-      registeredStudents: [],
-    };
-    setEvents((prev) => [newEvt, ...prev]);
-    addToast(
-      "success",
-      "تم إضافة الفعالية بنجاح",
-      `تم إضافة "${newEvt.title}" إلى قائمة الفعاليات.`,
-    );
+  const handleAddEvent = async (eventData: Omit<CampusEvent, "id" | "rsvpCount" | "hasRsvped">) => {
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(eventData),
+      });
+      const data = await res.json();
+      if (res.ok && data.event) {
+        setEvents((prev) => [data.event, ...prev]);
+        addToast(
+          "success",
+          "تم إضافة الفعالية بنجاح",
+          `تم إضافة "${data.event.title}" إلى قائمة الفعاليات.`,
+        );
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل إضافة الفعالية.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر إضافة الفعالية. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleUpdateEvent = (eventId: string, eventUpdate: Partial<CampusEvent>) => {
-    setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, ...eventUpdate } : e)));
-    addToast("success", "تم تعديل الفعالية", "تم تحديث بيانات الفعالية بنجاح.");
+  const handleUpdateEvent = async (eventId: string, eventUpdate: Partial<CampusEvent>) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(eventUpdate),
+      });
+      const data = await res.json();
+      if (res.ok && data.event) {
+        setEvents((prev) => prev.map((e) => (e.id === eventId ? data.event : e)));
+        addToast("success", "تم تعديل الفعالية", "تم تحديث بيانات الفعالية بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل الفعالية.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تعديل الفعالية. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== eventId));
-    addToast("info", "تم حذف الفعالية", "تم إزالة الفعالية بنجاح.");
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        addToast("info", "تم حذف الفعالية", "تم إزالة الفعالية بنجاح.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الفعالية.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر حذف الفعالية. يرجى المحاولة مرة أخرى.");
+    }
   };
 
-  const handleToggleEventStatus = (eventId: string) => {
-    setEvents((prev) =>
-      prev.map((e) => {
-        if (e.id === eventId) {
-          const newStatus = e.status === "draft" ? "published" : "draft";
-          return { ...e, status: newStatus as any };
-        }
-        return e;
-      }),
-    );
-    addToast("info", "تم تحديث حالة الفعالية", "تم تغيير حالة الظهور والاعتماد.");
+  const handleToggleEventStatus = async (eventId: string) => {
+    try {
+      const event = events.find((e) => e.id === eventId);
+      if (!event) return;
+      const newStatus = event.status === "draft" ? "published" : "draft";
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.event) {
+        setEvents((prev) => prev.map((e) => (e.id === eventId ? data.event : e)));
+        addToast("info", "تم تحديث حالة الفعالية", "تم تغيير حالة الظهور والاعتماد.");
+      } else {
+        addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الحالة.");
+      }
+    } catch {
+      addToast("error", "خطأ في الاتصال", "تعذر تحديث الحالة. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   const handleToggleRSVP = (eventId: string) => {
