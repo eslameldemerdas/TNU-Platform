@@ -28,6 +28,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { MOCK_EXAMS_QUIZZES } from "../../data/mockData";
 import { ExamQuiz, QuizQuestion, QuizSubmission, Course, UserProfile } from "../../types";
 import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import { Card, Button, Badge, EmptyState } from "../ui";
 
 interface ExamsQuizzesEngineProps {
   courses: Course[];
@@ -650,95 +651,101 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
     return (
       <div className="space-y-6" id="exam-quiz-active-runner">
         {/* Top Quiz Header Bar */}
-        <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                {selectedQuiz.courseCode}
-              </span>
-              <span className="text-xs text-slate-400">
-                {selectedQuiz.term || "اختبار تقييمي"} • {selectedQuiz.questions.length} أسئلة
-              </span>
-              {selectedQuiz.isPastExam && (
-                <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300">
-                  امتحان سابق {selectedQuiz.year}
+        <Card variant="elevated" padding="lg" className="bg-slate-900 text-white border-slate-800 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="neutral" size="sm" className="course-code">
+                  {selectedQuiz.courseCode}
+                </Badge>
+                <span className="text-xs text-slate-400">
+                  {selectedQuiz.term || "اختبار تقييمي"} • {selectedQuiz.questions.length} أسئلة
                 </span>
-              )}
-            </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-              {selectedQuiz.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300">الموضوع: {selectedQuiz.topic}</p>
-          </div>
-
-          {/* Timer & Actions */}
-          <div className="flex items-center gap-3">
-            {!isQuizSubmitted && (
-              <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-base font-bold transition-colors ${
-                  isWarningTime
-                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse"
-                    : "bg-slate-800 text-emerald-400 border border-slate-700"
-                }`}
-                role="timer"
-                aria-live="polite"
-              >
-                <Clock className="w-5 h-5 text-current" />
-                <span>{formatTimer(timeLeftSeconds)}</span>
+                {selectedQuiz.isPastExam && (
+                  <Badge variant="warning" size="sm">
+                    امتحان سابق {selectedQuiz.year}
+                  </Badge>
+                )}
               </div>
-            )}
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                {selectedQuiz.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300">الموضوع: {selectedQuiz.topic}</p>
+            </div>
 
-            {!isQuizSubmitted && (
-              <button
-                onClick={() => setIsReviewDrawerOpen(true)}
-                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5"
-              >
-                <ListOrdered className="w-4 h-4 text-emerald-400" />
-                <span>
-                  مراجعة ({answeredCount}/{selectedQuiz.questions.length})
-                </span>
-              </button>
-            )}
+            {/* Timer & Actions */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {!isQuizSubmitted && (
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-ehb-lg font-mono text-base font-bold transition-colors border ${
+                    isWarningTime
+                      ? "text-amber-400 bg-amber-500/10 border-amber-500/40"
+                      : "text-emerald-400 bg-slate-800 border-slate-700"
+                  }`}
+                  role="timer"
+                  aria-live="polite"
+                >
+                  <Clock className="w-5 h-5 text-current" />
+                  <span dir="ltr">{formatTimer(timeLeftSeconds)}</span>
+                </div>
+              )}
 
-            <button
-              onClick={() => {
-                if (!isQuizSubmitted && Object.keys(userAnswers).length > 0) {
-                  if (
-                    !window.confirm(
-                      "هل تريد مغادرة الاختبار الحالي؟ سيتم فقدان إجاباتك غير المحفوظة.",
-                    )
+              {!isQuizSubmitted && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsReviewDrawerOpen(true)}
+                  leftIcon={<ListOrdered className="w-4 h-4" />}
+                >
+                  مراجعة (
+                  <bdi className="course-code" dir="ltr">
+                    {answeredCount}/{selectedQuiz.questions.length}
+                  </bdi>
                   )
-                    return;
-                }
-                setSelectedQuiz(null);
-                setIsQuizSubmitted(false);
-                setSubmissionResult(null);
-              }}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
-            >
-              خروج
-            </button>
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (!isQuizSubmitted && Object.keys(userAnswers).length > 0) {
+                    if (
+                      !window.confirm(
+                        "هل تريد مغادرة الاختبار الحالي؟ سيتم فقدان إجاباتك غير المحفوظة.",
+                      )
+                    )
+                      return;
+                  }
+                  setSelectedQuiz(null);
+                  setIsQuizSubmitted(false);
+                  setSubmissionResult(null);
+                }}
+              >
+                خروج
+              </Button>
+            </div>
           </div>
-        </div>
+        </Card>
 
         {/* QUIZ SUBMISSION RESULTS REPORT VIEW */}
         {isQuizSubmitted && submissionResult ? (
           <div className="space-y-6 animate-fadeIn">
             {/* Score Banner */}
-            <div
-              className={`p-6 sm:p-8 rounded-3xl border ${
-                submissionResult.passed
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-100"
-                  : "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100"
-              }`}
+            <Card
+              variant="elevated"
+              padding="lg"
+              className={
+                submissionResult.passed ? "border-emerald-500/30" : "border-amber-500/30"
+              }
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+                    className={`w-14 h-14 rounded-ehb-lg flex items-center justify-center shrink-0 ${
                       submissionResult.passed
-                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                        : "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
+                        ? "bg-emerald-500 text-white shadow-ehb-md"
+                        : "bg-amber-500 text-white shadow-ehb-md"
                     }`}
                   >
                     {submissionResult.passed ? (
@@ -748,79 +755,79 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                     )}
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-xl sm:text-2xl font-bold text-ehb-text-primary">
                       {submissionResult.passed
                         ? "أحسنت! لقد اجتزت الاختبار بنجاح"
                         : "محاولة جيدة! راجع الأخطاء لتحسين مستواك"}
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p className="text-sm text-ehb-text-muted">
                       حصلت على {submissionResult.score} من إجمالي {submissionResult.totalQuestions}{" "}
                       إجابات صحيحة
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 sm:border-r sm:pr-6 sm:border-slate-200 dark:sm:border-slate-700">
+                <div className="flex items-center gap-4 sm:border-r sm:pr-6 sm:border-ehb-default">
                   <div className="text-center">
-                    <div className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                    <div className="text-3xl font-extrabold text-ehb-text-primary" dir="ltr">
                       {submissionResult.percentage}%
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      النسبة المئوية
-                    </div>
+                    <div className="text-xs text-ehb-text-muted font-medium">النسبة المئوية</div>
                   </div>
                   {submissionResult.pointsEarned && (
-                    <div className="text-center px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                      <div className="text-xl font-bold">+{submissionResult.pointsEarned}</div>
-                      <div className="text-xs font-medium">نقاط مضافة</div>
-                    </div>
+                    <Badge variant="success" size="md">
+                      +{submissionResult.pointsEarned} نقطة
+                    </Badge>
                   )}
                 </div>
               </div>
 
               {/* Action Buttons & Study Loop Connector */}
-              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-6 pt-6 border-t border-ehb-subtle flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
+                  <Button
+                    variant="success"
+                    size="md"
                     onClick={() => handleStartQuiz(selectedQuiz)}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-colors flex items-center gap-2"
+                    leftIcon={<RotateCcw className="w-4 h-4" />}
                   >
-                    <RotateCcw className="w-4 h-4" />
                     إعادة الاختبار مرة أخرى
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="md"
                     onClick={() => {
                       setSelectedQuiz(null);
                       setIsQuizSubmitted(false);
                     }}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors"
                   >
                     العودة لقائمة الاختبارات
-                  </button>
+                  </Button>
                 </div>
 
                 {/* STUDY LOOP CALL TO ACTION */}
                 {onStartPomodoroStudy && (
-                  <button
+                  <Button
+                    variant="attention"
+                    size="md"
                     onClick={() =>
                       onStartPomodoroStudy(
                         selectedQuiz.courseCode,
                         `مراجعة أخطاء ومفاهيم ${selectedQuiz.courseCode}`,
                       )
                     }
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md transition-all flex items-center gap-2"
+                    leftIcon={<Flame className="w-4 h-4" />}
                   >
-                    <Flame className="w-4 h-4 text-slate-950" />
                     ذاكر مقرر {selectedQuiz.courseCode} الآن مع بومودورو
-                  </button>
+                  </Button>
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Detailed Question by Question Solution Breakdown */}
             <div className="space-y-4">
-              <h4 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h4 className="text-lg font-bold text-ehb-text-primary flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-500" />
                 مراجعة الإجابات والحلول النموذجية مع الشرح الهندسي
               </h4>
@@ -832,43 +839,36 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                   const isUnanswered = userAnsIdx === undefined;
 
                   return (
-                    <div
+                    <Card
                       key={q.id}
-                      className={`p-5 sm:p-6 rounded-3xl border transition-all ${
+                      padding="lg"
+                      className={
                         isCorrect
-                          ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40"
-                          : "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40"
-                      }`}
+                          ? "border-emerald-500/40 bg-emerald-500/5"
+                          : "border-rose-500/40 bg-rose-500/5"
+                      }
                     >
                       <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                          <span className="w-7 h-7 rounded-ehb-md flex items-center justify-center font-bold text-xs bg-ehb-surface-elevated-2 text-ehb-text-primary">
                             {idx + 1}
                           </span>
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-md ${
-                              isCorrect
-                                ? "bg-emerald-500 text-white"
-                                : isUnanswered
-                                  ? "bg-amber-500 text-white"
-                                  : "bg-rose-500 text-white"
-                            }`}
-                          >
+                          <Badge dot variant={isCorrect ? "success" : isUnanswered ? "warning" : "error"} size="sm">
                             {isCorrect
                               ? "إجابة صحيحة"
                               : isUnanswered
                                 ? "لم يتم الإجابة"
                                 : "إجابة خاطئة"}
-                          </span>
+                          </Badge>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleBookmarkQuestion(q.id)}
-                            className={`p-1.5 rounded-lg transition-colors ${
+                            className={`p-1.5 rounded-ehb-md transition-colors ${
                               bookmarkedQuestionIds.has(q.id)
-                                ? "text-amber-500 bg-amber-500/10"
-                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                ? "text-amber-400 bg-amber-500/10"
+                                : "text-ehb-text-muted hover:text-amber-400"
                             }`}
                             title={
                               bookmarkedQuestionIds.has(q.id) ? "إلغاء حفظ السؤال" : "حفظ السؤال"
@@ -877,19 +877,20 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                             <Bookmark className="w-4 h-4 fill-current" />
                           </button>
 
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() =>
                               handleRequestAiExplanation(q, userAnsIdx, selectedQuiz.courseCode)
                             }
-                            className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 transition-colors border border-purple-500/20"
+                            leftIcon={<Bot className="w-3.5 h-3.5" />}
                           >
-                            <Bot className="w-3.5 h-3.5" />
                             طلب شرح المسألة
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
-                      <p className="text-base font-semibold text-slate-900 dark:text-white mb-4 leading-relaxed">
+                      <p className="text-base font-semibold text-ehb-text-primary mb-4 leading-relaxed">
                         {q.question}
                       </p>
 
@@ -899,24 +900,24 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                           const isThisUserSelected = optIdx === userAnsIdx;
 
                           let optionClass =
-                            "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300";
+                            "bg-ehb-surface border-ehb-subtle text-ehb-text-primary";
                           if (isThisCorrect) {
                             optionClass =
-                              "bg-emerald-500/10 border-emerald-500 text-emerald-900 dark:text-emerald-200 font-semibold ring-1 ring-emerald-500/30";
+                              "bg-emerald-500/10 border-emerald-500 text-emerald-100 ring-1 ring-emerald-500/30";
                           } else if (isThisUserSelected && !isThisCorrect) {
                             optionClass =
-                              "bg-rose-500/10 border-rose-500 text-rose-900 dark:text-rose-200 font-semibold ring-1 ring-rose-500/30";
+                              "bg-rose-500/10 border-rose-500 text-rose-100 ring-1 ring-rose-500/30";
                           }
 
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-xl border text-sm flex items-center justify-between ${optionClass}`}
+                              className={`p-3 rounded-ehb-md border text-sm flex items-center justify-between ${optionClass}`}
                             >
                               <div className="flex items-center gap-2.5">
-                                <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center border border-current">
+                                <Badge variant="neutral" size="sm" className="course-code">
                                   {String.fromCharCode(65 + optIdx)}
-                                </span>
+                                </Badge>
                                 <span>{opt}</span>
                               </div>
                               {isThisCorrect && (
@@ -931,15 +932,15 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                       </div>
 
                       {q.explanation && (
-                        <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-1">
-                          <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <div className="p-3.5 rounded-ehb-lg bg-ehb-surface border border-ehb-subtle text-xs sm:text-sm text-ehb-text-muted space-y-1">
+                          <div className="font-bold text-ehb-text-primary flex items-center gap-1.5">
                             <BookOpenCheck className="w-4 h-4 text-emerald-500" />
                             الشرح والتفسير العلمي النموذجي:
                           </div>
                           <p className="leading-relaxed">{q.explanation}</p>
                         </div>
                       )}
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -950,15 +951,16 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Main Question Display Area */}
             <div className="lg:col-span-3 space-y-6">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+              <Card padding="lg">
                 {/* Progress and Question Meta */}
-                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-ehb-subtle">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      السؤال {currentQuestionIndex + 1} من {selectedQuiz.questions.length}
-                    </span>
+                    <Badge variant="success" size="sm" className="course-code">
+                      السؤال <bdi dir="ltr">{currentQuestionIndex + 1}</bdi> من{" "}
+                      <bdi dir="ltr">{selectedQuiz.questions.length}</bdi>
+                    </Badge>
                     {currentQ?.hint && (
-                      <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <span className="text-xs text-ehb-text-muted flex items-center gap-1">
                         <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
                         تلميح متاح
                       </span>
@@ -966,38 +968,31 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant={bookmarkedQuestionIds.has(currentQ.id) ? "attention" : "secondary"}
+                      size="sm"
                       onClick={() => handleToggleBookmarkQuestion(currentQ.id)}
-                      className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                        bookmarkedQuestionIds.has(currentQ.id)
-                          ? "bg-amber-500 text-white shadow-sm"
-                          : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                      }`}
-                      title="حفظ السؤال في المحفوظات"
+                      leftIcon={<Bookmark className="w-3.5 h-3.5 fill-current" />}
                     >
-                      <Bookmark className="w-3.5 h-3.5 fill-current" />
                       <span className="hidden sm:inline">
                         {bookmarkedQuestionIds.has(currentQ.id) ? "محفوظ" : "حفظ"}
                       </span>
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
+                      variant={flaggedQuestions.has(currentQ.id) ? "attention" : "secondary"}
+                      size="sm"
                       onClick={() => handleToggleFlag(currentQ.id)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                        flaggedQuestions.has(currentQ.id)
-                          ? "bg-amber-500 text-white shadow-sm"
-                          : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-                      }`}
+                      leftIcon={<Flag className="w-3.5 h-3.5" />}
                     >
-                      <Flag className="w-3.5 h-3.5" />
-                      <span>{flaggedQuestions.has(currentQ.id) ? "مُميّز للمراجعة" : "تمييز"}</span>
-                    </button>
+                      {flaggedQuestions.has(currentQ.id) ? "مُميّز للمراجعة" : "تمييز"}
+                    </Button>
                   </div>
                 </div>
 
                 {/* Question Statement */}
                 <div className="space-y-2">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-relaxed">
+                  <h3 className="text-lg sm:text-xl font-bold text-ehb-text-primary leading-relaxed">
                     {currentQ.question}
                   </h3>
                 </div>
@@ -1008,114 +1003,108 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                     const isSelected = userAnswers[currentQ.id] === optIdx;
 
                     return (
-                      <button
+                      <Button
                         key={optIdx}
+                        variant={isSelected ? "success" : "secondary"}
+                        size="lg"
                         onClick={() => handleSelectOption(currentQ.id, optIdx)}
-                        className={`w-full p-4 rounded-2xl border text-right transition-all flex items-center justify-between group ${
-                          isSelected
-                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 font-semibold"
-                            : "bg-slate-50/70 hover:bg-slate-100/80 dark:bg-slate-800/60 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
-                              isSelected
-                                ? "bg-emerald-500 text-white"
-                                : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 group-hover:bg-emerald-500 group-hover:text-white"
-                            }`}
+                        className="w-full justify-between"
+                        leftIcon={
+                          <Badge
+                            variant={isSelected ? "primary" : "neutral"}
+                            size="sm"
+                            className="course-code"
                           >
                             {String.fromCharCode(65 + optIdx)}
-                          </span>
-                          <span className="text-sm sm:text-base">{opt}</span>
-                        </div>
-
-                        <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
-                            isSelected
-                              ? "border-emerald-500 bg-emerald-500 text-white"
-                              : "border-slate-300 dark:border-slate-600"
-                          }`}
-                        >
-                          {isSelected && <CheckCircle2 className="w-4 h-4" />}
-                        </div>
-                      </button>
+                          </Badge>
+                        }
+                        rightIcon={
+                          isSelected ? (
+                            <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          ) : undefined
+                        }
+                      >
+                        <span className="text-sm sm:text-base">{opt}</span>
+                      </Button>
                     );
                   })}
                 </div>
 
                 {/* Question Hint Accordion (Optional) */}
                 {currentQ.hint && (
-                  <details className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-900 dark:text-amber-200">
+                  <details className="p-3.5 rounded-ehb-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400">
                     <summary className="font-semibold cursor-pointer select-none">
                       💡 هل تحتاج تلميحاً هندسياً لحل هذه المسألة؟ (انقر للعرض)
                     </summary>
-                    <p className="mt-2 text-slate-700 dark:text-slate-300 leading-relaxed">
-                      {currentQ.hint}
-                    </p>
+                    <p className="mt-2 text-ehb-text-muted leading-relaxed">{currentQ.hint}</p>
                   </details>
                 )}
 
                 {/* Bottom Navigation Buttons */}
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <button
+                <div className="flex items-center justify-between pt-4 border-t border-ehb-subtle">
+                  <Button
+                    variant="secondary"
+                    size="md"
                     onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                    leftIcon={<ChevronRight className="w-4 h-4" />}
                   >
-                    <ChevronRight className="w-4 h-4" />
                     السابق
-                  </button>
+                  </Button>
 
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="md"
                       onClick={() => setIsReviewDrawerOpen(true)}
-                      className="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-colors"
                     >
                       مراجعة قبل التسليم
-                    </button>
+                    </Button>
 
                     {currentQuestionIndex < selectedQuiz.questions.length - 1 ? (
-                      <button
+                      <Button
+                        variant="primary"
+                        size="md"
                         onClick={() =>
                           setCurrentQuestionIndex((prev) =>
                             Math.min(selectedQuiz.questions.length - 1, prev + 1),
                           )
                         }
-                        className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-colors flex items-center gap-1.5"
+                        rightIcon={<ChevronLeft className="w-4 h-4" />}
                       >
                         التالي
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
+                      </Button>
                     ) : (
-                      <button
+                      <Button
+                        variant="success"
+                        size="md"
                         onClick={handleSubmitQuiz}
-                        className="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                        leftIcon={<CheckCircle2 className="w-4 h-4" />}
                       >
-                        <CheckCircle2 className="w-4 h-4" />
                         تسليم الاختبار النهائي
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
 
             {/* Sidebar Palette / Quick Nav */}
             <div className="space-y-4">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+              <Card padding="md">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold text-ehb-text-primary flex items-center gap-1.5">
                     <ListOrdered className="w-4 h-4 text-emerald-500" />
                     خريطة الأسئلة
                   </h4>
-                  <span className="text-xs text-slate-500">
-                    تم حل {answeredCount} من {selectedQuiz.questions.length}
+                  <span className="text-xs text-ehb-text-muted">
+                    تم حل <bdi dir="ltr">{answeredCount}</bdi> من{" "}
+                    <bdi dir="ltr">{selectedQuiz.questions.length}</bdi>
                   </span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-ehb-surface-elevated-2 rounded-full h-2 overflow-hidden">
                   <div
                     className="bg-emerald-500 h-full rounded-full transition-all duration-300"
                     style={{ width: `${progressPercent}%` }}
@@ -1129,33 +1118,27 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                     const isAnswered = userAnswers[q.id] !== undefined;
                     const isFlagged = flaggedQuestions.has(q.id);
 
-                    let buttonClass =
-                      "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
-                    if (isCurrent) {
-                      buttonClass =
-                        "bg-emerald-600 text-white font-bold ring-2 ring-emerald-500/40 border-emerald-600";
-                    } else if (isFlagged) {
-                      buttonClass = "bg-amber-500 text-white font-semibold border-amber-600";
-                    } else if (isAnswered) {
-                      buttonClass =
-                        "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-semibold";
-                    }
+                    let buttonVariant: Button["variant"] = "secondary";
+                    if (isCurrent) buttonVariant = "primary";
+                    else if (isFlagged) buttonVariant = "attention";
+                    else if (isAnswered) buttonVariant = "success";
 
                     return (
-                      <button
+                      <Button
                         key={q.id}
+                        variant={buttonVariant}
+                        size="sm"
                         onClick={() => setCurrentQuestionIndex(idx)}
-                        className={`w-full aspect-square rounded-xl text-xs flex items-center justify-center border transition-all ${buttonClass}`}
-                        title={`السؤال ${idx + 1}`}
+                        className="aspect-square"
                       >
-                        {idx + 1}
-                      </button>
+                        <bdi dir="ltr">{idx + 1}</bdi>
+                      </Button>
                     );
                   })}
                 </div>
 
                 {/* Legend */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs space-y-1.5 text-slate-500 dark:text-slate-400">
+                <div className="pt-3 border-t border-ehb-subtle text-xs space-y-1.5 text-ehb-text-muted">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-emerald-500" />
                     <span>السؤال الحالي / تم حله</span>
@@ -1165,18 +1148,20 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                     <span>مُميّز للمراجعة</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700" />
+                    <span className="w-3 h-3 rounded-full bg-ehb-surface-elevated-2" />
                     <span>لم يتم حله بعد</span>
                   </div>
                 </div>
 
-                <button
+                <Button
+                  variant="success"
+                  size="md"
                   onClick={handleSubmitQuiz}
-                  className="w-full py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-colors"
+                  className="w-full"
                 >
                   تسليم الاختبار
-                </button>
-              </div>
+                </Button>
+              </Card>
             </div>
           </div>
         )}
@@ -1188,31 +1173,34 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
             role="dialog"
             aria-modal="true"
           >
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+            <Card variant="elevated" padding="lg" className="max-w-lg w-full shadow-ehb-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-ehb-text-primary flex items-center gap-2">
                     <ListOrdered className="w-5 h-5 text-emerald-500" />
                     مراجعة حالة الإجابات قبل التسليم
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    أجبت على {answeredCount} من أصل {selectedQuiz.questions.length} أسئلة
+                  <p className="text-xs text-ehb-text-muted">
+                    أجبت على <bdi dir="ltr">{answeredCount}</bdi> من أصل{" "}
+                    <bdi dir="ltr">{selectedQuiz.questions.length}</bdi> أسئلة
                   </p>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsReviewDrawerOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
+                  className="w-8 h-8 p-0"
                 >
                   ✕
-                </button>
+                </Button>
               </div>
 
               {answeredCount < selectedQuiz.questions.length && (
-                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                <div className="p-3 rounded-ehb-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>
-                    تنبيه: لديك {selectedQuiz.questions.length - answeredCount} أسئلة لم تُجب عليها
-                    بعد.
+                    تنبيه: لديك <bdi dir="ltr">{selectedQuiz.questions.length - answeredCount}</bdi> أسئلة
+                    لم تُجب عليها بعد.
                   </span>
                 </div>
               )}
@@ -1223,60 +1211,56 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                   const isFlagged = flaggedQuestions.has(q.id);
 
                   return (
-                    <div
+                    <Button
                       key={q.id}
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setCurrentQuestionIndex(idx);
                         setIsReviewDrawerOpen(false);
                       }}
-                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full justify-between"
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-700 font-bold flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-ehb-md bg-ehb-surface-elevated-2 font-bold flex items-center justify-center text-ehb-text-primary">
                           {idx + 1}
                         </span>
-                        <span className="font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
+                        <span className="font-medium text-ehb-text-primary line-clamp-1 text-left">
                           {q.question}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         {isFlagged && (
-                          <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[10px] font-bold">
-                            مُميّز
-                          </span>
+                          <Badge variant="warning" size="sm">مُميّز</Badge>
                         )}
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            isAnswered
-                              ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                              : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
+                        <Badge variant={isAnswered ? "success" : "error"} size="sm">
                           {isAnswered ? "تمت الإجابة" : "معلق"}
-                        </span>
+                        </Badge>
                       </div>
-                    </div>
+                    </Button>
                   );
                 })}
               </div>
 
               <div className="flex items-center justify-between gap-3 pt-2">
-                <button
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={() => setIsReviewDrawerOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
                 >
                   متابعة الحل
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="success"
+                  size="md"
                   onClick={submitQuizInternal}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-colors flex items-center gap-2"
+                  leftIcon={<CheckCircle2 className="w-4 h-4" />}
                 >
-                  <CheckCircle2 className="w-4 h-4" />
                   تأكيد تسليم الاختبار الآن
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>
@@ -1723,36 +1707,30 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
       {activeTab !== "mistakes" && activeTab !== "bookmarks" && activeTab !== "history" && (
         <div className="space-y-6">
           {filteredQuizzes.length === 0 ? (
-            <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
-              <FileQuestion className="w-12 h-12 text-slate-400 mx-auto" />
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                لا توجد اختبارات مطابقة لبحثك
-              </h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                جرب تغيير خيارات التصفية أو اسم المادة، أو قم بتوليد اختبار جديد بالذكاء الاصطناعي.
-              </p>
-              <button
-                onClick={() => {
+            <Card padding="lg">
+              <EmptyState
+                icon={FileQuestion}
+                title="لا توجد اختبارات مطابقة لبحثك"
+                description="جرب تغيير خيارات التصفية أو اسم المادة، أو قم بتوليد اختبار جديد بالذكاء الاصطناعي."
+                actionLabel="إعادة ضبط الفلاتر"
+                onAction={() => {
                   setSelectedCourseFilter("all");
                   setSelectedDifficulty("all");
                   setSelectedTermType("all");
                   setSearchQuery("");
                 }}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold"
-              >
-                إعادة ضبط الفلاتر
-              </button>
-            </div>
+              />
+            </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredQuizzes.map((quiz) => {
                 const isBookmarked = bookmarkedExamIds.has(quiz.id);
-                const difficultyBadge =
+                const difficultyVariant =
                   quiz.difficulty === "hard"
-                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                    ? "error"
                     : quiz.difficulty === "medium"
-                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+                      ? "warning"
+                      : "success";
 
                 const difficultyText =
                   quiz.difficulty === "hard"
@@ -1762,34 +1740,38 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                       : "أساسي";
 
                 return (
-                  <div
+                  <Card
                     key={quiz.id}
-                    className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                    variant="interactive"
+                    padding="lg"
+                    className="flex flex-col justify-between"
+                    onClick={() => handleStartQuiz(quiz)}
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                        <Badge variant="neutral" size="sm" className="course-code">
                           {quiz.courseCode}
-                        </span>
+                        </Badge>
 
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${difficultyBadge}`}
-                          >
+                          <Badge variant={difficultyVariant} size="sm">
                             {difficultyText}
-                          </span>
+                          </Badge>
                           {quiz.isPastExam && (
-                            <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                            <Badge variant="info" size="sm">
                               امتحان سابق {quiz.year}
-                            </span>
+                            </Badge>
                           )}
 
                           <button
-                            onClick={(e) => handleToggleBookmarkExam(quiz.id, e)}
-                            className={`p-1.5 rounded-lg transition-colors ${
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleBookmarkExam(quiz.id, e);
+                            }}
+                            className={`p-1.5 rounded-ehb-md transition-colors ${
                               isBookmarked
-                                ? "text-amber-500 bg-amber-500/10"
-                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                ? "text-amber-400 bg-amber-500/10"
+                                : "text-ehb-text-muted hover:text-amber-400"
                             }`}
                             title={isBookmarked ? "إلغاء الحفظ" : "حفظ في المحفوظات"}
                           >
@@ -1798,36 +1780,40 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
                         </div>
                       </div>
 
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                      <h3 className="text-base font-bold text-ehb-text-primary leading-snug line-clamp-2">
                         {quiz.title}
                       </h3>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                      <p className="text-xs text-ehb-text-muted line-clamp-2">
                         الموضوع: {quiz.topic}
                       </p>
                     </div>
 
-                    <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="pt-4 mt-4 border-t border-ehb-subtle flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 text-xs text-ehb-text-muted">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                          <Clock className="w-3.5 h-3.5 text-emerald-400" />
                           {quiz.durationMinutes} دقيقة
                         </span>
                         <span className="flex items-center gap-1">
-                          <HelpCircle className="w-3.5 h-3.5 text-emerald-500" />
+                          <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
                           {quiz.questions.length} أسئلة
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => handleStartQuiz(quiz)}
-                        className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors flex items-center gap-1.5"
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartQuiz(quiz);
+                        }}
+                        rightIcon={<ChevronLeft className="w-4 h-4" />}
                       >
                         ابدأ الاختبار
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
@@ -1972,71 +1958,77 @@ ${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <Card variant="elevated" padding="lg" className="max-w-xl w-full shadow-ehb-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-ehb-text-primary">
                     الشرح والتفسير الهندسي للمسألة
                   </h3>
-                  <p className="text-xs text-slate-500">مقرر {aiExplanationModal.courseCode}</p>
+                  <p className="text-xs text-ehb-text-muted">
+                    مقرر <span className="course-code">{aiExplanationModal.courseCode}</span>
+                  </p>
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setAiExplanationModal((prev) => ({ ...prev, isOpen: false }))}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
+                className="w-8 h-8 p-0"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             {aiExplanationModal.question && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-semibold leading-relaxed">
+              <div className="p-4 rounded-ehb-lg bg-ehb-surface border border-ehb-subtle text-xs sm:text-sm text-ehb-text-primary font-semibold leading-relaxed">
                 {aiExplanationModal.question.question}
               </div>
             )}
 
-            <div className="min-h-[140px] max-h-72 overflow-y-auto pr-1 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            <div className="min-h-[140px] max-h-72 overflow-y-auto pr-1 text-xs sm:text-sm leading-relaxed text-ehb-text-muted">
               {aiExplanationModal.loading ? (
                 <div className="flex flex-col items-center justify-center py-10 space-y-3">
                   <div className="w-8 h-8 border-3 border-purple-500/30 border-t-purple-600 rounded-full animate-spin" />
-                  <span className="text-xs font-semibold text-slate-500">
+                  <span className="text-xs font-semibold text-ehb-text-muted">
                     جاري صياغة الشرح العلمي والخطوات التفصيلية...
                   </span>
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 whitespace-pre-wrap">
+                <div className="p-4 rounded-ehb-lg bg-purple-500/5 border border-purple-500/20 whitespace-pre-wrap text-ehb-text-primary">
                   {aiExplanationModal.explanationText}
                 </div>
               )}
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => setAiExplanationModal((prev) => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
               >
                 إغلاق
-              </button>
+              </Button>
 
               {onStartPomodoroStudy && aiExplanationModal.courseCode && (
-                <button
+                <Button
+                  variant="attention"
+                  size="md"
                   onClick={() => {
                     const code = aiExplanationModal.courseCode!;
                     setAiExplanationModal((prev) => ({ ...prev, isOpen: false }));
                     onStartPomodoroStudy(code, `مذاكرة موضوع السؤال في ${code}`);
                   }}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-colors flex items-center gap-1.5"
+                  leftIcon={<Flame className="w-3.5 h-3.5" />}
                 >
-                  <Flame className="w-3.5 h-3.5" />
                   بدء جلسة تركيز بومودورو
-                </button>
+                </Button>
               )}
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

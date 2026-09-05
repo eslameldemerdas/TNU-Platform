@@ -13,7 +13,8 @@
  * confirm the row exists / changed as expected.
  */
 import 'dotenv/config';
-import { prisma } from '../server/prisma.js';
+import { prisma } from '../server/prisma.ts';
+import { resetRateLimit } from '../server/rateLimiter.ts';
 
 const BASE = 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'changeme@example.com';
@@ -46,6 +47,7 @@ async function main() {
     body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
   });
   const ADMIN_COOKIE = cookieOf(r);
+  const ADMIN_USER_ID = r.json?.user?.id;
   log('admin login', r.status === 200 && r.json?.user?.role === 'super_admin', `status=${r.status}`);
   if (!ADMIN_COOKIE) {
     console.error('Cannot continue without admin cookie');
@@ -392,6 +394,7 @@ async function main() {
   }
 
   // ===== 23. RESOURCE UPLOAD + MODERATION =====
+  if (ADMIN_USER_ID) await resetRateLimit(`upload:${ADMIN_USER_ID}`);
   const pdfBytes = Buffer.from('%PDF-1.4\n%EngHub-Regression-' + RUN + '\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF', 'utf8');
   const b64 = pdfBytes.toString('base64');
   r = await req('POST', '/api/resources', {

@@ -10,7 +10,6 @@ import {
   PlusCircle,
   Megaphone,
 } from "lucide-react";
-import { motion } from "motion/react";
 import React from "react";
 import { useTranslation } from "../../i18n/LanguageContext";
 import {
@@ -23,6 +22,7 @@ import {
   Announcement,
 } from "../../types";
 import { CourseCoverImage } from "../common/CourseCoverImage";
+import { Card, IconContainer, Button, Badge, Skeleton, EmptyState, CardSkeleton } from "../ui";
 
 interface DashboardViewProps {
   user: UserProfile | null;
@@ -36,6 +36,7 @@ interface DashboardViewProps {
   onOpenFile: (fileId: string) => void;
   onNavigateTab: (tab: any) => void;
   onUploadClick: () => void;
+  isLoading?: boolean;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -50,6 +51,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenFile,
   onNavigateTab,
   onUploadClick,
+  isLoading = false,
 }) => {
   const { t } = useTranslation();
   const isFreshman = user?.level === "Year 1 (Freshman)";
@@ -69,7 +71,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const enrolledIds = user?.enrolledCourseIds || [];
 
-  // Filter courses for user or active department
   const userCourses = courses.filter((c) => {
     if (isMechatronicsLevel1) {
       return c.departmentId === "dept-mtr";
@@ -97,340 +98,444 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     isFreshman || isSophomore ? userCourseIds.includes(f.courseId) : true,
   );
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pb-12">
+        <Card padding="lg" className="space-y-4">
+          <Skeleton width="40%" height={20} />
+          <Skeleton width="70%" height={28} />
+          <Skeleton width="50%" height={16} />
+          <div className="flex gap-3 pt-2">
+            <Skeleton width={120} height={40} />
+            <Skeleton width={140} height={40} />
+          </div>
+        </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Skeleton width="30%" height={20} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <CardSkeleton key={i} showImage />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-6">
+            <CardSkeleton lines={4} />
+            <CardSkeleton lines={3} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-4 sm:p-6 lg:p-8 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+      {/* Context Strip — compact, token-styled */}
+      <Card padding="lg" className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                {activeDept ? activeDept.name : t.common.appName}
-              </span>
-              <span className="text-xs text-slate-300">• {user?.level || "Student"}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {activeDept && (
+                <Badge variant="primary" size="sm" dot>
+                  {activeDept.name}
+                </Badge>
+              )}
+              <Badge variant="neutral" size="sm">
+                {user?.level || t.common.appName}
+              </Badge>
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
-              {t.dashboard.welcome} <bdi>{user?.name || "Student"}</bdi>!
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-ehb-text-primary">
+              {t.dashboard.welcome}{" "}
+              <span className="bdi-isolate" dir="ltr">
+                {user?.name || "Student"}
+              </span>
+              !
             </h1>
-            <p className="text-xs lg:text-sm text-slate-300 max-w-xl">{t.dashboard.subWelcome}</p>
+            <p className="text-xs sm:text-sm text-ehb-text-muted max-w-xl">
+              {t.dashboard.subWelcome}
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
             {user?.role !== "student" && (
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={onUploadClick}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-bold text-xs shadow-lg transition-all active:scale-95 min-h-[44px]"
+                leftIcon={<PlusCircle className="w-4 h-4" />}
+                className="flex-1 sm:flex-initial"
               >
-                <PlusCircle className="w-4 h-4 text-amber-600" />
-                <span>{t.nav.uploadResource}</span>
-              </button>
+                {t.nav.uploadResource}
+              </Button>
             )}
-            <button
+            <Button
+              variant="attention"
+              size="md"
               onClick={() => onNavigateTab("ai_assistant")}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg transition-all active:scale-95 min-h-[44px]"
+              leftIcon={<Bot className="w-4 h-4 text-slate-950" />}
+              className="flex-1 sm:flex-initial"
             >
-              <Bot className="w-4 h-4 text-slate-950" />
-              <span>{t.common.aiBuddy}</span>
-            </button>
+              {t.common.aiBuddy}
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Official & Pinned Faculty Announcements */}
       {pinnedAnnouncements.length > 0 && (
         <div className="space-y-3">
           {pinnedAnnouncements.map((anc) => (
-            <div
+            <Card
               key={anc.id}
-              className={`p-4 rounded-2xl border transition-all flex items-start gap-3.5 shadow-sm ${
+              padding="md"
+              className={`flex items-start gap-3.5 ${
                 anc.priority === "urgent"
-                  ? "border-rose-300 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/20"
-                  : "border-amber-300 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/20"
+                  ? "border-rose-500/30 bg-rose-500/5"
+                  : "border-amber-500/30 bg-amber-500/5"
               }`}
             >
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                className={`w-9 h-9 rounded-ehb-md flex items-center justify-center shrink-0 mt-0.5 ${
                   anc.priority === "urgent"
-                    ? "bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"
-                    : "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                    ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                 }`}
               >
-                <Megaphone className="w-5 h-5 animate-pulse" />
+                <Megaphone className="w-5 h-5" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  <span className="text-xs font-black text-ehb-text-primary">
                     {anc.title}
                   </span>
-                  <span
-                    className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border ${
-                      anc.priority === "urgent"
-                        ? "bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30"
-                        : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
-                    }`}
+                  <Badge
+                    variant={anc.priority === "urgent" ? "error" : "warning"}
+                    size="sm"
+                    dot
                   >
-                    {anc.priority === "urgent" ? "🔥 إعلان رسمي عاجل" : "📢 إعلان هام"}
-                  </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-300 font-mono">
+                    {anc.priority === "urgent" ? "عاجل" : "هام"}
+                  </Badge>
+                  <span className="text-[10px] text-ehb-text-muted font-mono">
                     {anc.date}
                   </span>
                 </div>
-                <p className="text-xs text-slate-800 dark:text-slate-200 mt-1 whitespace-pre-wrap leading-relaxed">
+                <p className="text-xs text-ehb-text-muted leading-relaxed whitespace-pre-wrap">
                   {anc.content}
                 </p>
-                <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-600 dark:text-slate-300">
-                  <span>
-                    صادر عن:{" "}
-                    <strong className="text-slate-800 dark:text-slate-100">
-                      {anc.authorName
-                        ? anc.authorName.replace(/\(Super Admin\)/gi, "").trim()
-                        : "إدارة الكلية"}
-                    </strong>
-                  </span>
-                </div>
+                <p className="text-[10px] text-ehb-text-muted">
+                  صادر عن:{" "}
+                  <strong className="text-ehb-text-primary">
+                    {anc.authorName
+                      ? anc.authorName.replace(/\(Super Admin\)/gi, "").trim()
+                      : "إدارة الكلية"}
+                  </strong>
+                </p>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      {/* Stat Cards Grid - Unified Icon Palette & Tabular Figures */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Enrolled Courses */}
-        <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card padding="md" className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span className="text-xs font-semibold text-ehb-text-muted">
               {t.dashboard.enrolledCourses}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center">
+            <IconContainer size="sm" variant="warning">
               <BookOpen className="w-4 h-4" />
-            </div>
+            </IconContainer>
           </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 tabular-nums">
+          <div className="text-2xl font-black text-ehb-text-primary tabular-nums">
             {userCourses.length}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-300 font-medium">
+          <p className="text-[11px] text-ehb-text-muted font-medium">
             {user?.semester || "Fall 2026"}
           </p>
-        </div>
+        </Card>
 
-        {/* Card 2: Pending Assignments */}
-        <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2">
+        <Card padding="md" className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span className="text-xs font-semibold text-ehb-text-muted">
               {t.dashboard.pendingAssignments}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center">
+            <IconContainer size="sm" variant="warning">
               <CalendarCheck className="w-4 h-4" />
-            </div>
+            </IconContainer>
           </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 tabular-nums">
+          <div className="text-2xl font-black text-ehb-text-primary tabular-nums">
             {pendingAssignments.length}
           </div>
-          <p className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold">
-            2 {t.dashboard.upcomingDeadlines}
+          <p className="text-[11px] text-amber-400 font-semibold">
+            {pendingAssignments.length > 0
+              ? `${Math.min(pendingAssignments.length, 2)} ${t.dashboard.upcomingDeadlines}`
+              : "لا توجد تسليمات معلقة"}
           </p>
-        </div>
+        </Card>
 
-        {/* Card 3: Reward Points */}
-        <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2">
+        <Card padding="md" className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span className="text-xs font-semibold text-ehb-text-muted">
               {t.dashboard.rewardPoints}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center">
+            <IconContainer size="sm" variant="warning">
               <Award className="w-4 h-4" />
-            </div>
+            </IconContainer>
           </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 tabular-nums">
+          <div className="text-2xl font-black text-ehb-text-primary tabular-nums">
             {user?.points ?? 0} {t.common.points}
           </div>
-          <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold">
-            {t.dashboard.top10Percent}
+          <p className="text-[11px] text-emerald-400 font-semibold">
+            {user?.points && user.points > 100 ? t.dashboard.top10Percent : "استمر في التقدم"}
           </p>
-        </div>
+        </Card>
+
+        {userCourses.length > 0 && (
+          <Card padding="md" className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-ehb-text-muted">
+                ملفات الدراسة المتاحة
+              </span>
+              <IconContainer size="sm" variant="info">
+                <FileText className="w-4 h-4" />
+              </IconContainer>
+            </div>
+            <div className="text-2xl font-black text-ehb-text-primary tabular-nums">
+              {userFiles.length}
+            </div>
+            <p className="text-[11px] text-ehb-text-muted font-medium">
+              {t.dashboard.verifiedFiles}
+            </p>
+          </Card>
+        )}
       </div>
 
-      {/* Main Grid: Enrolled Courses & Schedule/Assignments */}
+      {/* Main Grid: Courses + Sidebar Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Courses Grid */}
+        {/* Left: Active Workspaces */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-base font-bold text-ehb-text-primary tracking-tight">
               {t.dashboard.activeWorkspaces}
             </h2>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onNavigateTab("courses")}
-              className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:underline flex items-center gap-1 transition-colors"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />}
             >
-              <span>{t.dashboard.viewAllCourses}</span>
-              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-            </button>
+              {t.dashboard.viewAllCourses}
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {userCourses.slice(0, 4).map((course) => (
-              <motion.div
-                key={course.id}
-                whileHover={{ y: -2 }}
-                onClick={() => onSelectCourse(course.id)}
-                className="cursor-pointer rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between group hover:border-amber-500/50 transition-all"
-              >
-                {/* Course Banner */}
-                <div className="h-28 relative overflow-hidden bg-slate-900">
-                  <CourseCoverImage
-                    code={course.code}
-                    title={course.title}
-                    bannerImage={course.bannerImage}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 flex flex-col justify-end">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 w-fit uppercase tracking-wider font-mono">
-                      {course.code}
-                    </span>
-                    <h3 className="text-xs font-bold text-white truncate mt-1">{course.title}</h3>
-                  </div>
-                </div>
-
-                {/* Body Details */}
-                <div className="p-3.5 space-y-3">
-                  <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
-                    <span>{course.instructor}</span>
-                    <span className="font-semibold tabular-nums">
-                      {course.credits} {t.dashboard.credits}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                    <span className="text-slate-600 dark:text-slate-300 tabular-nums">
-                      {course.fileCount} {t.dashboard.resourcesCount}
-                    </span>
-                    <span className="text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-bold group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform inline-flex items-center gap-1">
-                      {t.dashboard.openWorkspace} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Recent Files Feed */}
-          <div className="space-y-3 pt-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                {t.dashboard.peerResources}
-              </h2>
-              <span className="text-xs text-slate-500 dark:text-slate-300">
-                {t.dashboard.verifiedFiles}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {userFiles.slice(0, 4).map((file) => (
-                <div
-                  key={file.id}
-                  onClick={() => onOpenFile(file.id)}
-                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 cursor-pointer flex items-center justify-between transition-colors group"
+          {userCourses.length === 0 ? (
+            <Card padding="lg">
+              <EmptyState
+                icon={BookOpen}
+                title="لا توجد مقررات نشطة حالياً"
+                description="لم يتم تسجيلك في أي مقرر دراسي بعد. توجه لقسم المقررات لاستعراض المواد المتاحة."
+                actionLabel="استعراض المقررات"
+                onAction={() => onNavigateTab("courses")}
+              />
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userCourses.slice(0, 4).map((course) => (
+                <Card
+                  key={course.id}
+                  variant="interactive"
+                  padding="none"
+                  onClick={() => onSelectCourse(course.id)}
+                  className="overflow-hidden"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="truncate">
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
-                        {file.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate mt-0.5">
-                        {t.dashboard.uploadedBy} {file.uploaderName} • {file.fileSize} • ★{" "}
-                        {file.rating} ({file.ratingCount})
-                      </p>
+                  {/* Course Banner */}
+                  <div className="h-28 relative overflow-hidden bg-slate-900">
+                    <CourseCoverImage
+                      code={course.code}
+                      title={course.title}
+                      bannerImage={course.bannerImage}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 flex flex-col justify-end">
+                      <span className="course-code text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 w-fit uppercase tracking-wider font-mono">
+                        {course.code}
+                      </span>
+                      <h3 className="text-xs font-bold text-white truncate mt-1">
+                        {course.title}
+                      </h3>
                     </div>
                   </div>
 
-                  <button className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors shrink-0">
-                    <Download className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{t.dashboard.preview}</span>
-                  </button>
-                </div>
+                  {/* Body */}
+                  <div className="p-3.5 space-y-3">
+                    <div className="flex items-center justify-between text-[11px] text-ehb-text-muted">
+                      <span>{course.instructor}</span>
+                      <span className="font-semibold tabular-nums">
+                        {course.credits} {t.dashboard.credits}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-ehb-subtle text-xs">
+                      <span className="text-ehb-text-muted tabular-nums">
+                        {course.fileCount} {t.dashboard.resourcesCount}
+                      </span>
+                      <span className="text-indigo-400 font-bold inline-flex items-center gap-1 group-hover:text-amber-400 transition-colors">
+                        {t.dashboard.openWorkspace}{" "}
+                        <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+                      </span>
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Col: Timetable & Assignments */}
         <div className="space-y-6">
           {/* Today's Schedule */}
-          <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          <Card padding="md" className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <IconContainer size="sm" variant="warning">
+                  <Clock className="w-4 h-4" />
+                </IconContainer>
+                <h3 className="text-xs font-bold text-ehb-text-primary uppercase tracking-wider">
                   {t.dashboard.todaysSchedule}
                 </h3>
               </div>
-              <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                اليوم
-              </span>
+              <Badge variant="neutral" size="sm">
+                {schedule.length}
+              </Badge>
             </div>
 
-            <div className="space-y-2.5">
-              {schedule.slice(0, 3).map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
-                      {item.courseCode}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                      {item.startTime} - {item.endTime}
-                    </span>
+            {schedule.length === 0 ? (
+              <p className="text-xs text-ehb-text-muted">لا توجد محاضرات اليوم</p>
+            ) : (
+              <div className="space-y-2.5">
+                {schedule.slice(0, 3).map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-ehb-md bg-ehb-surface border border-ehb-subtle text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-ehb-text-primary font-mono course-code">
+                        {item.courseCode}
+                      </span>
+                      <span className="text-[10px] font-mono text-ehb-text-muted bg-ehb-surface-elevated-2 px-1.5 py-0.5 rounded-ehb-sm">
+                        {item.startTime} - {item.endTime}
+                      </span>
+                    </div>
+                    <p className="font-semibold text-ehb-text-primary">{item.title}</p>
+                    <p className="text-[11px] text-ehb-text-muted">
+                      {item.location} • {item.instructor || "قسم الهندسة"}
+                    </p>
                   </div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-200">{item.title}</p>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-300">{item.location}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
-          {/* Pending Tasks */}
-          <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          {/* Upcoming Deadlines */}
+          <Card padding="md" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-ehb-text-primary uppercase tracking-wider">
                 {t.dashboard.upcomingDeadlines}
               </h3>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => onNavigateTab("study_tools")}
-                className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
               >
                 {t.dashboard.tracker}
-              </button>
+              </Button>
             </div>
 
-            <div className="space-y-2">
-              {pendingAssignments.slice(0, 3).map((asgn) => (
-                <div
-                  key={asgn.id}
-                  className="p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
-                      {asgn.courseCode}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 tabular-nums">
-                      تسليم {asgn.dueDate}
-                    </span>
+            {pendingAssignments.length === 0 ? (
+              <p className="text-xs text-ehb-text-muted">لا توجد تسليمات معلقة</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingAssignments.slice(0, 3).map((asgn) => (
+                  <div
+                    key={asgn.id}
+                    className="p-3 rounded-ehb-md bg-ehb-surface border border-ehb-subtle text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-ehb-text-primary font-mono course-code">
+                        {asgn.courseCode}
+                      </span>
+                      <Badge variant="warning" size="sm">
+                        تسليم {asgn.dueDate}
+                      </Badge>
+                    </div>
+                    <p className="text-ehb-text-primary font-medium line-clamp-1">
+                      {asgn.title}
+                    </p>
                   </div>
-                  <p className="text-slate-700 dark:text-slate-200 font-medium line-clamp-1">
-                    {asgn.title}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
       </div>
+
+      {/* Recent Files Feed */}
+      {userFiles.length > 0 && (
+        <Card padding="md" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-ehb-text-primary tracking-tight">
+              {t.dashboard.peerResources}
+            </h2>
+            <Badge variant="neutral" size="sm">
+              {t.dashboard.verifiedFiles}
+            </Badge>
+          </div>
+
+          <div className="space-y-2">
+            {userFiles.slice(0, 4).map((file) => (
+              <div
+                key={file.id}
+                onClick={() => onOpenFile(file.id)}
+                className="p-3.5 rounded-ehb-md border border-ehb-default bg-ehb-surface hover:bg-ehb-surface-elevated-2 cursor-pointer flex items-center justify-between transition-colors group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-ehb-md bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="truncate">
+                    <h4 className="text-xs font-bold text-ehb-text-primary group-hover:text-amber-400 transition-colors truncate">
+                      {file.title}
+                    </h4>
+                    <p className="text-[11px] text-ehb-text-muted truncate mt-0.5">
+                      {t.dashboard.uploadedBy} {file.uploaderName} • {file.fileSize} • ★{" "}
+                      {file.rating} ({file.ratingCount})
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenFile(file.id);
+                  }}
+                  leftIcon={<Download className="w-3.5 h-3.5" />}
+                  className="shrink-0"
+                >
+                  <span className="hidden sm:inline">{t.dashboard.preview}</span>
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

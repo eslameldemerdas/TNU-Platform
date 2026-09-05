@@ -1,6 +1,5 @@
 import {
   MessageSquare,
-  Search,
   Plus,
   CheckCircle2,
   HelpCircle,
@@ -13,11 +12,9 @@ import {
   ChevronUp,
   Send,
   Pin,
-  ShieldCheck,
   Check,
   Tag,
   CheckCheck,
-  GraduationCap,
   BookOpen,
   Trophy,
 } from "lucide-react";
@@ -33,6 +30,17 @@ import {
   PostCategoryType,
 } from "../../types";
 import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import {
+  Card,
+  Button,
+  Badge,
+  SearchField,
+  Select,
+  Avatar,
+  EmptyState,
+  Skeleton,
+  CardSkeleton,
+} from "../ui";
 import { HonorBoardView } from "./HonorBoardView";
 
 interface CommunityViewProps {
@@ -63,7 +71,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   const [sortBy, setSortBy] = useState<"recent" | "upvotes" | "replies">("recent");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Local state for interactive posts and comments
   const [postsList, setPostsList] = useState<DiscussionThread[]>(initialDiscussions);
   const [commentsList, setCommentsList] = useState<Comment[]>(initialComments);
   const [expandedPostIds, setExpandedPostIds] = useState<Set<string>>(new Set(["disc-101"]));
@@ -71,7 +78,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   const [isSubmittingReply, setIsSubmittingReply] = useState<Record<string, boolean>>({});
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
 
-  // Create Post Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newContent, setNewContent] = useState<string>("");
@@ -81,13 +87,14 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   const [newTagsInput, setNewTagsInput] = useState<string>("");
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmittingPost, setIsSubmittingPost] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sync with initial discussions if prop changes
   useEffect(() => {
     if (initialDiscussions.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPostsList(initialDiscussions);
     }
+    setIsLoading(false);
   }, [initialDiscussions]);
 
   useEffect(() => {
@@ -97,7 +104,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     }
   }, [initialComments]);
 
-  // Filtering & Sorting Logic
   const filteredPosts = postsList
     .filter((post) => {
       if (selectedCategory !== "all" && post.postType !== selectedCategory) return false;
@@ -129,7 +135,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  // Toggle expand comments
   const toggleExpand = (postId: string) => {
     setExpandedPostIds((prev) => {
       const next = new Set(prev);
@@ -142,7 +147,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     });
   };
 
-  // Upvote Post (Optimistic with server sync)
   const handleUpvote = async (postId: string) => {
     setPostsList((prev) =>
       prev.map((p) => {
@@ -172,7 +176,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     }
   };
 
-  // Upvote Comment
   const handleUpvoteComment = (commentId: string) => {
     setCommentsList((prev) =>
       prev.map((c) => {
@@ -189,7 +192,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     );
   };
 
-  // Submit new comment reply
   const handleAddReply = async (postId: string) => {
     const text = replyInputMap[postId]?.trim();
     if (!text || text.length < 3) return;
@@ -231,7 +233,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     setIsSubmittingReply((prev) => ({ ...prev, [postId]: false }));
   };
 
-  // Mark comment as solution
   const handleMarkAsSolution = async (postId: string, commentId: string) => {
     setCommentsList((prev) =>
       prev.map((c) => (c.targetId === postId ? { ...c, isSolution: c.id === commentId } : c)),
@@ -249,7 +250,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     }
   };
 
-  // Share post link helper
   const handleSharePost = (postId: string) => {
     const url = `${window.location.origin}/#post-${postId}`;
     navigator.clipboard?.writeText(url);
@@ -257,7 +257,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     setTimeout(() => setCopiedPostId(null), 2500);
   };
 
-  // Create new post
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || newTitle.trim().length < 5) {
@@ -331,44 +330,43 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     setIsSubmittingPost(false);
   };
 
-  // Helper for category badge styling
   const getCategoryMeta = (type?: PostCategoryType) => {
     switch (type) {
       case "question":
         return {
           label: "سؤال واستفسار",
           icon: HelpCircle,
-          color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          color: "warning",
         };
       case "resource_share":
         return {
           label: "مشاركة مرجع",
           icon: BookOpen,
-          color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          color: "success",
         };
       case "study_tip":
         return {
           label: "نصيحة دراسية",
           icon: Lightbulb,
-          color: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+          color: "neutral",
         };
       case "exam_discussion":
         return {
           label: "نقاش امتحانات",
           icon: FileQuestion,
-          color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+          color: "primary",
         };
       case "project_help":
         return {
           label: "مساعدة مشروع",
           icon: Wrench,
-          color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+          color: "info",
         };
       default:
         return {
           label: "مناقشة عامة",
           icon: MessageSquare,
-          color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+          color: "neutral",
         };
     }
   };
@@ -387,10 +385,26 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pb-12">
+        <Card padding="lg" className="space-y-4">
+          <Skeleton width="40%" height={20} />
+          <Skeleton width="60%" height={16} />
+        </Card>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardSkeleton key={i} lines={4} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12" id="academic-posts-community">
       {/* Top Header Tabs */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="border-b border-ehb-default pb-3">
         <ScrollableTabs
           tabs={communityTabs}
           activeTab={activeTab}
@@ -405,52 +419,50 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {activeTab === "posts" && (
         <div className="space-y-6">
           {/* Header Action Bar */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-4">
+          <Card padding="lg" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                <h2 className="text-lg sm:text-xl font-extrabold text-ehb-text-primary flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-ehb-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
                     <MessageSquare className="w-4 h-4" />
                   </div>
                   <span>مجتمع ومناقشات الهندسة الأكاديمية</span>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                    {filteredPosts.length} منشور
-                  </span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-ehb-text-muted mt-1">
                   اطرح استفساراتك، شارك المراجع والحلول النموذجية، وتناقش مع زملائك وأعضاء هيئة
                   التدريس (+10 نقاط للحلول المعتمدة).
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="primary"
+                size="md"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-sm hover:shadow-md hover:shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 shrink-0 active:scale-95 min-h-[44px]"
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="shrink-0"
               >
-                <Plus className="w-4 h-4" />
-                <span>إنشاء موضوع / سؤال جديد</span>
-              </button>
+                إنشاء موضوع / سؤال جديد
+              </Button>
             </div>
 
             {/* Filter Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-3 border-t border-ehb-subtle">
               {/* Search Bar */}
-              <div className="relative sm:col-span-2">
-                <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="ابحث بالعنوان، الكود، المحتوى، أو #الوسم..."
+              <div className="sm:col-span-2">
+                <SearchField
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-9 pl-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="ابحث بالعنوان، الكود، المحتوى، أو #الوسم..."
+                  size="sm"
                 />
               </div>
 
               {/* Category Filter */}
-              <select
+              <Select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                size="sm"
+                className="w-full"
               >
                 <option value="all">كافة أنواع المنشورات</option>
                 <option value="question">❓ أسئلة واستفسارات</option>
@@ -458,13 +470,14 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 <option value="study_tip">💡 نصائح دراسية</option>
                 <option value="exam_discussion">📝 نقاش امتحانات</option>
                 <option value="project_help">🛠️ مساعدة مشاريع</option>
-              </select>
+              </Select>
 
               {/* Department Filter */}
-              <select
+              <Select
                 value={selectedDeptId}
                 onChange={(e) => setSelectedDeptId(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                size="sm"
+                className="w-full"
               >
                 <option value="all">كافة الأقسام</option>
                 {departments.map((d) => (
@@ -472,55 +485,47 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     {d.name}
                   </option>
                 ))}
-              </select>
+              </Select>
 
               {/* Status / Sort Filter */}
-              <div className="flex gap-1.5">
-                <select
+              <div className="flex gap-2">
+                <Select
                   value={selectedStatus}
                   onChange={(e: any) => setSelectedStatus(e.target.value)}
-                  className="flex-1 px-2.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  size="sm"
+                  className="flex-1"
                 >
                   <option value="all">الحالة: الكل</option>
                   <option value="solved">✓ تم الحل</option>
                   <option value="unsolved">⏳ بانتظار حل</option>
-                </select>
+                </Select>
 
-                <select
+                <Select
                   value={sortBy}
                   onChange={(e: any) => setSortBy(e.target.value)}
-                  className="px-2.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  size="sm"
+                  className="flex-1"
                   title="ترتيب النتائج"
                 >
                   <option value="recent">الأحدث</option>
                   <option value="upvotes">الأكثر تأييداً</option>
                   <option value="replies">الأكثر ردوداً</option>
-                </select>
+                </Select>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Posts Feed List */}
           {filteredPosts.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto">
-                <MessageSquare className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  لا توجد منشورات مطابقة لمعايير البحث
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  جرّب تغيير كلمات البحث أو الفلاتر، أو ابدأ النقاش بطرح موضوع جديد للحصول على نقاط!
-                </p>
-              </div>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md hover:bg-indigo-700 transition-colors"
-              >
-                طرح سؤال أو موضوع الآن
-              </button>
-            </div>
+            <Card padding="lg">
+              <EmptyState
+                icon={MessageSquare}
+                title="لا توجد منشورات مطابقة لمعايير البحث"
+                description="جرّب تغيير كلمات البحث أو الفلاتر، أو ابدأ النقاش بطرح موضوع جديد للحصول على نقاط!"
+                actionLabel="طرح سؤال أو موضوع الآن"
+                onAction={() => setIsCreateModalOpen(true)}
+              />
+            </Card>
           ) : (
             <div className="space-y-4">
               {filteredPosts.map((post) => {
@@ -531,44 +536,42 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 const isSolvedState = post.isSolved || hasSolvedComment;
 
                 return (
-                  <article
+                  <Card
                     key={post.id}
-                    className="bg-white dark:bg-slate-900/90 rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/30 dark:hover:border-indigo-500/30 hover:shadow-md transition-all duration-200 space-y-4"
+                    padding="lg"
+                    className="space-y-4"
                   >
                     {/* Post Top Header */}
                     <div className="flex items-start justify-between gap-3 sm:gap-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            post.authorAvatar ||
-                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                          }
+                        <Avatar
+                          src={post.authorAvatar}
                           alt={post.authorName}
-                          className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 shrink-0"
-                          loading="lazy"
+                          size="md"
+                          fallback={post.authorName?.[0] || "?"}
                         />
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                            <span className="text-xs sm:text-sm font-bold text-ehb-text-primary">
                               {post.authorName}
                             </span>
                             {post.authorRole === "moderator" && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3" />
+                              <Badge variant="primary" size="sm" dot>
                                 مشرف أكاديمي
-                              </span>
+                              </Badge>
                             )}
                             {post.authorRole === "supervisor" && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                                <GraduationCap className="w-3 h-3" />
+                              <Badge variant="warning" size="sm" dot>
                                 عضو هيئة تدريس
-                              </span>
+                              </Badge>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <div className="text-[11px] text-ehb-text-muted flex items-center gap-1.5 mt-0.5">
                             <span>{post.authorDepartment}</span>
                             <span>•</span>
-                            <span>{new Date(post.createdAt).toLocaleDateString("ar-EG")}</span>
+                            <span className="font-mono">
+                              {new Date(post.createdAt).toLocaleDateString("ar-EG")}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -576,31 +579,29 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                       {/* Right Meta Chips */}
                       <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                         {post.isPinned && (
-                          <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                          <Badge variant="warning" size="sm" dot>
                             <Pin className="w-3 h-3" />
                             مثبت
-                          </span>
+                          </Badge>
                         )}
-                        <span
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${categoryMeta.color} flex items-center gap-1`}
-                        >
+                        <Badge variant={categoryMeta.color as any} size="sm">
                           <categoryMeta.icon className="w-3 h-3" />
                           <span className="hidden sm:inline">{categoryMeta.label}</span>
-                        </span>
+                        </Badge>
                         {post.courseCode && (
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 course-code">
+                          <Badge variant="neutral" size="sm" className="course-code">
                             {post.courseCode}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     </div>
 
                     {/* Post Title & Content */}
                     <div className="space-y-2">
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                      <h3 className="text-base sm:text-lg font-bold text-ehb-text-primary leading-snug">
                         {post.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                      <p className="text-xs sm:text-sm text-ehb-text-muted leading-relaxed whitespace-pre-line">
                         {post.content}
                       </p>
                     </div>
@@ -609,21 +610,18 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     {post.tags && post.tags.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                         {post.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200/40 dark:border-slate-700/40 flex items-center gap-1"
-                          >
-                            <Tag className="w-2.5 h-2.5 text-slate-400" />
+                          <Badge key={idx} variant="neutral" size="sm">
+                            <Tag className="w-2.5 h-2.5 text-ehb-text-muted" />
                             <bdi>{tag}</bdi>
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     )}
 
                     {/* Solved Status Indicator Banner */}
                     {isSolvedState && (
-                      <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <div className="p-3 rounded-ehb-md bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2.5 text-xs font-bold text-emerald-400">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <span>
                           تم حل هذا الاستفسار واعتماد الإجابة النموذجية من المشرف الأكاديمي / صاحب
                           السؤال
@@ -632,123 +630,121 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     )}
 
                     {/* Bottom Action Controls */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                    <div className="flex items-center justify-between pt-3 border-t border-ehb-subtle text-xs">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <button
+                        <Button
+                          variant={post.hasUpvoted ? "primary" : "secondary"}
+                          size="sm"
                           onClick={() => handleUpvote(post.id)}
-                          className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 min-h-[36px] ${
-                            post.hasUpvoted
-                              ? "bg-indigo-600 text-white shadow-xs"
-                              : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                          }`}
-                          aria-label="تأييد المنشور"
+                          leftIcon={<ThumbsUp className="w-3.5 h-3.5" />}
                         >
-                          <ThumbsUp
-                            className={`w-3.5 h-3.5 ${post.hasUpvoted ? "text-white" : "text-slate-500"}`}
-                          />
-                          <span>{post.upvotes} تأييد</span>
-                        </button>
+                          {post.upvotes} تأييد
+                        </Button>
 
-                        <button
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => toggleExpand(post.id)}
-                          className="px-3 py-1.5 rounded-xl font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1.5 min-h-[36px]"
-                          aria-label="عرض الردود"
+                          leftIcon={
+                            isExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )
+                          }
                         >
-                          <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
-                          <span>{postComments.length} إجابات</span>
-                          {isExpanded ? (
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          ) : (
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                          {postComments.length} إجابات
+                        </Button>
 
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleSharePost(post.id)}
-                          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[36px]"
-                          title="مشاركة رابط المنشور"
+                          leftIcon={
+                            copiedPostId === post.id ? (
+                              <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Share2 className="w-3.5 h-3.5" />
+                            )
+                          }
                         >
-                          {copiedPostId === post.id ? (
-                            <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Share2 className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                          مشاركة
+                        </Button>
                       </div>
 
-                      <div className="text-slate-400 text-[11px] flex items-center gap-1">
+                      <div className="text-ehb-text-muted text-[11px] flex items-center gap-1">
                         <span>{post.views || 1} مشاهدة</span>
                       </div>
                     </div>
 
                     {/* Expanded Replies & Comment Input */}
                     {isExpanded && (
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-4">
+                      <div className="pt-4 space-y-4 border-t border-ehb-subtle">
                         {/* Comments Thread List */}
                         <div className="space-y-3">
                           {postComments.length === 0 ? (
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center text-xs text-slate-500 dark:text-slate-400">
+                            <div className="p-4 rounded-ehb-md bg-ehb-surface text-center text-xs text-ehb-text-muted">
                               لا توجد ردود بعد. كن أول من يجيب ويساعد زملاءه للحصول على نقاط (+5
                               نقاط للإجابة)!
                             </div>
                           ) : (
-                            // Show verified solution comment at the top if present
                             [...postComments]
                               .sort((a, b) => (b.isSolution ? 1 : 0) - (a.isSolution ? 1 : 0))
                               .map((cmt) => (
                                 <div
                                   key={cmt.id}
-                                  className={`p-4 rounded-xl border transition-all ${
+                                  className={`p-4 rounded-ehb-md border transition-all ${
                                     cmt.isSolution
-                                      ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-500/50 ring-1 ring-emerald-500/30"
-                                      : "bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80"
+                                      ? "bg-emerald-500/10 border-emerald-500/30"
+                                      : "bg-ehb-surface border-ehb-subtle"
                                   }`}
                                 >
                                   <div className="flex items-start justify-between gap-3 mb-2">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                      <span className="text-xs font-bold text-ehb-text-primary">
                                         {cmt.authorName}
                                       </span>
-                                      <span className="text-[10px] text-slate-400">
+                                      <span className="text-[10px] text-ehb-text-muted">
                                         • {cmt.authorDepartment}
                                       </span>
                                       {cmt.isSolution && (
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white flex items-center gap-1">
+                                        <Badge variant="success" size="sm" dot>
                                           <Check className="w-3 h-3" />
                                           حل نموذجي معتمد (+10 نقاط)
-                                        </span>
+                                        </Badge>
                                       )}
                                     </div>
-
-                                    <div className="flex items-center gap-2">
-                                      {/* Mark as Solution button (author or elevated role) */}
-                                      {!cmt.isSolution &&
-                                        (user?.id === post.authorId ||
-                                          user?.role !== "student") && (
-                                          <button
-                                            onClick={() => handleMarkAsSolution(post.id, cmt.id)}
-                                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-500/20 transition-colors"
-                                          >
-                                            اعتماد كحل نموذجي ✓
-                                          </button>
-                                        )}
-
-                                      <button
-                                        onClick={() => handleUpvoteComment(cmt.id)}
-                                        className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
-                                          cmt.hasUpvoted
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                                        }`}
-                                      >
-                                        ▲ {cmt.upvotes}
-                                      </button>
-                                    </div>
+                                    <span className="text-[10px] text-ehb-text-muted font-mono">
+                                      {cmt.createdAt}
+                                    </span>
                                   </div>
 
-                                  <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+                                  <p className="text-xs sm:text-sm text-ehb-text-primary leading-relaxed whitespace-pre-line">
                                     {cmt.content}
                                   </p>
+
+                                  <div className="flex items-center gap-2 mt-3">
+                                    {/* Mark as Solution button */}
+                                    {!cmt.isSolution &&
+                                      (user?.id === post.authorId ||
+                                        user?.role !== "student") && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleMarkAsSolution(post.id, cmt.id)}
+                                        >
+                                          اعتماد كحل نموذجي ✓
+                                        </Button>
+                                      )}
+
+                                    <Button
+                                      variant={cmt.hasUpvoted ? "primary" : "secondary"}
+                                      size="sm"
+                                      onClick={() => handleUpvoteComment(cmt.id)}
+                                    >
+                                      ▲ {cmt.upvotes}
+                                    </Button>
+                                  </div>
                                 </div>
                               ))
                           )}
@@ -758,7 +754,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="اكتب إجابتك أو إيضاحك الأكاديمي هنا..."
+                            placeholder="أضف رداً أكاديمياً..."
                             value={replyInputMap[post.id] || ""}
                             onChange={(e) =>
                               setReplyInputMap((prev) => ({ ...prev, [post.id]: e.target.value }))
@@ -769,20 +765,21 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                                 handleAddReply(post.id);
                               }
                             }}
-                            className="w-full px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="flex-1 px-3.5 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
                           />
-                          <button
+                          <Button
+                            variant="primary"
+                            size="sm"
                             onClick={() => handleAddReply(post.id)}
                             disabled={isSubmittingReply[post.id] || !replyInputMap[post.id]?.trim()}
-                            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-40 shrink-0 min-h-[40px]"
+                            leftIcon={<Send className="w-3.5 h-3.5" />}
                           >
-                            <Send className="w-3.5 h-3.5" />
-                            <span>إرسال</span>
-                          </button>
+                            إرسال
+                          </Button>
                         </div>
                       </div>
                     )}
-                  </article>
+                  </Card>
                 );
               })}
             </div>
@@ -800,61 +797,69 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {/* CREATE POST MODAL */}
       {isCreateModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
+          onClick={() => setIsCreateModalOpen(false)}
         >
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <Card
+            padding="lg"
+            className="w-full max-w-lg shadow-ehb-xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-base sm:text-lg font-bold text-ehb-text-primary flex items-center gap-2">
+                <Plus className="w-5 h-5 text-indigo-400" />
                 إنشاء منشور أو سؤال أكاديمي جديد
               </h3>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors"
                 aria-label="إغلاق"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             {createError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
+              <div className="p-3 rounded-ehb-md bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
                 {createError}
               </div>
             )}
 
             <form onSubmit={handleCreatePost} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-ehb-text-primary">
                   نوع المنشور
                 </label>
-                <select
+                <Select
                   value={newCategory}
                   onChange={(e: any) => setNewCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  size="sm"
+                  className="w-full"
                 >
                   <option value="question">❓ سؤال واستفسار أكاديمي</option>
                   <option value="resource_share">📚 مشاركة مرجع أو ملخص</option>
                   <option value="study_tip">💡 نصيحة دراسية وتجربة معملية</option>
                   <option value="exam_discussion">📝 نقاش امتحانات سابقة</option>
                   <option value="project_help">🛠️ استشارة وتطوير مشروع تخرج/عملي</option>
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-ehb-text-primary">
                   المقرر المرتبط
                 </label>
-                <select
+                <Select
                   value={newCourseId}
                   onChange={(e) => {
                     const c = courses.find((crs) => crs.id === e.target.value);
                     setNewCourseId(e.target.value);
                     if (c) setNewCourseCode(c.code);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  size="sm"
+                  className="w-full"
                 >
                   <option value="course-general">عام (كافة المقررات الهندسية)</option>
                   {courses.map((c) => (
@@ -862,11 +867,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                       {c.code} - {c.title}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-ehb-text-primary">
                   عنوان الموضوع
                 </label>
                 <input
@@ -874,12 +879,12 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   placeholder="اكتب عنواناً دقيقاً وواضحاً..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-ehb-text-primary">
                   التفاصيل والشرح
                 </label>
                 <textarea
@@ -887,12 +892,12 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   placeholder="اشرح المسألة أو المرجع بالتفصيل لتسهيل فهم الزملاء والمشرفين..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-ehb-text-primary">
                   الوسوم والكلمات المفتاحية (مفصولة بفواصل)
                 </label>
                 <input
@@ -900,28 +905,30 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   placeholder="مثال: Laplace, Logic, C++, Midterm"
                   value={newTagsInput}
                   onChange={(e) => setNewTagsInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-3">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="md"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
                 >
                   إلغاء
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
                   type="submit"
                   disabled={isSubmittingPost}
-                  className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-colors disabled:opacity-50 min-h-[40px]"
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
                 >
                   {isSubmittingPost ? "جاري النشر..." : "نشر الموضوع (+5 نقاط)"}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>

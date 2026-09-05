@@ -2,21 +2,194 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* ==========================================================================
+   EngHub Design System — Phase B1 CSS Custom Properties
+   ========================================================================== */
+
 :root {
+  /* --- Fonts --- */
   --font-arabic:
     "Cairo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-latin: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* --- Typography Scale --- */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --text-leading-tight: 1.25;
+  --text-leading-snug: 1.375;
+  --text-leading-normal: 1.5;
+  --text-leading-relaxed: 1.625;
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  /* --- Spacing Scale (rem-equivalent) --- */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* --- Border Radius Scale --- */
+  --radius-none: 0;
+  --radius-sm: 0.5rem;   /* 8px — buttons, inputs, small controls */
+  --radius-md: 0.75rem;  /* 12px — cards, modals, dropdowns (default) */
+  --radius-lg: 1rem;     /* 16px — hero cards, large sections */
+  --radius-xl: 1.25rem;  /* 20px — prominent modals, CTAs */
+  --radius-full: 9999px; /* pills, avatars, toggle switches */
+
+  /* --- Shadows (calm, subtle — no glow) --- */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
+
+  /* --- Motion Tokens --- */
+  --duration-instant: 75ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-smooth: 250ms;
+  --duration-slow: 350ms;
+
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --transition-fast: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-colors: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-shadow: box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Z-Index Scale --- */
+  --z-base: 0;
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-mobile-nav: 40;
+  --z-modal: 50;
+  --z-toast: 50;
+  --z-tooltip: 60;
+  --z-notification-outer: 100;
+  --z-notification-inner: 101;
+
+  /* ==========================================================================
+     DARK MODE (default — brand surface)
+     ========================================================================== */
+  --ehb-background: #020617;         /* slate-950 — deep dark base */
+  --ehb-surface: #0f172a;            /* slate-900 — one level up */
+  --ehb-surface-elevated: #1e293b;   /* slate-800 — cards/modals */
+  --ehb-surface-elevated-2: #334155; /* slate-700 — hover states */
+
+  --ehb-text-primary: #f8fafc;       /* slate-50 */
+  --ehb-text-muted: #94a3b8;         /* slate-400 */
+  --ehb-text-inverse: #020617;       /* slate-950 */
+
+  --ehb-border-subtle: rgba(148, 163, 184, 0.12);   /* slate-400/12 */
+  --ehb-border-default: rgba(148, 163, 184, 0.2);    /* slate-400/20 */
+  --ehb-border-strong: rgba(148, 163, 184, 0.35);    /* slate-400/35 */
+
+  --ehb-primary: #f59e0b;            /* amber-500 */
+  --ehb-primary-hover: #fbbf24;      /* amber-400 */
+  --ehb-primary-active: #d97706;     /* amber-600 */
+  --ehb-primary-subtle: rgba(245, 158, 11, 0.12);
+  --ehb-primary-text: #0f172a;       /* slate-900 — dark text on amber */
+
+  --ehb-success: #10b981;            /* emerald-500 */
+  --ehb-success-subtle: rgba(16, 185, 129, 0.12);
+  --ehb-success-text: #ffffff;
+
+  --ehb-warning: #f59e0b;            /* amber-500 */
+  --ehb-warning-subtle: rgba(245, 158, 11, 0.12);
+  --ehb-warning-text: #0f172a;
+
+  --ehb-error: #ef4444;              /* red-500 */
+  --ehb-error-subtle: rgba(239, 68, 68, 0.12);
+  --ehb-error-text: #ffffff;
+
+  /* ==========================================================================
+     LIGHT MODE (explicit variant — toggled via .dark class on <html>)
+     ========================================================================== */
+  --ehb-background-light: #f8fafc;          /* slate-50 */
+  --ehb-surface-light: #ffffff;             /* white */
+  --ehb-surface-elevated-light: #f1f5f9;    /* slate-100 */
+  --ehb-surface-elevated-2-light: #e2e8f0;  /* slate-200 */
+
+  --ehb-text-primary-light: #0f172a;        /* slate-900 */
+  --ehb-text-muted-light: #64748b;          /* slate-500 */
+  --ehb-text-inverse-light: #f8fafc;        /* slate-50 */
+
+  --ehb-border-subtle-light: rgba(15, 23, 42, 0.06);   /* slate-900/6 */
+  --ehb-border-default-light: rgba(15, 23, 42, 0.1);    /* slate-900/10 */
+  --ehb-border-strong-light: rgba(15, 23, 42, 0.18);    /* slate-900/18 */
+
+  --ehb-primary-subtle-light: rgba(217, 119, 6, 0.08);   /* amber-600/8 */
+  --ehb-success-subtle-light: rgba(5, 150, 105, 0.08);   /* emerald-600/8 */
+  --ehb-warning-subtle-light: rgba(217, 119, 6, 0.08);   /* amber-600/8 */
+  --ehb-error-subtle-light: rgba(220, 38, 38, 0.08);     /* red-600/8 */
 }
 
+/* ==========================================================================
+   Light Mode Overrides
+   When .dark is NOT present on <html>, use the light token values.
+   We apply light values via the absence of .dark, using :where() to keep
+   specificity low so component classes can override when needed.
+   ========================================================================== */
+:where(:not(.dark)) {
+  --ehb-background: var(--ehb-background-light);
+  --ehb-surface: var(--ehb-surface-light);
+  --ehb-surface-elevated: var(--ehb-surface-elevated-light);
+  --ehb-surface-elevated-2: var(--ehb-surface-elevated-2-light);
+
+  --ehb-text-primary: var(--ehb-text-primary-light);
+  --ehb-text-muted: var(--ehb-text-muted-light);
+  --ehb-text-inverse: var(--ehb-text-inverse-light);
+
+  --ehb-border-subtle: var(--ehb-border-subtle-light);
+  --ehb-border-default: var(--ehb-border-default-light);
+  --ehb-border-strong: var(--ehb-border-strong-light);
+
+  --ehb-primary-subtle: var(--ehb-primary-subtle-light);
+  --ehb-success-subtle: var(--ehb-success-subtle-light);
+  --ehb-warning-subtle: var(--ehb-warning-subtle-light);
+  --ehb-error-subtle: var(--ehb-error-subtle-light);
+}
+
+/* ==========================================================================
+   Global Element Styles (drawn from design tokens)
+   ========================================================================== */
 body {
   font-family: var(--font-arabic);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--ehb-background);
+  color: var(--ehb-text-primary);
+  transition: background-color var(--duration-smooth) var(--ease-default),
+              color var(--duration-smooth) var(--ease-default);
 }
 
-/* Tabular figures for numbers, GPAs, stats, and scores */
+/* --- Tabular figures for numbers, GPAs, stats, and scores --- */
 .tabular-nums,
 .font-tabular,
 .stat-value {
@@ -25,7 +198,7 @@ body {
   font-family: var(--font-mono), var(--font-arabic);
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* --- Hide scrollbar for Chrome, Safari and Opera --- */
 .no-scrollbar::-webkit-scrollbar,
 .scrollbar-none::-webkit-scrollbar {
   display: none;
@@ -33,14 +206,14 @@ body {
   height: 0px;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+/* --- Hide scrollbar for IE, Edge and Firefox --- */
 .no-scrollbar,
 .scrollbar-none {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
 
-/* Academic isolate numbers and course codes */
+/* --- Academic isolate numbers and course codes --- */
 .course-code {
   direction: ltr;
   display: inline-block;
@@ -48,7 +221,19 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Smooth motion control and accessibility */
+/* --- Bidi Isolate Utility ---
+   Use on any inline element containing Latin tokens (course codes like
+   "AIE 103", terms like "C++", "GPA", years like "2026") inside RTL
+   Arabic text flow to prevent mid-word breaking and misalignment.
+   Usage: <span className="bdi-isolate">AIE 103</span>
+*/
+.bdi-isolate {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+
+/* --- Accessibility: reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -59,3 +244,72 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Design Token Reference Classes (B1 — available for future use)
+   These classes map directly to token values. Components in B2+ should
+   use these instead of arbitrary inline Tailwind values.
+   ========================================================================== */
+
+/* --- Token-based surface backgrounds --- */
+.bg-ehb-background { background-color: var(--ehb-background); }
+.bg-ehb-surface { background-color: var(--ehb-surface); }
+.bg-ehb-surface-elevated { background-color: var(--ehb-surface-elevated); }
+.bg-ehb-surface-elevated-2 { background-color: var(--ehb-surface-elevated-2); }
+
+/* --- Token-based text colors --- */
+.text-ehb-primary { color: var(--ehb-text-primary); }
+.text-ehb-muted { color: var(--ehb-text-muted); }
+.text-ehb-inverse { color: var(--ehb-text-inverse); }
+
+/* --- Token-based border colors --- */
+.border-ehb-subtle { border-color: var(--ehb-border-subtle); }
+.border-ehb-default { border-color: var(--ehb-border-default); }
+.border-ehb-strong { border-color: var(--ehb-border-strong); }
+
+/* --- Token-based accent colors --- */
+.text-ehb-primary-accent { color: var(--ehb-primary); }
+.text-ehb-primary-accent-hover { color: var(--ehb-primary-hover); }
+.bg-ehb-primary { background-color: var(--ehb-primary); }
+.bg-ehb-primary-hover { background-color: var(--ehb-primary-hover); }
+.bg-ehb-primary-subtle { background-color: var(--ehb-primary-subtle); }
+.text-ehb-primary-text { color: var(--ehb-primary-text); }
+
+/* --- Token-based semantic colors --- */
+.text-ehb-success { color: var(--ehb-success); }
+.bg-ehb-success { background-color: var(--ehb-success); }
+.bg-ehb-success-subtle { background-color: var(--ehb-success-subtle); }
+.text-ehb-success-text { color: var(--ehb-success-text); }
+
+.text-ehb-warning { color: var(--ehb-warning); }
+.bg-ehb-warning { background-color: var(--ehb-warning); }
+.bg-ehb-warning-subtle { background-color: var(--ehb-warning-subtle); }
+.text-ehb-warning-text { color: var(--ehb-warning-text); }
+
+.text-ehb-error { color: var(--ehb-error); }
+.bg-ehb-error { background-color: var(--ehb-error); }
+.bg-ehb-error-subtle { background-color: var(--ehb-error-subtle); }
+.text-ehb-error-text { color: var(--ehb-error-text); }
+
+/* --- Token-based shadows --- */
+.shadow-ehb-xs { box-shadow: var(--shadow-xs); }
+.shadow-ehb-sm { box-shadow: var(--shadow-sm); }
+.shadow-ehb-md { box-shadow: var(--shadow-md); }
+.shadow-ehb-lg { box-shadow: var(--shadow-lg); }
+.shadow-ehb-xl { box-shadow: var(--shadow-xl); }
+
+/* --- Token-based transitions --- */
+.transition-ehb-fast { transition: var(--transition-fast); }
+.transition-ehb-normal { transition: var(--transition-normal); }
+.transition-ehb-smooth { transition: var(--transition-smooth); }
+.transition-ehb-colors { transition: var(--transition-colors); }
+.transition-ehb-transform { transition: var(--transition-transform); }
+.transition-ehb-shadow { transition: var(--transition-shadow); }
+
+/* --- Token-based radius --- */
+.rounded-ehb-none { border-radius: var(--radius-none); }
+.rounded-ehb-sm { border-radius: var(--radius-sm); }
+.rounded-ehb-md { border-radius: var(--radius-md); }
+.rounded-ehb-lg { border-radius: var(--radius-lg); }
+.rounded-ehb-xl { border-radius: var(--radius-xl); }
+.rounded-ehb-full { border-radius: var(--radius-full); }

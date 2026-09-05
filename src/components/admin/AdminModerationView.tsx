@@ -32,7 +32,6 @@ import {
   Upload,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { INITIAL_SUPERVISORS, ALL_MOCK_USERS } from "../../data/mockData";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { getAuthHeaders } from "../../lib/storage";
 import {
@@ -52,6 +51,9 @@ import { getCourseCoverSvg } from "../../utils/courseCovers";
 import { getSupervisorScopeLabel } from "../../utils/permissionUtils";
 
 import { ConfirmModal } from "../common/ConfirmModal";
+
+import { Card, Button, Badge, Avatar, Input, Textarea, Select } from "../ui";
+
 import { AdminAuditDashboard } from "./AdminAuditDashboard";
 import { CourseFormModal } from "./CourseFormModal";
 import { HonorRollManager } from "./HonorRollManager";
@@ -139,7 +141,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
 }) => {
   const { t, language } = useTranslation();
 
-  // Tab control: super_admin & moderators get 'queue', 'courses', 'users', 'supervisors', 'assignments', 'schedule', 'announcements', 'events', 'honor_board', 'audit'.
   const [activeTab, setActiveTab] = useState<
     | "queue"
     | "courses"
@@ -155,7 +156,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
   const [rejectReason, setRejectReason] = useState("");
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
 
-  // Course Management State
   const [courseFormModalOpen, setCourseFormModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
@@ -165,7 +165,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
   const [cInstructor, _setCInstructor] = useState("");
   const [cCredits, _setCCredits] = useState(3);
 
-  // New Announcement Form State
   const [ancTitle, setAncTitle] = useState("");
   const [ancContent, setAncContent] = useState("");
   const [ancPriority, setAncPriority] = useState<"urgent" | "normal" | "low">("urgent");
@@ -173,7 +172,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
   const [ancTargetDept, setAncTargetDept] = useState<string>(departments[0]?.id || "");
   const [ancIsPinned, setAncIsPinned] = useState(true);
 
-  // Event Management State & Form
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [viewRegistrantsEvent, setViewRegistrantsEvent] = useState<CampusEvent | null>(null);
@@ -217,7 +215,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Quick Preset Helper for Activity Templates
   const applyEventTemplate = (
     type: "workshop" | "hackathon" | "field_trip" | "seminar" | "competition",
   ) => {
@@ -314,28 +311,7 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     }
   };
 
-  // User Directory & Role Management State
-  const [userList, setUserList] = useState<AdminUserRecord[]>(() =>
-    ALL_MOCK_USERS.map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      phoneNumber: "+20 100 000 0000",
-      studentId: u.studentId,
-      role: u.role,
-      supervisorTitle: u.supervisorTitle,
-      supervisorScope: u.supervisorScope,
-      universityId: u.universityId,
-      facultyId: u.facultyId,
-      departmentId: u.departmentId,
-      level: u.level,
-      semester: u.semester,
-      avatar: u.avatar,
-      bio: u.bio,
-      points: u.points,
-      createdAt: u.createdAt,
-    })),
-  );
+  const [userList, setUserList] = useState<AdminUserRecord[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
@@ -352,13 +328,11 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     type: "success" | "error";
   } | null>(null);
 
-  // Supervisor Scope & Specialization Management State
-  const [supervisorsList, setSupervisorsList] = useState<UserProfile[]>(INITIAL_SUPERVISORS);
+  const [supervisorsList, setSupervisorsList] = useState<UserProfile[]>([]);
   const [supervisorFilterDept, setSupervisorFilterDept] = useState<string>("all");
   const [showSupervisorModal, setShowSupervisorModal] = useState(false);
   const [editingSupervisor, setEditingSupervisor] = useState<UserProfile | null>(null);
 
-  // Supervisor Form state
   const [supName, setSupName] = useState("");
   const [supEmail, setSupEmail] = useState("");
   const [supTitle, setSupTitle] = useState("");
@@ -418,50 +392,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
       canPublishAnnouncements: supCanPublishAnnouncements,
     };
 
-    if (editingSupervisor) {
-      setSupervisorsList((prev) =>
-        prev.map((s) =>
-          s.id === editingSupervisor.id
-            ? {
-                ...s,
-                name: supName.trim(),
-                email: supEmail.trim(),
-                supervisorTitle: supTitle.trim(),
-                supervisorScope: newScope,
-              }
-            : s,
-        ),
-      );
-      setRoleMessage({ text: `تم تحديث صلاحيات ونطاق إشراف (${supName}) بنجاح!`, type: "success" });
-    } else {
-      const newSup: UserProfile = {
-        id: `usr-sup-${Date.now()}`,
-        name: supName.trim(),
-        email: supEmail.trim(),
-        studentId: `SUP-${Math.floor(1000 + Math.random() * 9000)}`,
-        role: "supervisor",
-        supervisorTitle: supTitle.trim() || "مشرف أخصائي للقسم",
-        supervisorScope: newScope,
-        universityId: "univ-1",
-        facultyId: "fac-1",
-        departmentId: supDeptId === "all" ? "dept-cmp" : supDeptId,
-        level: supLevel === "all" ? "Year 1 (Freshman)" : (supLevel as any),
-        semester: "Fall 2026",
-        avatar: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80`,
-        bio: `أخصائي مسند لقسم ${supDeptId}`,
-        points: 1000,
-        badges: [],
-        savedBookmarks: [],
-        enrolledCourseIds: [],
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setSupervisorsList((prev) => [newSup, ...prev]);
-      setRoleMessage({
-        text: `تم تعيين المشرف الأخصائي الجديد (${supName}) بنجاح!`,
-        type: "success",
-      });
-    }
-
     try {
       const res = await fetch("/api/admin/update-role", {
         method: "POST",
@@ -479,6 +409,58 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || data.error?.message || "فشل تحديث صلاحيات المشرف.");
       }
+
+      const data = await res.json();
+      const savedUser = data.user || {
+        id: editingSupervisor?.id || `usr-sup-${Date.now()}`,
+        name: supName.trim(),
+        email: supEmail.trim(),
+        role: "supervisor",
+        supervisorTitle: supTitle.trim(),
+        supervisorScope: newScope,
+      };
+
+      setSupervisorsList((prev) => {
+        if (editingSupervisor) {
+          return prev.map((s) =>
+            s.id === editingSupervisor.id
+              ? {
+                  ...s,
+                  name: savedUser.name || supName.trim(),
+                  email: savedUser.email || supEmail.trim(),
+                  supervisorTitle: savedUser.supervisorTitle || supTitle.trim(),
+                  supervisorScope: newScope,
+                }
+              : s,
+          );
+        }
+        return [
+          {
+            ...savedUser,
+            studentId: `SUP-${Math.floor(1000 + Math.random() * 9000)}`,
+            universityId: "univ-tnu",
+            facultyId: "fac-eng-01",
+            departmentId: supDeptId === "all" ? "dept-cmp" : supDeptId,
+            level: supLevel === "all" ? "Year 1 (Freshman)" : (supLevel as string),
+            semester: "Fall 2026",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+            bio: `أخصائي مسند لقسم ${supDeptId}`,
+            points: 1000,
+            badges: [],
+            savedBookmarks: [],
+            enrolledCourseIds: [],
+            createdAt: new Date().toISOString().split("T")[0],
+          } as UserProfile,
+          ...prev,
+        ];
+      });
+
+      setRoleMessage({
+        text: editingSupervisor
+          ? `تم تحديث صلاحيات ونطاق إشراف (${supName}) بنجاح!`
+          : `تم تعيين المشرف الأخصائي الجديد (${supName}) بنجاح!`,
+        type: "success",
+      });
     } catch (err: any) {
       setRoleMessage({
         text: err.message || "حدث خطأ أثناء تحديث الصلاحيات في قاعدة البيانات.",
@@ -536,87 +518,33 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         headers: getAuthHeaders(),
         credentials: "include",
       });
-      const userMap = new Map<string, AdminUserRecord>();
-
-      // Pre-fill with local mock directory (students, supervisors, admins) keyed uniquely by ID
-      ALL_MOCK_USERS.forEach((u) => {
-        userMap.set(u.id, {
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          phoneNumber: "+20 100 000 0000",
-          studentId: u.studentId,
-          role: u.role,
-          supervisorTitle: u.supervisorTitle,
-          supervisorScope: u.supervisorScope,
-          universityId: u.universityId,
-          facultyId: u.facultyId,
-          departmentId: u.departmentId,
-          level: u.level,
-          semester: u.semester,
-          avatar: u.avatar,
-          bio: u.bio,
-          points: u.points,
-          createdAt: u.createdAt,
-        });
-      });
-
       if (res.ok) {
         const data = await res.json();
-        const serverUsers = data.users || [];
-        serverUsers.forEach((u: any) => {
-          if (u) {
-            // Find existing key by ID first, then by email
-            let targetKey = u.id;
-            if (!targetKey || !userMap.has(targetKey)) {
-              if (u.email) {
-                for (const [k, val] of userMap.entries()) {
-                  if (val.email.toLowerCase() === u.email.toLowerCase()) {
-                    targetKey = k;
-                    break;
-                  }
-                }
-              }
-            }
-            const finalKey = targetKey || u.id || u.email;
-            if (finalKey) {
-              const existing = userMap.get(finalKey);
-              userMap.set(finalKey, {
-                ...existing,
-                ...u,
-                id: u.id || existing?.id || finalKey,
-              });
-            }
-          }
-        });
-      }
-
-      setUserList(Array.from(userMap.values()));
-    } catch {
-      // Graceful fallback to local mock directory without error noise
-      const fallbackMap = new Map<string, AdminUserRecord>();
-      ALL_MOCK_USERS.forEach((u) => {
-        fallbackMap.set(u.id, {
+        const serverUsers = (data.users || []).map((u: any) => ({
           id: u.id,
           name: u.name,
           email: u.email,
-          phoneNumber: "+20 100 000 0000",
-          studentId: u.studentId,
+          phoneNumber: u.phoneNumber || "",
+          studentId: u.studentId || "",
           role: u.role,
           supervisorTitle: u.supervisorTitle,
           supervisorScope: u.supervisorScope,
-          universityId: u.universityId,
-          facultyId: u.facultyId,
-          departmentId: u.departmentId,
-          level: u.level,
-          semester: u.semester,
-          avatar: u.avatar,
-          bio: u.bio,
-          points: u.points,
-          createdAt: u.createdAt,
-        });
-      });
-      setUserList(Array.from(fallbackMap.values()));
+          universityId: u.universityId || "",
+          facultyId: u.facultyId || "",
+          departmentId: u.departmentId || "",
+          level: u.level || "",
+          semester: u.semester || "",
+          avatar: u.avatar || "",
+          bio: u.bio || "",
+          points: u.points || 0,
+          createdAt: u.createdAt || new Date().toISOString(),
+        }));
+        setUserList(serverUsers);
+      } else {
+        setUserList([]);
+      }
+    } catch {
+      setUserList([]);
     } finally {
       setLoadingUsers(false);
     }
@@ -638,20 +566,15 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, userRole]);
 
-  // Handle non-admin role gating (Student Access Denied)
   if (userRole === "student") {
     return (
-      <div className="p-8 rounded-3xl border border-rose-500/20 bg-rose-500/5 dark:bg-rose-950/20 text-center space-y-4 max-w-xl mx-auto my-12">
+      <Card padding="lg" className="max-w-xl mx-auto my-12 text-center space-y-4">
         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
           <Lock className="w-8 h-8" />
         </div>
-        <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-          {t.admin.accessDeniedTitle}
-        </h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-          {t.admin.accessDeniedMessage}
-        </p>
-      </div>
+        <h2 className="text-lg font-black text-ehb-text-primary">{t.admin.accessDeniedTitle}</h2>
+        <p className="text-xs text-ehb-text-muted leading-relaxed">{t.admin.accessDeniedMessage}</p>
+      </Card>
     );
   }
 
@@ -705,7 +628,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
       const data = await res.json();
       if (res.ok) {
         setRoleMessage({ text: data.message || t.admin.roleUpdatedSuccess, type: "success" });
-        // Update local list
         setUserList((prev) =>
           prev.map((u) =>
             u.id === selectedUserForRole.id || u.email === selectedUserForRole.email
@@ -741,6 +663,7 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
           scope: ancScope,
           targetId: ancScope === "department" ? ancTargetDept : undefined,
           isPinned: ancIsPinned,
+          date: new Date().toISOString().split("T")[0],
           authorName:
             userRole === "super_admin"
               ? language === "ar"
@@ -889,387 +812,359 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Role Banner */}
-      <div className="p-5 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className="w-7 h-7 text-amber-300 shrink-0" />
-          <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              {userRole === "super_admin" ? t.admin.promoteSuperAdmin : userRole.replace("_", " ")}{" "}
-              - {t.admin.panelTitle}
-            </h2>
-            <p className="text-xs text-slate-300">{t.admin.panelSubtitle}</p>
+      <Card padding="lg" className="border-ehb-default">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="w-7 h-7 text-amber-500 shrink-0" />
+            <div>
+              <h2 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
+                {userRole === "super_admin" ? t.admin.promoteSuperAdmin : userRole.replace("_", " ")}{" "}
+                - {t.admin.panelTitle}
+              </h2>
+              <p className="text-xs text-ehb-text-muted">{t.admin.panelSubtitle}</p>
+            </div>
           </div>
+
+          <span className="self-start sm:self-auto text-xs font-mono font-bold px-3 py-1 rounded-ehb-sm border border-ehb-default text-ehb-text-muted">
+            Role: {userRole}
+          </span>
         </div>
+      </Card>
 
-        <span className="self-start sm:self-auto text-xs font-mono font-bold px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-          Role: {userRole}
-        </span>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <button
+      <div className="flex flex-wrap items-center gap-2 border-b border-ehb-default pb-3">
+        <Button
+          variant={activeTab === "queue" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("queue")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "queue"
-              ? "bg-indigo-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<FileText className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <FileText className="w-4 h-4" />
           <span>
             {t.admin.queueTab} ({pendingFiles.length})
           </span>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant={activeTab === "courses" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("courses")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "courses"
-              ? "bg-indigo-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Plus className="w-4 h-4" />
           <span>
             {t.admin.coursesTab} ({courses.length})
           </span>
-        </button>
+        </Button>
 
-        {/* Supervisors & Specialization Management Tab */}
-        <button
+        <Button
+          variant={activeTab === "supervisors" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("supervisors")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "supervisors"
-              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<ShieldCheck className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <ShieldCheck className="w-4 h-4 text-purple-300" />
           <span>إدارة المشرفين والتخصصات ({supervisorsList.length})</span>
-        </button>
+        </Button>
 
-        {/* Assignments Management Tab */}
-        <button
+        <Button
+          variant={activeTab === "assignments" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("assignments")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "assignments"
-              ? "bg-purple-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<CheckSquare className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <CheckSquare className="w-4 h-4 text-purple-300" />
           <span>التكليفات والواجبات ({assignments.length})</span>
-        </button>
+        </Button>
 
-        {/* Timetable Schedule Management Tab */}
-        <button
+        <Button
+          variant={activeTab === "schedule" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("schedule")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "schedule"
-              ? "bg-blue-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Clock className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Clock className="w-4 h-4 text-blue-300" />
           <span>جدول الحضور والمحاضرات ({schedule.length})</span>
-        </button>
+        </Button>
 
-        {/* Users Division Tab: Accessible to Overseers & Admins */}
-        <button
+        <Button
+          variant={activeTab === "users" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("users")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "users"
-              ? "bg-purple-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Users className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Users className="w-4 h-4" />
           <span>{t.admin.usersTab}</span>
-        </button>
+        </Button>
 
-        {/* Official Announcements Tab */}
-        <button
+        <Button
+          variant={activeTab === "announcements" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("announcements")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "announcements"
-              ? "bg-amber-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Megaphone className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Megaphone className="w-4 h-4" />
           <span>
             {t.admin.announcementsTab} ({announcements.length})
           </span>
-        </button>
+        </Button>
 
-        {/* Student Activities & Events Tab */}
-        <button
+        <Button
+          variant={activeTab === "events" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("events")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "events"
-              ? "bg-emerald-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Calendar className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Calendar className="w-4 h-4" />
           <span>إدارة الأنشطة والفعاليات ({events.length})</span>
-        </button>
+        </Button>
 
-        {/* Honor Roll & Achievers Management Tab */}
-        <button
+        <Button
+          variant={activeTab === "honor_board" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("honor_board")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "honor_board"
-              ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md shadow-amber-500/20"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Award className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Award className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           <span>لوحة الشرف والطلاب المتميزين</span>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant={activeTab === "audit" ? "primary" : "ghost"}
+          size="sm"
           onClick={() => setActiveTab("audit")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] ${
-            activeTab === "audit"
-              ? "bg-indigo-600 text-white shadow-md"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          }`}
+          leftIcon={<Activity className="w-4 h-4" />}
+          className="min-h-[44px]"
         >
-          <Activity className="w-4 h-4" />
           <span>{t.admin.auditTab}</span>
-        </button>
+        </Button>
       </div>
 
       {roleMessage && (
-        <div
-          className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between ${
+        <Card
+          padding="md"
+          className={`flex items-center justify-between ${
             roleMessage.type === "success"
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-              : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
           }`}
         >
-          <span>
+          <span className="text-xs font-semibold">
             {typeof roleMessage.text === "object"
               ? (roleMessage.text as any)?.message || JSON.stringify(roleMessage.text)
               : String(roleMessage.text)}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setRoleMessage(null)}
             className="text-xs opacity-70 hover:opacity-100"
           >
             ✕
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
-      {/* 1. MODERATION QUEUE */}
       {activeTab === "queue" && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
             {t.admin.pendingQueue}
           </h3>
 
           {pendingFiles.length === 0 ? (
-            <div className="py-12 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <Card padding="lg" className="text-center space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                Moderation Queue Clear
-              </h4>
-              <p className="text-xs text-slate-400">
+              <h4 className="text-sm font-bold text-ehb-text-primary">Moderation Queue Clear</h4>
+              <p className="text-xs text-ehb-text-muted">
                 All submitted study files have been reviewed.
               </p>
-            </div>
+            </Card>
           ) : (
             <div className="space-y-3">
               {pendingFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-slate-900 shadow-sm space-y-3"
-                >
+                <Card key={file.id} padding="lg" className="space-y-3 border-amber-500/30 bg-amber-500/5">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                        <Badge variant="warning" size="sm" dot>
                           Pending Approval
-                        </span>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        </Badge>
+                        <span className="text-xs font-bold text-ehb-text-primary">
                           Uploader: {file.uploaderName}
                         </span>
                       </div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                        {file.title}
-                      </h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-300">
-                        {file.description}
-                      </p>
+                      <h4 className="text-sm font-bold text-ehb-text-primary">{file.title}</h4>
+                      <p className="text-xs text-ehb-text-muted">{file.description}</p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0">
-                      <button
+                      <Button
+                        variant="success"
+                        size="sm"
                         onClick={() => onApproveFile(file.id)}
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all min-h-[44px]"
+                        leftIcon={<CheckCircle2 className="w-4 h-4" />}
+                        className="min-h-[44px]"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>{t.common.approve}</span>
-                      </button>
+                        {t.common.approve}
+                      </Button>
 
-                      <button
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => setSelectedFileId(file.id)}
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all min-h-[44px]"
+                        leftIcon={<XCircle className="w-4 h-4" />}
+                        className="min-h-[44px]"
                       >
-                        <XCircle className="w-4 h-4" />
-                        <span>{t.common.reject}</span>
-                      </button>
+                        {t.common.reject}
+                      </Button>
                     </div>
                   </div>
 
                   {selectedFileId === file.id && (
-                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 space-y-2 text-xs">
-                      <p className="font-bold text-rose-950 dark:text-rose-200">
+                    <Card padding="md" className="space-y-2 border-rose-500/30 bg-rose-500/5">
+                      <p className="font-bold text-rose-600 dark:text-rose-400 text-xs">
                         Rejection Reason Feedback:
                       </p>
-                      <input
-                        type="text"
-                        placeholder="State reason (e.g., Incomplete solutions, blurry scan...)"
+                      <Input
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs focus:outline-none"
+                        placeholder="State reason (e.g., Incomplete solutions, blurry scan...)"
                       />
                       <div className="flex justify-end gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setSelectedFileId(null)}
-                          className="px-2.5 py-1 text-slate-500"
                         >
                           {t.common.cancel}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleReject(file.id)}
-                          className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold"
                         >
                           Confirm Rejection
-                        </button>
+                        </Button>
                       </div>
-                    </div>
+                    </Card>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* 2. COURSE REGISTRY */}
       {activeTab === "courses" && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/20">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                إدارة وسجل المقررات الدراسية ({courses.length})
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                صلاحيات كاملة للسوبر أدمن لإضافة المواد الهندسية، تعديل الساعات والأساتذة أو حذف
-                المقرر نهائياً.
-              </p>
-            </div>
+          <Card padding="lg" className="border-indigo-500/20 bg-indigo-500/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
+                  إدارة وسجل المقررات الدراسية ({courses.length})
+                </h3>
+                <p className="text-xs text-ehb-text-muted mt-0.5">
+                  صلاحيات كاملة للسوبر أدمن لإضافة المواد الهندسية، تعديل الساعات والأساتذة أو حذف
+                  المقرر نهائياً.
+                </p>
+              </div>
 
-            <button
-              onClick={() => {
-                setEditingCourse(null);
-                setCourseFormModalOpen(true);
-              }}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ إضافة مقرر دراسي جديد</span>
-            </button>
-          </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setEditingCourse(null);
+                  setCourseFormModalOpen(true);
+                }}
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="shrink-0"
+              >
+                + إضافة مقرر دراسي جديد
+              </Button>
+            </div>
+          </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {courses.map((c) => {
               const deptName =
                 departments.find((d) => d.id === c.departmentId)?.name || "كلية الهندسة";
               return (
-                <div
-                  key={c.id}
-                  className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3 hover:border-indigo-500/40 transition-all flex flex-col justify-between"
-                >
+                <Card key={c.id} variant="interactive" padding="lg" className="flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-extrabold text-xs px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                      <Badge variant="primary" size="sm" className="course-code">
                         {c.code}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-400">
+                      </Badge>
+                      <span className="text-[11px] font-bold text-ehb-text-muted">
                         {c.credits} ساعات معتمدة • {c.level}
                       </span>
                     </div>
 
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                        {c.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                      <h4 className="font-bold text-sm text-ehb-text-primary">{c.title}</h4>
+                      <p className="text-xs text-ehb-text-muted line-clamp-2 mt-1">
                         {c.description || "لا يوجد وصف للمادة"}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ehb-text-muted pt-2 border-t border-ehb-subtle">
                       <span>
-                        القسم: <strong>{deptName}</strong>
+                        القسم: <strong className="text-ehb-text-primary">{deptName}</strong>
                       </span>
                       <span>
-                        الأستاذ: <strong>{c.instructor}</strong>
+                        الأستاذ: <strong className="text-ehb-text-primary">{c.instructor}</strong>
                       </span>
                     </div>
                   </div>
 
-                  {/* Actions for Super Admin & Department Admin */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button
+                  <div className="flex items-center gap-2 pt-2 border-t border-ehb-subtle">
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setEditingCourse(c);
                         setCourseFormModalOpen(true);
                       }}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs transition-colors"
+                      leftIcon={<Edit3 className="w-3.5 h-3.5" />}
+                      className="flex-1"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>تعديل المادة</span>
-                    </button>
+                      تعديل المادة
+                    </Button>
 
-                    <button
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => setDeletingCourse(c)}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs transition-colors"
+                      leftIcon={<Trash2 className="w-3.5 h-3.5" />}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>حذف</span>
-                    </button>
+                      حذف
+                    </Button>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         </div>
       )}
 
-      {/* SUPERVISORS & SPECIALIZATION MANAGEMENT TAB */}
       {activeTab === "supervisors" && (
         <div className="space-y-6 animate-fade-in">
-          {/* Metrics Summary Row */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-300">
-              <span className="text-[11px] font-extrabold uppercase block text-purple-600 dark:text-purple-400">
-                إجمالي المشرفين الأخصائيين
-              </span>
-              <span className="text-2xl font-black">{supervisorsList.length}</span>
-            </div>
+            <Card padding="md" className="border-purple-500/20 bg-purple-500/5">
+              <div className="flex items-center justify-between text-purple-600 dark:text-purple-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">
+                  إجمالي المشرفين الأخصائيين
+                </span>
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">{supervisorsList.length}</span>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300">
-              <span className="text-[11px] font-extrabold uppercase block text-blue-600 dark:text-blue-400">
-                مشرفو قسم الحاسبات
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-blue-500/20 bg-blue-500/5">
+              <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">مشرفو قسم الحاسبات</span>
+                <Building2 className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {
                   supervisorsList.filter(
                     (s) =>
@@ -1278,13 +1173,14 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   ).length
                 }
               </span>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300">
-              <span className="text-[11px] font-extrabold uppercase block text-amber-600 dark:text-amber-400">
-                مشرفو قسم الميكاترونكس
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-amber-500/20 bg-amber-500/5">
+              <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">مشرفو قسم الميكاترونكس</span>
+                <Layers className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {
                   supervisorsList.filter(
                     (s) =>
@@ -1293,48 +1189,50 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   ).length
                 }
               </span>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
-              <span className="text-[11px] font-extrabold uppercase block text-emerald-600 dark:text-emerald-400">
-                مشرفو السنة الأولى فقط
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-emerald-500/20 bg-emerald-500/5">
+              <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">مشرفو السنة الأولى فقط</span>
+                <Award className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {
                   supervisorsList.filter(
                     (s) => s.supervisorScope?.level && s.supervisorScope.level.includes("Year 1"),
                   ).length
                 }
               </span>
-            </div>
+            </Card>
           </div>
 
-          {/* Department Filter & Actions Bar */}
-          <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-purple-500" />
+          <Card padding="lg" className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-ehb-text-primary w-full sm:w-auto">
+              <Filter className="w-4 h-4 text-purple-500 shrink-0" />
               <span>تصفية حسب التخصص:</span>
-              <select
+              <Select
+                size="sm"
                 value={supervisorFilterDept}
                 onChange={(e) => setSupervisorFilterDept(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
-              >
-                <option value="all">كافة الأقسام التخصصية ({supervisorsList.length})</option>
-                <option value="dept-cmp">قسم هندسة الحاسبات والذكاء الاصطناعي</option>
-                <option value="dept-mtr">قسم هندسة الميكاترونكس والروبوتات</option>
-              </select>
+                options={[
+                  { value: "all", label: `كافة الأقسام التخصصية (${supervisorsList.length})` },
+                  { value: "dept-cmp", label: "قسم هندسة الحاسبات والذكاء الاصطناعي" },
+                  { value: "dept-mtr", label: "قسم هندسة الميكاترونكس والروبوتات" },
+                ]}
+              />
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleOpenNewSupervisorModal}
-              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all flex items-center gap-2 shrink-0"
+              leftIcon={<UserPlus className="w-4 h-4" />}
+              className="shrink-0"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>+ تعيين مشرف أخصائي جديد</span>
-            </button>
-          </div>
+              + تعيين مشرف أخصائي جديد
+            </Button>
+          </Card>
 
-          {/* Supervisors Grid List */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {supervisorsList
               .filter((s) => {
@@ -1357,159 +1255,152 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                 const hasMultipleSupervisors = sameDeptSupervisors.length > 0 && !isSuper;
 
                 return (
-                  <div
-                    key={sup.id}
-                    className="p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 hover:border-purple-500/40 transition-all relative"
-                  >
-                    {/* Top User Info */}
+                  <Card key={sup.id} padding="lg" className="space-y-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <img
+                        <Avatar
+                          size="lg"
                           src={sup.avatar}
                           alt={sup.name}
-                          className="w-12 h-12 rounded-2xl object-cover border-2 border-purple-500/30 shrink-0"
+                          fallback={sup.name}
+                          className="border-2 border-purple-500/30"
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">
-                              {sup.name}
-                            </h4>
+                            <h4 className="text-sm font-black text-ehb-text-primary">{sup.name}</h4>
                             {isSuper && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                              <Badge variant="error" size="sm">
                                 {language === "ar" ? "مسؤول رئيسي" : "Super Admin"}
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-0.5">
                             {sup.supervisorTitle || getSupervisorScopeLabel(sup, departments)}
                           </p>
-                          <span className="text-[11px] text-slate-400 font-mono block">
+                          <span className="text-[11px] text-ehb-text-muted font-mono block">
                             {sup.email}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEditSupervisorClick(sup)}
-                          title="تعديل نطاق الصلاحيات"
-                          className="p-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 transition-all text-xs flex items-center gap-1 font-bold"
+                          leftIcon={<Settings className="w-3.5 h-3.5" />}
+                          className="text-purple-600 dark:text-purple-400"
                         >
-                          <Settings className="w-3.5 h-3.5" />
-                          <span>تعديل</span>
-                        </button>
+                          تعديل
+                        </Button>
                         {!isSuper && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleRemoveSupervisor(sup.id, sup.name)}
-                            title="إلغاء صفة المشرف"
-                            className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 transition-all text-xs"
+                            className="text-rose-600 dark:text-rose-400"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
 
-                    {/* Scope & Specialization Badges */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <Card padding="md" className="space-y-2 text-xs border-ehb-subtle">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-ehb-text-muted">
                         <span>النطاق والتخصص المسند:</span>
                         {hasMultipleSupervisors && (
-                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                          <Badge variant="warning" size="sm">
                             👥 يوجد {sameDeptSupervisors.length + 1} مشرفين لهذا التخصص
-                          </span>
+                          </Badge>
                         )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 font-bold text-xs flex items-center gap-1">
-                          <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                        <Badge variant="info" size="sm" className="flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5" />
                           {scope?.departmentId === "dept-cmp" || sup.departmentId === "dept-cmp"
                             ? "قسم هندسة الحاسبات"
                             : scope?.departmentId === "dept-mtr" || sup.departmentId === "dept-mtr"
                               ? "قسم هندسة الميكاترونكس"
                               : "كافة الأقسام بالكلية"}
-                        </span>
+                        </Badge>
 
-                        <span className="px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 font-bold text-xs flex items-center gap-1">
-                          <Layers className="w-3.5 h-3.5 text-purple-500" />
-                          {scope?.level && scope.level !== "all"
-                            ? scope.level
-                            : "جميع السنوات والفرائق"}
-                        </span>
+                        <Badge variant="primary" size="sm" className="flex items-center gap-1">
+                          <Layers className="w-3.5 h-3.5" />
+                          {scope?.level && scope.level !== "all" ? scope.level : "جميع السنوات والفرائق"}
+                        </Badge>
                       </div>
-                    </div>
+                    </Card>
 
-                    {/* Permissions List */}
                     <div className="space-y-1.5 pt-1 text-[11px]">
-                      <span className="font-bold text-slate-600 dark:text-slate-400 block">
+                      <span className="font-bold text-ehb-text-muted block">
                         الصلاحيات الممنوحة داخل التخصص:
                       </span>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div
-                          className={`flex items-center gap-1.5 font-semibold ${scope?.canManageCourses !== false ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 line-through"}`}
+                          className={`flex items-center gap-1.5 font-semibold ${scope?.canManageCourses !== false ? "text-emerald-600 dark:text-emerald-400" : "text-ehb-text-muted line-through"}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                           <span>تعديل المقررات والمنهج</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-semibold ${scope?.canUploadResources !== false ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 line-through"}`}
+                          className={`flex items-center gap-1.5 font-semibold ${scope?.canUploadResources !== false ? "text-emerald-600 dark:text-emerald-400" : "text-ehb-text-muted line-through"}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                           <span>رفع المراجع والمعامل</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-semibold ${scope?.canUploadCertificates !== false ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 line-through"}`}
+                          className={`flex items-center gap-1.5 font-semibold ${scope?.canUploadCertificates !== false ? "text-emerald-600 dark:text-emerald-400" : "text-ehb-text-muted line-through"}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                           <span>إسناد الشهادات الأكاديمية</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-semibold ${scope?.canPublishAnnouncements !== false ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 line-through"}`}
+                          className={`flex items-center gap-1.5 font-semibold ${scope?.canPublishAnnouncements !== false ? "text-emerald-600 dark:text-emerald-400" : "text-ehb-text-muted line-through"}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                           <span>نشر إعلانات القسم</span>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
           </div>
         </div>
       )}
 
-      {/* 3. USERS DIVISION (Users & Role Management) */}
       {activeTab === "users" && (
         <div className="space-y-6">
-          {/* Header & Overview Banner */}
-          <div className="p-5 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-slate-900/10 dark:bg-slate-900 space-y-3">
+          <Card padding="lg" className="border-purple-500/20 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+                  <Users className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <h3 className="text-base font-extrabold text-ehb-text-primary">
                     {t.admin.usersTab}
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                <p className="text-xs text-ehb-text-muted mt-1">
                   {t.admin.usersTabDesc}
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={fetchUsers}
                 disabled={loadingUsers}
-                className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+                leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loadingUsers ? "animate-spin" : ""}`} />}
+                className="shrink-0"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingUsers ? "animate-spin" : ""}`} />
-                <span>Refresh Directory</span>
-              </button>
+                Refresh Directory
+              </Button>
             </div>
 
-            {/* Privilege & Restriction Callout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
-              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-900 dark:text-purple-200 flex items-start gap-2.5">
+              <Card padding="md" className="border-purple-500/20 bg-purple-500/5 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">
@@ -1517,11 +1408,11 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                       ? "صلاحيات المشرف التعليمي:"
                       : "Academic Moderator Privileges:"}
                   </strong>
-                  <span className="text-[11px] opacity-90">{t.admin.simpleAdminPrivileges}</span>
+                  <span className="text-[11px] text-ehb-text-muted">{t.admin.simpleAdminPrivileges}</span>
                 </div>
-              </div>
+              </Card>
 
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+              <Card padding="md" className="border-amber-500/20 bg-amber-500/5 flex items-start gap-2.5">
                 <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">
@@ -1529,82 +1420,74 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                       ? "ضوابط رفع المصادر والمواد:"
                       : "Resource Upload Regulations:"}
                   </strong>
-                  <span className="text-[11px] opacity-90">{t.admin.uploadRestrictedNotice}</span>
+                  <span className="text-[11px] text-ehb-text-muted">{t.admin.uploadRestrictedNotice}</span>
                 </div>
-              </div>
+              </Card>
             </div>
-          </div>
+          </Card>
 
-          {/* Search & Filter Controls */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <Card padding="lg" className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder={t.admin.searchUsersPlaceholder}
+              <Input
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder={t.admin.searchUsersPlaceholder}
+                leftIcon={<Search className="w-4 h-4" />}
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <Select
+                size="sm"
                 value={userDeptFilter}
                 onChange={(e) => setUserDeptFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none"
-              >
-                <option value="all">جميع الأقسام</option>
-                <option value="dept-cmp">💻 هندسة الحاسبات</option>
-                <option value="dept-mtr">🤖 هندسة الميكاترونكس</option>
-              </select>
+                options={[
+                  { value: "all", label: "جميع الأقسام" },
+                  { value: "dept-cmp", label: "💻 هندسة الحاسبات" },
+                  { value: "dept-mtr", label: "🤖 هندسة الميكاترونكس" },
+                ]}
+              />
 
-              <select
+              <Select
+                size="sm"
                 value={userLevelFilter}
                 onChange={(e) => setUserLevelFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none"
-              >
-                <option value="all">جميع الفرق</option>
-                <option value="Year 1 (Freshman)">السنة الأولى</option>
-                <option value="Year 2 (Sophomore)">السنة الثانية</option>
-              </select>
+                options={[
+                  { value: "all", label: "جميع الفرق" },
+                  { value: "Year 1 (Freshman)", label: "السنة الأولى" },
+                  { value: "Year 2 (Sophomore)", label: "السنة الثانية" },
+                ]}
+              />
 
-              <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2">
-                <button
+              <div className="flex items-center gap-1 border-l border-ehb-default pl-2">
+                <Button
+                  variant={userRoleFilter === "all" ? "primary" : "ghost"}
+                  size="sm"
                   onClick={() => setUserRoleFilter("all")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    userRoleFilter === "all"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
+                  className="whitespace-nowrap"
                 >
                   {t.admin.filterAllRoles} ({userList.length})
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={userRoleFilter === "student" ? "primary" : "ghost"}
+                  size="sm"
                   onClick={() => setUserRoleFilter("student")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    userRoleFilter === "student"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
+                  className="whitespace-nowrap"
                 >
                   {t.admin.filterStudents} ({userList.filter((u) => u.role === "student").length})
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={userRoleFilter === "admins" ? "primary" : "ghost"}
+                  size="sm"
                   onClick={() => setUserRoleFilter("admins")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    userRoleFilter === "admins"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
+                  className="whitespace-nowrap"
                 >
                   {t.admin.filterAdmins} ({userList.filter((u) => u.role !== "student").length})
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* User Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
             {userList
               .filter((u) => {
@@ -1628,45 +1511,43 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                 return matchesRole && matchesDept && matchesLevel && matchesQuery;
               })
               .map((u) => (
-                <div
-                  key={u.id}
-                  className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-between space-y-4 hover:border-purple-500/40 transition-colors"
-                >
+                <Card key={u.id} padding="lg" className="flex flex-col justify-between space-y-4">
                   <div className="space-y-3">
-                    {/* User Header Info */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <img
+                        <Avatar
+                          size="md"
                           src={
                             u.avatar ||
                             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
                           }
                           alt={u.name}
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+                          fallback={u.name}
+                          className="border border-ehb-subtle"
                         />
                         <div>
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
-                            {u.name}
-                          </h4>
+                          <h4 className="font-extrabold text-sm text-ehb-text-primary">{u.name}</h4>
                           <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
                             {u.email}
                           </p>
-                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-                            ID: {u.studentId || u.id} • {u.phoneNumber || "No Phone"}
+                          <p className="text-[11px] text-ehb-text-muted font-mono mt-0.5">
+                            ID: <bdi dir="ltr">{u.studentId || u.id}</bdi> • {u.phoneNumber || "No Phone"}
                           </p>
                         </div>
                       </div>
 
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shrink-0 ${
+                      <Badge
+                        variant={
                           u.role === "super_admin"
-                            ? "bg-purple-500/10 text-purple-600 border-purple-500/30"
+                            ? "error"
                             : u.role === "department_admin"
-                              ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/30"
+                              ? "primary"
                               : u.role === "moderator"
-                                ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-                        }`}
+                                ? "warning"
+                                : "neutral"
+                        }
+                        size="sm"
+                        className="shrink-0"
                       >
                         <ShieldCheck className="w-3 h-3" />
                         {u.role === "super_admin"
@@ -1688,15 +1569,14 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                                 : language === "ar"
                                   ? "طالب"
                                   : "Student"}
-                      </span>
+                      </Badge>
                     </div>
 
-                    {/* Academic & Bio Details */}
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs space-y-1.5 border border-slate-100 dark:border-slate-800">
-                      <div className="flex justify-between text-slate-700 dark:text-slate-300 font-semibold">
+                    <Card padding="md" className="text-xs space-y-1.5 border-ehb-subtle">
+                      <div className="flex justify-between text-ehb-text-primary font-semibold">
                         <span>
                           {language === "ar" ? "القسم:" : "Department:"}{" "}
-                          <strong className="text-slate-900 dark:text-slate-100">
+                          <strong>
                             {departments.find((d) => d.id === u.departmentId)?.name ||
                               u.departmentId ||
                               (language === "ar" ? "كلية الهندسة" : "Engineering")}
@@ -1704,17 +1584,17 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                         </span>
                         <span>
                           {language === "ar" ? "المستوى:" : "Level:"}{" "}
-                          <strong className="text-slate-900 dark:text-slate-100">
+                          <strong>
                             {u.level || (language === "ar" ? "مقيد" : "Enrolled")}
                           </strong>
                         </span>
                       </div>
                       {u.bio && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2">
+                        <p className="text-[11px] text-ehb-text-muted italic line-clamp-2">
                           &quot;{u.bio}&quot;
                         </p>
                       )}
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
+                      <div className="flex items-center justify-between text-[11px] text-ehb-text-muted pt-1 border-t border-ehb-subtle">
                         <span>
                           {language === "ar" ? "النقاط:" : "Points:"}{" "}
                           <strong className="text-amber-500 tabular-nums">
@@ -1732,53 +1612,54 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                               : "Active"}
                         </span>
                       </div>
-                    </div>
+                    </Card>
                   </div>
 
-                  {/* Actions / Upgrade Section */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <div className="pt-2 border-t border-ehb-subtle flex items-center justify-between gap-2">
                     {u.role === "student" ? (
-                      <button
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={() => {
                           setSelectedUserForRole(u);
                           setPendingNewRole("moderator");
                           setShowRoleConfirmModal(true);
                         }}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+                        leftIcon={<ShieldCheck className="w-3.5 h-3.5" />}
+                        className="w-full"
                       >
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>{t.admin.upgradeToAdmin}</span>
-                      </button>
+                        {t.admin.upgradeToAdmin}
+                      </Button>
                     ) : (
                       <div className="w-full flex items-center justify-between gap-2">
                         <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           {language === "ar" ? "حساب بصلاحيات إدارية" : "Admin Privileges Active"}
                         </span>
-                        <select
+                        <Select
+                          size="sm"
                           value={u.role}
                           onChange={(e) => {
                             setSelectedUserForRole(u);
                             setPendingNewRole(e.target.value as UserRole);
                             setShowRoleConfirmModal(true);
                           }}
-                          className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-semibold cursor-pointer focus:outline-none"
-                        >
-                          <option value="student">{t.admin.demoteStudent}</option>
-                          <option value="moderator">{t.admin.promoteModerator}</option>
-                          <option value="department_admin">{t.admin.promoteDeptAdmin}</option>
-                          <option value="super_admin">{t.admin.promoteSuperAdmin}</option>
-                        </select>
+                          options={[
+                            { value: "student", label: t.admin.demoteStudent },
+                            { value: "moderator", label: t.admin.promoteModerator },
+                            { value: "department_admin", label: t.admin.promoteDeptAdmin },
+                            { value: "super_admin", label: t.admin.promoteSuperAdmin },
+                          ]}
+                        />
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
           </div>
         </div>
       )}
 
-      {/* Role Change Confirmation Dialog Modal */}
       <ConfirmModal
         isOpen={showRoleConfirmModal && Boolean(selectedUserForRole)}
         title={t.admin.confirmRoleChangeTitle}
@@ -1792,35 +1673,34 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         }}
       />
 
-      {/* OFFICIAL ANNOUNCEMENTS MANAGEMENT TAB */}
       {activeTab === "announcements" && (
         <div className="space-y-6">
-          {/* Header Banner */}
-          <div className="p-6 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-indigo-950/40 dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 shrink-0 shadow-inner">
-                <Megaphone className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <span>{t.admin.officialAnnouncementsTitle}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                    Live Broadcast
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  قم بنشر إعلانات رسمية هامة يتم تعميمها فوراً على جميع الطلاب والمستخدمين وتظهر في
-                  الشاشات الرئيسية والحرم الجامعي.
-                </p>
+          <Card padding="lg" className="border-amber-500/30 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 shrink-0">
+                  <Megaphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-ehb-text-primary flex items-center gap-2">
+                    <span>{t.admin.officialAnnouncementsTitle}</span>
+                    <Badge variant="attention" size="sm">
+                      Live Broadcast
+                    </Badge>
+                  </h3>
+                  <p className="text-xs text-ehb-text-muted mt-0.5">
+                    قم بنشر إعلانات رسمية هامة يتم تعميمها فوراً على جميع الطلاب والمستخدمين وتظهر في
+                    الشاشات الرئيسية والحرم الجامعي.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Form to Create New Announcement */}
-          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Send className="w-4 h-4 text-amber-500" />
-              <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          <Card padding="lg" className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-ehb-subtle pb-3">
+              <Send className="w-4 h-4 text-amber-500 shrink-0" />
+              <h4 className="text-xs font-black text-ehb-text-primary uppercase tracking-wider">
                 {t.admin.publishAnnouncement}
               </h4>
             </div>
@@ -1828,85 +1708,75 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
             <form onSubmit={handlePublishAnnouncement} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {t.admin.announcementTitle} *
-                  </label>
-                  <input
-                    type="text"
+                  <Input
+                    label={t.admin.announcementTitle}
                     required
                     value={ancTitle}
                     onChange={(e) => setAncTitle(e.target.value)}
                     placeholder="مثال: تقديم المواعيد النهائية لتسليم مشاريع التخرج / بدء تسجيل المقررات"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                   />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {t.admin.announcementContent} *
-                  </label>
-                  <textarea
+                  <Textarea
+                    label={t.admin.announcementContent}
                     required
                     rows={4}
                     value={ancContent}
                     onChange={(e) => setAncContent(e.target.value)}
                     placeholder="اكتب المحتوى التفصيلي للإعلان الرسمي الموجه لطلاب الكلية..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="block text-xs font-bold text-ehb-text-primary mb-1.5">
                     {t.admin.priority}
                   </label>
-                  <select
+                  <Select
                     value={ancPriority}
                     onChange={(e) => setAncPriority(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none"
-                  >
-                    <option value="urgent">{t.admin.urgent} 🔥</option>
-                    <option value="normal">{t.admin.normal} 📢</option>
-                    <option value="low">{t.admin.low} 📌</option>
-                  </select>
+                    options={[
+                      { value: "urgent", label: `${t.admin.urgent} 🔥` },
+                      { value: "normal", label: `${t.admin.normal} 📢` },
+                      { value: "low", label: `${t.admin.low} 📌` },
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="block text-xs font-bold text-ehb-text-primary mb-1.5">
                     {t.admin.scope}
                   </label>
-                  <select
+                  <Select
                     value={ancScope}
                     onChange={(e) => setAncScope(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none"
-                  >
-                    <option value="faculty">{t.admin.allUsers}</option>
-                    <option value="department">قسم أكاديمي معين</option>
-                    <option value="university">الجامعة عامة</option>
-                  </select>
+                    options={[
+                      { value: "faculty", label: t.admin.allUsers },
+                      { value: "department", label: "قسم أكاديمي معين" },
+                      { value: "university", label: "الجامعة عامة" },
+                    ]}
+                  />
                 </div>
 
                 {ancScope === "department" && (
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label className="block text-xs font-bold text-ehb-text-primary mb-1.5">
                       اختر القسم المستهدف
                     </label>
-                    <select
+                    <Select
                       value={ancTargetDept}
                       onChange={(e) => setAncTargetDept(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none"
-                    >
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name} ({d.code})
-                        </option>
-                      ))}
-                    </select>
+                      options={departments.map((d) => ({
+                        value: d.id,
+                        label: `${d.name} (${d.code})`,
+                      }))}
+                    />
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-ehb-subtle">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-ehb-text-primary">
                   <input
                     type="checkbox"
                     checked={ancIsPinned}
@@ -1916,251 +1786,258 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   <span>{t.admin.pinAnnouncement}</span>
                 </label>
 
-                <button
+                <Button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 min-h-[42px]"
+                  variant="attention"
+                  leftIcon={<Megaphone className="w-4 h-4" />}
                 >
-                  <Megaphone className="w-4 h-4" />
-                  <span>{t.admin.publishAnnouncement}</span>
-                </button>
+                  {t.admin.publishAnnouncement}
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
 
-          {/* List of Published Announcements */}
-          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-                <Bell className="w-4 h-4 text-amber-500" />
+          <Card padding="lg" className="space-y-4">
+            <div className="flex items-center justify-between border-b border-ehb-subtle pb-3">
+              <h4 className="text-xs font-black text-ehb-text-primary uppercase tracking-wider flex items-center gap-2">
+                <Bell className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>سجل الإعلانات المنشورة ({announcements.length})</span>
               </h4>
             </div>
 
             {announcements.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 text-xs">
+              <div className="py-12 text-center text-ehb-text-muted text-xs">
                 لا يوجد إعلانات منشورة حتى الآن. قم بإضافة إعلان رسمي من النموذج أعلاه.
               </div>
             ) : (
               <div className="space-y-3">
                 {announcements.map((anc) => (
-                  <div
+                  <Card
                     key={anc.id}
-                    className={`p-4 rounded-2xl border transition-all ${
+                    padding="lg"
+                    className={`transition-all ${
                       anc.isPinned
-                        ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10"
-                        : "border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40"
+                        ? "border-amber-500/40 bg-amber-500/5"
+                        : "border-ehb-subtle bg-ehb-surface"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1 min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {anc.isPinned && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                            <Badge variant="warning" size="sm" className="flex items-center gap-1">
                               <Pin className="w-3 h-3" />
                               <span>مثبت في الأعلى</span>
-                            </span>
+                            </Badge>
                           )}
-                          <span
-                            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                          <Badge
+                            variant={
                               anc.priority === "urgent"
-                                ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 animate-pulse"
+                                ? "error"
                                 : anc.priority === "normal"
-                                  ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30"
-                                  : "bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/30"
-                            }`}
+                                  ? "primary"
+                                  : "neutral"
+                            }
+                            size="sm"
                           >
                             {anc.priority === "urgent"
                               ? "🔥 عاجل ورسمي"
                               : anc.priority === "normal"
                                 ? "📢 إعلان عادي"
                                 : "📌 تنويه"}
+                          </Badge>
+                          <span className="text-[10px] text-ehb-text-muted font-mono">
+                            {anc.date}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-mono">{anc.date}</span>
                         </div>
 
-                        <h5 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 pt-1">
+                        <h5 className="text-sm font-extrabold text-ehb-text-primary pt-1">
                           {anc.title}
                         </h5>
 
-                        <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                        <p className="text-xs text-ehb-text-muted whitespace-pre-wrap leading-relaxed">
                           {anc.content}
                         </p>
 
-                        <div className="pt-2 flex items-center gap-2 text-[10px] text-slate-400">
+                        <div className="pt-2 flex items-center gap-2 text-[10px] text-ehb-text-muted">
                           <span>
-                            صادر عن: <strong>{anc.authorName}</strong>
+                            صادر عن: <strong className="text-ehb-text-primary">{anc.authorName}</strong>
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         {onTogglePinAnnouncement && (
-                          <button
+                          <Button
+                            variant={anc.isPinned ? "primary" : "ghost"}
+                            size="sm"
                             onClick={() => onTogglePinAnnouncement(anc.id)}
                             title={anc.isPinned ? "إلغاء التثبيت" : "تثبيت الإعلان"}
-                            className={`p-2 rounded-xl border text-xs transition-all ${
-                              anc.isPinned
-                                ? "bg-amber-500 text-white border-amber-600"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                            }`}
                           >
                             <Pin className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         )}
                         {onDeleteAnnouncement && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => onDeleteAnnouncement(anc.id)}
                             title={t.admin.deleteAnnouncement}
-                            className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs transition-all"
+                            className="text-rose-600 dark:text-rose-400"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* 5. STUDENT ACTIVITIES & EVENTS MANAGEMENT */}
       {activeTab === "events" && (
         <div className="space-y-6 animate-fade-in">
-          {/* Top Overview Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
-              <span className="text-[11px] font-extrabold uppercase block text-emerald-600 dark:text-emerald-400">
-                إجمالي الفعاليات والأنشطة
-              </span>
-              <span className="text-2xl font-black">{events.length}</span>
-            </div>
+            <Card padding="md" className="border-emerald-500/20 bg-emerald-500/5">
+              <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">
+                  إجمالي الفعاليات والأنشطة
+                </span>
+                <Calendar className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">{events.length}</span>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-800 dark:text-indigo-300">
-              <span className="text-[11px] font-extrabold uppercase block text-indigo-600 dark:text-indigo-400">
-                الفعاليات المنشورة للطلاب
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-indigo-500/20 bg-indigo-500/5">
+              <div className="flex items-center justify-between text-indigo-600 dark:text-indigo-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">
+                  الفعاليات المنشورة للطلاب
+                </span>
+                <Check className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {events.filter((e) => e.status !== "draft" && e.status !== "cancelled").length}
               </span>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300">
-              <span className="text-[11px] font-extrabold uppercase block text-amber-600 dark:text-amber-400">
-                المسودات المؤجلة
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-amber-500/20 bg-amber-500/5">
+              <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">المسودات المؤجلة</span>
+                <FileText className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {events.filter((e) => e.status === "draft").length}
               </span>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-300">
-              <span className="text-[11px] font-extrabold uppercase block text-purple-600 dark:text-purple-400">
-                إجمالي المقاعد المسجلة
-              </span>
-              <span className="text-2xl font-black">
+            <Card padding="md" className="border-purple-500/20 bg-purple-500/5">
+              <div className="flex items-center justify-between text-purple-600 dark:text-purple-400 mb-2">
+                <span className="text-[11px] font-extrabold uppercase">إجمالي المقاعد المسجلة</span>
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-2xl font-black text-ehb-text-primary">
                 {events.reduce((acc, curr) => acc + (curr.rsvpCount || 0), 0)}
               </span>
-            </div>
+            </Card>
           </div>
 
-          {/* Presets & Add Action Bar */}
-          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          <Card padding="lg" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-sm font-black text-ehb-text-primary uppercase tracking-wider flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-emerald-500 shrink-0" />
                   <span>نماذج جاهزة لإضافة فعاليات وأنشطة طلابية جديدة</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-ehb-text-muted mt-1">
                   اختر أحد القوالب الجاهزة أدناه للتعبئة التلقائية، أو انقر فوق إضافة نشاط لتخصيص
                   كامل الحقول.
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleOpenNewEventModal}
-                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 shrink-0 min-h-[42px]"
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="shrink-0"
               >
-                <Plus className="w-4 h-4" />
-                <span>إضافة نشاط / فعالية جديدة</span>
-              </button>
+                إضافة نشاط / فعالية جديدة
+              </Button>
             </div>
 
-            {/* Template Presets Buttons */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block uppercase">
+            <Card padding="md" className="space-y-2 border-ehb-subtle bg-ehb-surface">
+              <span className="text-[11px] font-bold text-ehb-text-muted block uppercase">
                 اختر نموذجاً جاهزاً للتعبئة السريعة:
               </span>
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     applyEventTemplate("workshop");
                     setShowEventModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <span>💻 ورشة برمجية</span>
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     applyEventTemplate("hackathon");
                     setShowEventModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <span>⚡ هكاثون هندسي</span>
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     applyEventTemplate("field_trip");
                     setShowEventModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <span>🚌 رحلة ميدانية</span>
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     applyEventTemplate("seminar");
                     setShowEventModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <span>🎤 ندوة خبير</span>
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     applyEventTemplate("competition");
                     setShowEventModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <span>🏆 مسابقة ابتكار</span>
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
+            </Card>
+          </Card>
 
-          {/* Events Table / Grid */}
-          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          <Card padding="lg" className="space-y-4">
+            <h4 className="text-xs font-black text-ehb-text-primary uppercase tracking-wider">
               سجل الفعاليات والأنشطة الطلابية
             </h4>
 
             {events.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 text-xs">
+              <div className="py-12 text-center text-ehb-text-muted text-xs">
                 لا توجد أفعاليات أو أنشطة مضافة حالياً. انقر فوق &quot;إضافة نشاط&quot; لبدء
                 الإضافة.
               </div>
@@ -2172,32 +2049,31 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   const pct = Math.min(100, Math.round((rsvps / cap) * 100));
 
                   return (
-                    <div
+                    <Card
                       key={evt.id}
-                      className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-3 relative group hover:border-emerald-500/40 transition-all"
+                      variant="interactive"
+                      padding="lg"
+                      className="space-y-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase">
+                            <Badge variant="info" size="sm" className="uppercase">
                               {evt.category}
-                            </span>
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                evt.status === "draft"
-                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                  : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                              }`}
+                            </Badge>
+                            <Badge
+                              variant={evt.status === "draft" ? "warning" : "success"}
+                              size="sm"
                             >
                               {evt.status === "draft" ? "مسودة" : "منشور للطلاب"}
-                            </span>
+                            </Badge>
                           </div>
 
-                          <h5 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 pt-1 leading-snug">
+                          <h5 className="text-sm font-extrabold text-ehb-text-primary pt-1 leading-snug">
                             {evt.title}
                           </h5>
 
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                          <p className="text-xs text-ehb-text-muted line-clamp-2">
                             {evt.description}
                           </p>
                         </div>
@@ -2206,13 +2082,12 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                           <img
                             src={evt.image}
                             alt={evt.title}
-                            className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            className="w-16 h-16 rounded-ehb-md object-cover border border-ehb-subtle shrink-0"
                           />
                         )}
                       </div>
 
-                      {/* Details row */}
-                      <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 pt-1">
+                      <div className="grid grid-cols-2 gap-2 text-[11px] text-ehb-text-muted pt-1">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                           <span>
@@ -2225,15 +2100,14 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Registrants Capacity Progress */}
                       <div className="space-y-1 pt-1">
                         <div className="flex items-center justify-between text-[11px] font-bold">
-                          <span className="text-slate-500">الحضور المكتمل:</span>
+                          <span className="text-ehb-text-muted">الحضور المكتمل:</span>
                           <span className="text-emerald-600 dark:text-emerald-400">
                             {rsvps} / {cap} ({pct}%)
                           </span>
                         </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className="w-full bg-ehb-surface-elevated-2 h-1.5 rounded-full overflow-hidden border border-ehb-subtle">
                           <div
                             className="bg-emerald-500 h-full rounded-full transition-all"
                             style={{ width: `${pct}%` }}
@@ -2241,54 +2115,57 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Admin Controls */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 dark:border-slate-800">
-                        <button
+                      <div className="flex items-center justify-between pt-2 border-t border-ehb-subtle">
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setViewRegistrantsEvent(evt)}
-                          className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                          leftIcon={<UserCheck className="w-3.5 h-3.5" />}
+                          className="text-indigo-600 dark:text-indigo-400"
                         >
-                          <UserCheck className="w-3.5 h-3.5" />
                           <span>
                             عرض قائمة المسجلين ({evt.registeredStudents?.length || evt.rsvpCount})
                           </span>
-                        </button>
+                        </Button>
 
                         <div className="flex items-center gap-2">
-                          <button
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() => onToggleEventStatus && onToggleEventStatus(evt.id)}
-                            title="تبديل حالة النشر"
-                            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+                            className="text-[11px] font-bold"
                           >
                             {evt.status === "draft" ? "نشر" : "حفظ كمسودة"}
-                          </button>
+                          </Button>
 
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEditEventClick(evt)}
-                            title="تعديل الفعالية"
-                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 transition-all"
+                            className="text-indigo-600 dark:text-indigo-400"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
 
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => onDeleteEvent && onDeleteEvent(evt.id)}
-                            title="حذف الفعالية"
-                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-all"
+                            className="text-rose-600 dark:text-rose-400"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* ASSIGNMENTS MANAGEMENT */}
       {activeTab === "assignments" && (
         <SupervisorAssignmentManager
           user={currentUser || null}
@@ -2301,7 +2178,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         />
       )}
 
-      {/* SCHEDULE MANAGEMENT */}
       {activeTab === "schedule" && (
         <SupervisorScheduleManager
           user={currentUser || null}
@@ -2314,128 +2190,116 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         />
       )}
 
-      {/* HONOR ROLL & ACHIEVERS MANAGEMENT */}
       {activeTab === "honor_board" && (
         <HonorRollManager departments={departments} currentUser={currentUser} />
       )}
 
-      {/* 6. AUDIT LOGS */}
       {activeTab === "audit" && (
         <AdminAuditDashboard currentUser={currentUser} userRole={userRole} />
       )}
 
-      {/* EVENT FORM TEMPLATE MODAL */}
       {showEventModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+          <Card padding="none" className="max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto border-ehb-default">
+            <div className="p-5 border-b border-ehb-subtle flex items-center justify-between bg-ehb-surface">
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-base font-black text-ehb-text-primary flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-emerald-500 shrink-0" />
                   <span>
                     {editingEventId
                       ? "تعديل بيانات الفعالية والنشاط"
                       : "نموذج إدخال فعالية / نشاط طلابي جديد"}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-ehb-text-muted">
                   قم بتعبئة بيانات الفعالية ونشرها للطلاب مباشرة في Campus Hub.
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowEventModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSaveEvent} className="p-6 overflow-y-auto space-y-4 text-xs">
-              {/* Category & Title */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     نوع النشاط/الفعالية
                   </label>
-                  <select
+                  <Select
                     value={evtCategory}
                     onChange={(e) => setEvtCategory(e.target.value as EventCategory)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold"
-                  >
-                    <option value="workshop">💻 ورشة عمل (Workshop)</option>
-                    <option value="hackathon">⚡ هكاثون (Hackathon)</option>
-                    <option value="guest_lecture">🎤 محاضرة ضيف / ندوة</option>
-                    <option value="field_trip">🚌 رحلة ميدانية</option>
-                    <option value="competition">🏆 مسابقة علمية</option>
-                    <option value="social">🎉 نشاط اجتماعي / ترفيهي</option>
-                  </select>
+                    options={[
+                      { value: "workshop", label: "💻 ورشة عمل (Workshop)" },
+                      { value: "hackathon", label: "⚡ هكاثون (Hackathon)" },
+                      { value: "guest_lecture", label: "🎤 محاضرة ضيف / ندوة" },
+                      { value: "field_trip", label: "🚌 رحلة ميدانية" },
+                      { value: "competition", label: "🏆 مسابقة علمية" },
+                      { value: "social", label: "🎉 نشاط اجتماعي / ترفيهي" },
+                    ]}
+                  />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     عنوان الفعالية أو النشاط *
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     required
                     value={evtTitle}
                     onChange={(e) => setEvtTitle(e.target.value)}
                     placeholder="مثال: ورشة العمل التطبيقية لبرمجة FPGA"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold"
                   />
                 </div>
               </div>
 
-              {/* Organizer & Speaker */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     الجهة المنظمة
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtOrganizer}
                     onChange={(e) => setEvtOrganizer(e.target.value)}
                     placeholder="مثال: نادي الميكاترونكس / قسم الحاسبات"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     المحاضر / المتحدث الرئيسي
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtSpeaker}
                     onChange={(e) => setEvtSpeaker(e.target.value)}
                     placeholder="اسم المتحدث أو الضيف"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Speaker Title & Capacity */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     صفة أو رتبة المتحدث
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtSpeakerTitle}
                     onChange={(e) => setEvtSpeakerTitle(e.target.value)}
                     placeholder="مثال: أستاذ الذكاء الاصطناعي / كبير مهندسي Siemens"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     السعة الاستيعابية (عدد المقاعد) *
                   </label>
-                  <input
+                  <Input
                     type="number"
                     min={5}
                     max={500}
@@ -2448,116 +2312,101 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                       const val = Number(e.target.value);
                       setEvtMaxCapacity(Number.isNaN(val) ? ("" as any) : val);
                     }}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold"
                   />
                 </div>
               </div>
 
-              {/* Date, Time, Location */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     التاريخ *
                   </label>
-                  <input
+                  <Input
                     type="date"
                     required
                     value={evtDate}
                     onChange={(e) => setEvtDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     التوقيت *
                   </label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={evtTime}
                     onChange={(e) => setEvtTime(e.target.value)}
                     placeholder="10:00 - 13:00"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     المكان / القاعة *
                   </label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={evtLocation}
                     onChange={(e) => setEvtLocation(e.target.value)}
                     placeholder="مثال: المدرج B / قاعة المؤتمرات"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Description */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-ehb-text-primary mb-1">
                   تفاصيل ونبذة عن الفعالية *
                 </label>
-                <textarea
+                <Textarea
                   rows={3}
                   required
                   value={evtDescription}
                   onChange={(e) => setEvtDescription(e.target.value)}
                   placeholder="اكتب وصفاً جذاباً يوضح أهداف الفعالية وما سيستفيده الطالب..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                 />
               </div>
 
-              {/* Target Audience & Requirements */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     الفئة المستهدفة
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtTargetAudience}
                     onChange={(e) => setEvtTargetAudience(e.target.value)}
                     placeholder="مثال: جميع طلاب الكلية / طلاب السنة الثالثة"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     المتطلبات المسبقة (إن وجدت)
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtRequirements}
                     onChange={(e) => setEvtRequirements(e.target.value)}
                     placeholder="مثال: احضار جهاز حاسوب محمول / معرفة بلغة C++"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Contact Email & Image URL */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     البريد أو هاتف الاستفسار
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={evtContactEmail}
                     onChange={(e) => setEvtContactEmail(e.target.value)}
                     placeholder="events@eng.gnu.edu"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     صورة غلاف الفعالية (من جهازك مباشرة)
                   </label>
                   <input
@@ -2572,14 +2421,14 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   />
 
                   {evtImage ? (
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <Card padding="md" className="flex items-center gap-2 border-ehb-subtle">
                       <img
                         src={evtImage}
                         alt="Event Banner"
-                        className="w-12 h-10 rounded-lg object-cover border shrink-0"
+                        className="w-12 h-10 rounded-ehb-sm object-cover border border-ehb-subtle shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
+                        <span className="text-[11px] font-bold text-ehb-text-primary block truncate">
                           {evtImageFileName || "صورة غلاف الفعالية"}
                         </span>
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
@@ -2587,29 +2436,32 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                         </span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           type="button"
                           onClick={() => evtImageInputRef.current?.click()}
-                          className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 text-[11px] font-bold hover:bg-slate-50"
                         >
                           تغيير
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           type="button"
                           onClick={() => {
                             setEvtImage("");
                             setEvtImageFileName("");
                             if (evtImageInputRef.current) evtImageInputRef.current.value = "";
                           }}
-                          className="p-1 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                          title="إزالة الغلاف"
+                          className="text-rose-600 dark:text-rose-400"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
-                    </div>
+                    </Card>
                   ) : (
-                    <div
+                    <Card
+                      padding="md"
                       onClick={() => evtImageInputRef.current?.click()}
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -2622,34 +2474,33 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                         const file = e.dataTransfer.files?.[0];
                         if (file) handleEvtImageFile(file);
                       }}
-                      className={`border border-dashed rounded-xl p-2.5 text-center cursor-pointer transition-all ${
+                      className={`border border-dashed cursor-pointer transition-all text-center ${
                         isEvtImageDragging
                           ? "border-emerald-500 bg-emerald-500/10"
-                          : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-500/5 hover:border-emerald-400"
+                          : "border-ehb-default bg-ehb-surface hover:bg-ehb-surface-elevated-2 hover:border-emerald-500"
                       }`}
                     >
                       <div className="flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                        <Upload className="w-3.5 h-3.5" />
+                        <Upload className="w-3.5 h-3.5 shrink-0" />
                         <span className="text-[11px] font-bold">رفع صورة الغلاف من جهازك</span>
                       </div>
-                    </div>
+                    </Card>
                   )}
                 </div>
               </div>
 
-              {/* Status Radio */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <Card padding="md" className="flex items-center justify-between border-ehb-subtle">
                 <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                  <span className="font-bold text-ehb-text-primary block">
                     حالة النشر والظهور
                   </span>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-ehb-text-muted">
                     اختر إما النشر الفوري للطلاب أو الحفظ كمسودة للتعديل لاحقاً.
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-1.5 cursor-pointer font-bold">
+                  <label className="flex items-center gap-1.5 cursor-pointer font-bold text-ehb-text-primary">
                     <input
                       type="radio"
                       name="evtStatus"
@@ -2661,7 +2512,7 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                     <span>نشر فوري</span>
                   </label>
 
-                  <label className="flex items-center gap-1.5 cursor-pointer font-bold">
+                  <label className="flex items-center gap-1.5 cursor-pointer font-bold text-ehb-text-primary">
                     <input
                       type="radio"
                       name="evtStatus"
@@ -2673,42 +2524,40 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                     <span>حفظ كمسودة</span>
                   </label>
                 </div>
-              </div>
+              </Card>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-                <button
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-ehb-subtle">
+                <Button
+                  variant="secondary"
                   type="button"
                   onClick={() => setShowEventModal(false)}
-                  className="px-5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                 >
                   إلغاء
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                  variant="success"
+                  leftIcon={<Check className="w-4 h-4" />}
                 >
-                  <Check className="w-4 h-4" />
-                  <span>{editingEventId ? "حفظ التعديلات" : "نشر الفعالية للطلاب"}</span>
-                </button>
+                  {editingEventId ? "حفظ التعديلات" : "نشر الفعالية للطلاب"}
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* VIEW REGISTRANTS MODAL */}
       {viewRegistrantsEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden my-auto">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+          <Card padding="none" className="max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden my-auto border-ehb-default">
+            <div className="p-5 border-b border-ehb-subtle flex items-center justify-between bg-ehb-surface">
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <UserCheck className="w-5 h-5 text-indigo-500" />
+                <h3 className="text-base font-black text-ehb-text-primary flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-indigo-500 shrink-0" />
                   <span>قائمة الطلاب المسجلين في الفعالية</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-ehb-text-muted">
                   {viewRegistrantsEvent.title} (الإجمالي:{" "}
                   {viewRegistrantsEvent.registeredStudents?.length ||
                     viewRegistrantsEvent.rsvpCount}{" "}
@@ -2716,76 +2565,76 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewRegistrantsEvent(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4">
               {!viewRegistrantsEvent.registeredStudents ||
               viewRegistrantsEvent.registeredStudents.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800/40 text-center space-y-2">
-                  <Users className="w-8 h-8 text-slate-400 mx-auto" />
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                <Card padding="lg" className="text-center space-y-2">
+                  <Users className="w-8 h-8 text-ehb-text-muted mx-auto" />
+                  <p className="text-xs font-bold text-ehb-text-primary">
                     تم حجز المقاعد عن طريق RSVP السريع ({viewRegistrantsEvent.rsvpCount} طالب).
                   </p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-ehb-text-muted">
                     عند تسجيل الطلاب باستخدام حواسبهم يظهر اسم الطالب ورقم القيد البرمجي هنا
                     تلقائياً.
                   </p>
-                </div>
+                </Card>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <table className="w-full text-right text-xs">
-                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="p-3">#</th>
-                        <th className="p-3">اسم الطالب</th>
-                        <th className="p-3">البريد الأكاديمي</th>
-                        <th className="p-3">الرقم الجامعي</th>
-                        <th className="p-3">القسم</th>
-                        <th className="p-3">تاريخ التسجيل</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {viewRegistrantsEvent.registeredStudents.map((st, idx) => (
-                        <tr
-                          key={st.id || idx}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                        >
-                          <td className="p-3 font-mono font-bold text-slate-400">{idx + 1}</td>
-                          <td className="p-3 font-bold text-slate-900 dark:text-slate-100">
-                            {st.name}
-                          </td>
-                          <td className="p-3 text-slate-600 dark:text-slate-300 font-mono">
-                            {st.email}
-                          </td>
-                          <td className="p-3 font-mono text-indigo-600 dark:text-indigo-400">
-                            {st.studentId || "N/A"}
-                          </td>
-                          <td className="p-3 text-slate-600 dark:text-slate-300">
-                            {st.departmentName || "عام"}
-                          </td>
-                          <td className="p-3 text-slate-400 font-mono text-[11px]">
-                            {st.registeredAt}
-                          </td>
+                <Card padding="none" className="overflow-hidden border-ehb-default">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-right">
+                      <thead className="bg-ehb-surface text-ehb-text-muted font-bold border-b border-ehb-subtle">
+                        <tr>
+                          <th className="p-3">#</th>
+                          <th className="p-3">اسم الطالب</th>
+                          <th className="p-3">البريد الأكاديمي</th>
+                          <th className="p-3">الرقم الجامعي</th>
+                          <th className="p-3">القسم</th>
+                          <th className="p-3">تاريخ التسجيل</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-ehb-subtle font-medium">
+                        {viewRegistrantsEvent.registeredStudents.map((st, idx) => (
+                          <tr
+                            key={st.id || idx}
+                            className="hover:bg-ehb-surface-elevated transition-colors"
+                          >
+                            <td className="p-3 font-mono font-bold text-ehb-text-muted">{idx + 1}</td>
+                            <td className="p-3 font-bold text-ehb-text-primary">{st.name}</td>
+                            <td className="p-3 text-ehb-text-muted font-mono">{st.email}</td>
+                            <td className="p-3 font-mono text-indigo-600 dark:text-indigo-400">
+                              {st.studentId || "N/A"}
+                            </td>
+                            <td className="p-3 text-ehb-text-muted">{st.departmentName || "عام"}</td>
+                            <td className="p-3 text-ehb-text-muted font-mono text-[11px]">
+                              {st.registeredAt}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">
+            <div className="p-4 bg-ehb-surface border-t border-ehb-subtle flex items-center justify-between">
+              <span className="text-xs font-bold text-ehb-text-muted">
                 السعة القصوى: {viewRegistrantsEvent.maxCapacity || 50} مقعد
               </span>
 
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   const headers = "Name,Email,StudentId,Department,RegisteredAt\n";
                   const rows = (viewRegistrantsEvent.registeredStudents || [])
@@ -2801,198 +2650,192 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                   a.download = `registrants-${viewRegistrantsEvent.id}.csv`;
                   a.click();
                 }}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
+                leftIcon={<Download className="w-4 h-4" />}
               >
-                <Download className="w-4 h-4" />
-                <span>تصدير القائمة (CSV)</span>
-              </button>
+                تصدير القائمة (CSV)
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* SUPERVISOR ASSIGNMENT & SCOPE MODAL */}
       {showSupervisorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden my-auto">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-purple-50 dark:bg-slate-800/60">
+          <Card padding="none" className="max-w-xl w-full flex flex-col overflow-hidden my-auto border-ehb-default">
+            <div className="p-5 border-b border-ehb-subtle flex items-center justify-between bg-purple-500/5">
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-base font-black text-ehb-text-primary flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
                   <span>
                     {editingSupervisor
                       ? "تعديل نطاق وصلاحيات المشرف"
                       : "تعيين مشرف وتحديد التخصص والسنة الدراسية"}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-ehb-text-muted">
                   حدد القسم والفرقة الدراسية والصلاحيات المسموح بها لهذا المشرف.
                 </p>
               </div>
 
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowSupervisorModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSaveSupervisorScope} className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     اسم المشرف / الأخصائي *
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     required
                     value={supName}
                     onChange={(e) => setSupName(e.target.value)}
                     placeholder="مثال: د. طارق عبد المجيد / م. عمر الشريف"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-ehb-text-primary mb-1">
                     البريد الإلكتروني *
                   </label>
-                  <input
+                  <Input
                     type="email"
                     required
                     value={supEmail}
                     onChange={(e) => setSupEmail(e.target.value)}
                     placeholder="supervisor@tnu.edu.eg"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-ehb-text-primary mb-1">
                   المسمى الوظيفي / الصفة الأكاديمية
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={supTitle}
                   onChange={(e) => setSupTitle(e.target.value)}
                   placeholder="مثال: أخصائي السنة الأولى - قسم هندسة الحاسبات"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
-              {/* Department & Academic Level Assignment */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-purple-50/50 dark:bg-slate-950/60 border border-purple-500/20">
-                <div>
-                  <label className="block font-bold text-purple-900 dark:text-purple-300 mb-1">
-                    القسم المستهدف (التخصص) *
-                  </label>
-                  <select
-                    value={supDeptId}
-                    onChange={(e) => setSupDeptId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-purple-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
-                  >
-                    <option value="dept-cmp">💻 قسم هندسة الحاسبات والذكاء الاصطناعي</option>
-                    <option value="dept-mtr">🤖 قسم هندسة الميكاترونكس والروبوتات</option>
-                    <option value="all">🌐 كافة الأقسام (إشراف عام)</option>
-                  </select>
-                </div>
+              <Card padding="lg" className="border-purple-500/20 bg-purple-500/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-ehb-text-primary mb-1">
+                      القسم المستهدف (التخصص) *
+                    </label>
+                    <Select
+                      value={supDeptId}
+                      onChange={(e) => setSupDeptId(e.target.value)}
+                      options={[
+                        { value: "dept-cmp", label: "💻 قسم هندسة الحاسبات والذكاء الاصطناعي" },
+                        { value: "dept-mtr", label: "🤖 قسم هندسة الميكاترونكس والروبوتات" },
+                        { value: "all", label: "🌐 كافة الأقسام (إشراف عام)" },
+                      ]}
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-purple-900 dark:text-purple-300 mb-1">
-                    السنة الدراسية المستهدفة *
-                  </label>
-                  <select
-                    value={supLevel}
-                    onChange={(e) => setSupLevel(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-purple-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
-                  >
-                    <option value="all">📚 جميع السنوات المتاحة (السنة الأولى والثانية)</option>
-                    <option value="Year 1 (Freshman)">🎓 السنة الأولى (إعدادي)</option>
-                    <option value="Year 2 (Sophomore)">📘 السنة الثانية - الترم الأول</option>
-                  </select>
+                  <div>
+                    <label className="block font-bold text-ehb-text-primary mb-1">
+                      السنة الدراسية المستهدفة *
+                    </label>
+                    <Select
+                      value={supLevel}
+                      onChange={(e) => setSupLevel(e.target.value)}
+                      options={[
+                        { value: "all", label: "📚 جميع السنوات المتاحة (السنة الأولى والثانية)" },
+                        { value: "Year 1 (Freshman)", label: "🎓 السنة الأولى (إعدادي)" },
+                        { value: "Year 2 (Sophomore)", label: "📘 السنة الثانية - الترم الأول" },
+                      ]}
+                    />
+                  </div>
                 </div>
-              </div>
+              </Card>
 
-              {/* Capability Toggles */}
               <div className="space-y-2 pt-2">
-                <label className="block font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <label className="block font-black text-ehb-text-primary uppercase tracking-wider">
                   حدد الصلاحيات الممنوحة داخل هذا التخصص:
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  <label className="flex items-center gap-2 p-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface cursor-pointer hover:bg-ehb-surface-elevated-2">
                     <input
                       type="checkbox"
                       checked={supCanManageCourses}
                       onChange={(e) => setSupCanManageCourses(e.target.checked)}
                       className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                     />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="font-bold text-ehb-text-primary">
                       إضافة وتعديل المقررات الدراسية
                     </span>
                   </label>
 
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  <label className="flex items-center gap-2 p-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface cursor-pointer hover:bg-ehb-surface-elevated-2">
                     <input
                       type="checkbox"
                       checked={supCanUploadResources}
                       onChange={(e) => setSupCanUploadResources(e.target.checked)}
                       className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                     />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="font-bold text-ehb-text-primary">
                       رفع واقتراح المراجع والمعامل
                     </span>
                   </label>
 
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  <label className="flex items-center gap-2 p-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface cursor-pointer hover:bg-ehb-surface-elevated-2">
                     <input
                       type="checkbox"
                       checked={supCanUploadCertificates}
                       onChange={(e) => setSupCanUploadCertificates(e.target.checked)}
                       className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                     />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="font-bold text-ehb-text-primary">
                       إسناد الشهادات الأكاديمية
                     </span>
                   </label>
 
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20">
+                  <label className="flex items-center gap-2 p-2.5 rounded-ehb-md border border-ehb-default bg-ehb-surface cursor-pointer hover:bg-ehb-surface-elevated-2">
                     <input
                       type="checkbox"
                       checked={supCanPublishAnnouncements}
                       onChange={(e) => setSupCanPublishAnnouncements(e.target.checked)}
                       className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                     />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="font-bold text-ehb-text-primary">
                       نشر إعلانات رسمية للقسم
                     </span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button
+              <div className="flex justify-end gap-3 pt-4 border-t border-ehb-subtle">
+                <Button
+                  variant="secondary"
                   type="button"
                   onClick={() => setShowSupervisorModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                 >
                   إلغاء
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-md transition-all"
+                  variant="primary"
                 >
                   حفظ وتعريف نطاق المشرف
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* Course Creation / Editing Modal */}
       <CourseFormModal
         isOpen={courseFormModalOpen}
         onClose={() => {
@@ -3014,7 +2857,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         }}
       />
 
-      {/* Confirm Delete Course Modal */}
       <ConfirmModal
         isOpen={Boolean(deletingCourse)}
         title="حذف المقرر الدراسي بالكامل"
@@ -3031,7 +2873,6 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
         }}
       />
 
-      {/* Confirm Remove Supervisor Modal */}
       <ConfirmModal
         isOpen={Boolean(supervisorToDelete)}
         title="إلغاء صفة المشرف الأكاديمي"

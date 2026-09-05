@@ -166,7 +166,7 @@ r = await req('POST', '/api/quiz/submit', { cookie: STU_COOKIE, body: {
 log('quiz: unknown quizId rejected (no client grading)', r.status === 400, `status=${r.status}`);
 
 // Real seeded quiz: correct answers graded server-side
-const quizResp = await req('GET', '/api/exams/quiz-aie103-01');
+const quizResp = await req('GET', '/api/exams/quiz-aie103-01', { cookie: ADMIN_COOKIE });
 const quiz = quizResp.json;
 const bank = Array.isArray(quiz?.questions) ? quiz.questions : [];
 if (bank.length > 0) {

@@ -11,6 +11,7 @@ import {
 import React, { useState } from "react";
 import { Assignment, ScheduleItem, Course, UserProfile } from "../../types";
 import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import { Card, Button, Badge } from "../ui";
 import { ExamsQuizzesEngine } from "./ExamsQuizzesEngine";
 import { PomodoroFocusTimer } from "./PomodoroFocusTimer";
 
@@ -160,13 +161,13 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* ------------------------------------------------ */}
       {activeSubTool === "assignments" && (
         <div className="space-y-6">
-          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          <Card padding="lg" className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
                   جدول التكليفات والشيتات الهندسية ({assignments.length})
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-ehb-text-muted">
                   تابع مواعيد تسليم الشيتات والمشاريع المعملية بدقة.
                 </p>
               </div>
@@ -174,49 +175,50 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
 
             <div className="space-y-3">
               {assignments.map((asgn) => (
-                <div
+                <Card
                   key={asgn.id}
-                  className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-4 text-xs"
+                  padding="md"
+                  className="flex items-center justify-between gap-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 dark:text-slate-100">
+                      <span className="font-bold text-ehb-text-primary">
                         {asgn.title}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">
+                      <Badge variant="neutral" size="sm" className="course-code">
                         {asgn.courseCode}
-                      </span>
+                      </Badge>
                     </div>
-                    <p className="text-slate-500">{asgn.description}</p>
-                    <div className="text-[11px] text-slate-400 flex items-center gap-3">
+                    <p className="text-xs text-ehb-text-muted">{asgn.description}</p>
+                    <div className="text-[11px] text-ehb-text-muted flex items-center gap-3">
                       <span>
-                        موعد التسليم: {new Date(asgn.dueDate).toLocaleDateString("ar-EG")}
+                        موعد التسليم:{" "}
+                        <bdi className="course-code" dir="ltr">
+                          {new Date(asgn.dueDate).toLocaleDateString("ar-EG")}
+                        </bdi>
                       </span>
                       <span>الدرجة: {asgn.totalPoints} درجة</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
+                    <Button
+                      variant={asgn.status === "submitted" ? "success" : "secondary"}
+                      size="sm"
                       onClick={() =>
                         onUpdateAssignmentStatus(
                           asgn.id,
                           asgn.status === "submitted" ? "todo" : "submitted",
                         )
                       }
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
-                        asgn.status === "submitted"
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                      }`}
                     >
                       {asgn.status === "submitted" ? "✓ تم التسليم" : "معلق"}
-                    </button>
+                    </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
@@ -224,58 +226,57 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
       {/* 5. SCHEDULE & .ICS EXPORT                        */}
       {/* ------------------------------------------------ */}
       {activeSubTool === "calendar" && (
-        <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
+        <Card padding="lg" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
                 الجدول الدراسي الأسبوعي وتصدير التقويم
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-ehb-text-muted">
                 يمكنك تحميل ملف (.ics) لمزامنة جدولك مع Google Calendar أو Apple Calendar.
               </p>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={exportICS}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-colors shrink-0"
+              leftIcon={<Download className="w-4 h-4" />}
+              className="shrink-0"
             >
-              <Download className="w-4 h-4" />
               تصدير الجدول إلى Google/Apple Calendar (.ics)
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schedule.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2 text-xs"
-              >
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
+              <Card key={item.id} padding="md" className="space-y-2">
+                <div className="flex items-center justify-between font-bold text-ehb-text-primary">
                   <span>{item.dayOfWeek}</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">
+                  <Badge variant="neutral" size="sm" className="course-code">
                     {item.startTime} - {item.endTime}
-                  </span>
+                  </Badge>
                 </div>
-                <div className="font-semibold text-slate-800 dark:text-slate-200">{item.title}</div>
-                <div className="text-slate-500 text-[11px]">
+                <div className="font-semibold text-ehb-text-primary">{item.title}</div>
+                <div className="text-xs text-ehb-text-muted">
                   القاعة: {item.location} • المحاضر: {item.instructor || "قسم الهندسة"}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* ------------------------------------------------ */}
       {/* 6. GRADUATION TRACKER                            */}
       {/* ------------------------------------------------ */}
       {activeSubTool === "graduation" && (
-        <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
+        <Card padding="lg" className="space-y-6">
           <div className="space-y-2">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
               متابع خريجي وتراكمي بكالوريوس الهندسة
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-ehb-text-muted">
               الساعات المطلوبة: 140 ساعة معتمدة إجمالية (المواد الأساسية + الرياضيات + مواد التخصص +
               مشروع التخرج)
             </p>
@@ -285,35 +286,35 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-bold">
               <span>إجمالي الساعات المكتملة: 82 / 140 ساعة</span>
-              <span className="text-emerald-500">58.5% إنجاز الخطة</span>
+              <span className="text-emerald-400">58.5% إنجاز الخطة</span>
             </div>
-            <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-3 rounded-full bg-ehb-surface-elevated-2 overflow-hidden">
               <div className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-400 w-[58.5%]" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2">
-              <h4 className="font-bold text-slate-900 dark:text-slate-100">
+            <Card padding="md" className="space-y-2">
+              <h4 className="font-bold text-ehb-text-primary">
                 متطلبات الخطة الدراسية والأقسام
               </h4>
-              <ul className="space-y-1.5 text-slate-600 dark:text-slate-300">
-                <li className="flex items-center gap-1.5 text-emerald-500 font-semibold">
+              <ul className="space-y-1.5 text-ehb-text-muted">
+                <li className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                   <Check className="w-3.5 h-3.5" /> العلوم الأساسية والرياضيات (32/32 ساعة)
                 </li>
-                <li className="flex items-center gap-1.5 text-emerald-500 font-semibold">
+                <li className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                   <Check className="w-3.5 h-3.5" /> أساسيات التخصص الأكاديمي (36/36 ساعة)
                 </li>
-                <li className="flex items-center gap-1.5 text-amber-500 font-semibold">
+                <li className="flex items-center gap-1.5 text-amber-400 font-semibold">
                   <Clock className="w-3.5 h-3.5" /> المقررات التخصصية المتقدمة (14/30 ساعة)
                 </li>
-                <li className="flex items-center gap-1.5 text-slate-400">
+                <li className="flex items-center gap-1.5 text-ehb-text-muted">
                   <Clock className="w-3.5 h-3.5" /> مشروع التخرج النهائي (0/10 ساعات)
                 </li>
               </ul>
-            </div>
+            </Card>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

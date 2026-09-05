@@ -205,6 +205,9 @@ export default function App() {
   const [appEditingCourse, setAppEditingCourse] = useState<Course | null>(null);
   const [appDeletingCourse, setAppDeletingCourse] = useState<Course | null>(null);
 
+  // Mobile Sidebar State
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
   // Verify Active Auth Session on Mount
   useEffect(() => {
     fetch("/api/auth/me", {
@@ -301,41 +304,7 @@ export default function App() {
 
       const data = await res.json();
       if (res.ok && data.resource) {
-        const newFile: StudyFile = {
-          id: data.resource.id,
-          title: data.resource.title,
-          description: data.resource.description,
-          courseId: data.resource.courseId,
-          courseCode: data.resource.courseCode,
-          courseTitle: data.resource.courseTitle,
-          category: data.resource.category,
-          fileType: data.resource.fileType,
-          fileSize: data.resource.fileSize,
-          fileSizeBytes: data.resource.fileSizeBytes,
-          fileName: data.resource.fileName,
-          uploaderId: activeUser.id,
-          uploaderName: activeUser.name,
-          uploaderRole: activeUser.role,
-          uploaderDepartment:
-            data.resource.uploaderDepartment || activeDept?.name || "Computer Engineering",
-          uploadDate: data.resource.uploadDate || new Date().toISOString().split("T")[0],
-          downloadCount: data.resource.downloadCount || 0,
-          viewCount: data.resource.viewCount || 1,
-          rating: data.resource.rating || 5.0,
-          ratingCount: data.resource.ratingCount || 0,
-          previewContent: data.resource.previewContent,
-          downloadUrl: `/api/files/download/${data.resource.id}`,
-          status: data.resource.status,
-          moderationStatus: data.resource.moderationStatus,
-          verificationStatus: data.resource.verificationStatus,
-          moderatedByName: data.resource.moderatedByName,
-          moderatedAt: data.resource.moderatedAt,
-          rejectionReason: data.resource.rejectionReason,
-          version: data.resource.version || 1,
-          tags: data.resource.tags || [],
-          isBookmarked: false,
-        };
-        setFiles((prev) => [newFile, ...prev]);
+        await fetchFiles();
         addToast(
           "success",
           data.message || "تم نشر الملف بنجاح!",
@@ -364,13 +333,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId
-              ? { ...f, status: "approved" as const, moderationStatus: "approved" as const }
-              : f,
-          ),
-        );
+        await fetchFiles();
         addToast(
           "success",
           "تم اعتماد ونشر الملف بنجاح",
@@ -398,18 +361,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId
-              ? {
-                  ...f,
-                  status: "rejected" as const,
-                  moderationStatus: "rejected" as const,
-                  rejectionReason: reason,
-                }
-              : f,
-          ),
-        );
+        await fetchFiles();
         addToast("info", "تم رفض الملف", `تم إشعار الرافع بسبب الرفض: ${reason}`);
       } else {
         addToast(
@@ -434,6 +386,132 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch("/api/courses?limit=100");
+      const data = await res.json();
+      const loadedCourses = Array.isArray(data) ? data : data.courses;
+      if (Array.isArray(loadedCourses)) setCourses(loadedCourses);
+    } catch {
+      // ignore fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/resources?limit=100")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.resources;
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setFiles(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch("/api/resources?limit=100");
+      const data = await res.json();
+      const loaded = Array.isArray(data) ? data : data.resources;
+      if (Array.isArray(loaded)) setFiles(loaded);
+    } catch {
+      // ignore fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/announcements")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.announcements;
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setAnnouncements(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      const loaded = Array.isArray(data) ? data : data.announcements;
+      if (Array.isArray(loaded)) setAnnouncements(loaded);
+    } catch {
+      // ignore fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/events")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.events;
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setEvents(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      const loaded = Array.isArray(data) ? data : data.events;
+      if (Array.isArray(loaded)) setEvents(loaded);
+    } catch {
+      // ignore fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/assignments?limit=100")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.assignments;
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setAssignments(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchAssignments = async () => {
+    try {
+      const res = await fetch("/api/assignments?limit=100");
+      const data = await res.json();
+      const loaded = Array.isArray(data) ? data : data.assignments;
+      if (Array.isArray(loaded)) setAssignments(loaded);
+    } catch {
+      // ignore fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/schedules")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.schedules;
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setSchedule(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchSchedule = async () => {
+    try {
+      const res = await fetch("/api/schedules");
+      const data = await res.json();
+      const loaded = Array.isArray(data) ? data : data.schedules;
+      if (Array.isArray(loaded)) setSchedule(loaded);
+    } catch {
+      // ignore fetch errors
+    }
+  };
 
   // Course Admin Management Handlers
   const handleAddCourse = async (newCourseData: Partial<Course>) => {
@@ -476,7 +554,7 @@ export default function App() {
       const data = await res.json();
 
       if (res.ok && data.course) {
-        setCourses((prev) => [data.course, ...prev.filter((c) => c.id !== data.course.id)]);
+        await fetchCourses();
         addToast(
           "success",
           "تم إضافة المقرر بنجاح",
@@ -511,7 +589,7 @@ export default function App() {
 
       const data = await res.json();
       if (res.ok && data.course) {
-        setCourses((prev) => prev.map((c) => (c.id === courseId ? data.course : c)));
+        await fetchCourses();
         addToast(
           "success",
           "تم تعديل المادة بنجاح",
@@ -546,7 +624,7 @@ export default function App() {
       });
 
       if (res.ok) {
-        setCourses((prev) => prev.filter((c) => c.id !== courseId));
+        await fetchCourses();
         if (selectedCourseId === courseId) {
           setSelectedCourseId(null);
         }
@@ -584,7 +662,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.announcement) {
-        setAnnouncements((prev) => [data.announcement, ...prev]);
+        await fetchAnnouncements();
         addToast(
           "success",
           "تم نشر الإعلان الرسمي",
@@ -607,7 +685,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+        await fetchAnnouncements();
         addToast("info", "تم حذف الإعلان", "تم إزالة الإعلان بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الإعلان.");
@@ -629,9 +707,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.announcement) {
-        setAnnouncements((prev) =>
-          prev.map((a) => (a.id === announcementId ? data.announcement : a)),
-        );
+        await fetchAnnouncements();
         addToast("success", "تم تحديث الإعلان", "تم تغيير حالة التثبيت بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الإعلان.");
@@ -810,7 +886,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.assignment) {
-        setAssignments((prev) => [data.assignment, ...prev]);
+        await fetchAssignments();
         addToast("success", "تم نشر التكليف بنجاح", `تم تعميم التكليف "${data.assignment.title}" للمقرر.`);
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل إضافة التكليف.");
@@ -830,7 +906,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.assignment) {
-        setAssignments((prev) => prev.map((a) => (a.id === id ? data.assignment : a)));
+        await fetchAssignments();
         addToast("success", "تم تعديل التكليف", "تم تحديث بيانات الشيت/الواجب بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل التكليف.");
@@ -849,7 +925,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setAssignments((prev) => prev.filter((a) => a.id !== id));
+        await fetchAssignments();
         addToast("info", "تم حذف التكليف", "تم إزالة الواجب الدراسي بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف التكليف.");
@@ -869,7 +945,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.assignment) {
-        setAssignments((prev) => prev.map((a) => (a.id === id ? data.assignment : a)));
+        await fetchAssignments();
         addToast("info", "تحديث حالة التسليم", `تم تغيير الحالة إلى ${status}.`);
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الحالة.");
@@ -903,7 +979,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.schedule) {
-        setSchedule((prev) => [...prev, data.schedule]);
+        await fetchSchedule();
         addToast(
           "success",
           "تم إضافة المحاضرة للجدول",
@@ -938,7 +1014,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.schedule) {
-        setSchedule((prev) => prev.map((s) => (s.id === id ? data.schedule : s)));
+        await fetchSchedule();
         addToast("success", "تم تعديل الجدول الأسبوعي", "تم تحديث الموعد والقاعة بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل الحصة.");
@@ -957,7 +1033,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSchedule((prev) => prev.filter((s) => s.id !== id));
+        await fetchSchedule();
         addToast("info", "تم حذف المحاضرة من الجدول", "تم إزالة الحصة الدراسية بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الحصة.");
@@ -978,7 +1054,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.event) {
-        setEvents((prev) => [data.event, ...prev]);
+        await fetchEvents();
         addToast(
           "success",
           "تم إضافة الفعالية بنجاح",
@@ -1002,7 +1078,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.event) {
-        setEvents((prev) => prev.map((e) => (e.id === eventId ? data.event : e)));
+        await fetchEvents();
         addToast("success", "تم تعديل الفعالية", "تم تحديث بيانات الفعالية بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تعديل الفعالية.");
@@ -1021,7 +1097,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        await fetchEvents();
         addToast("info", "تم حذف الفعالية", "تم إزالة الفعالية بنجاح.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل حذف الفعالية.");
@@ -1044,7 +1120,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.event) {
-        setEvents((prev) => prev.map((e) => (e.id === eventId ? data.event : e)));
+        await fetchEvents();
         addToast("info", "تم تحديث حالة الفعالية", "تم تغيير حالة الظهور والاعتماد.");
       } else {
         addToast("error", "خطأ", data.message || data.error?.message || "فشل تحديث الحالة.");
@@ -1149,7 +1225,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans flex flex-col transition-colors selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-ehb-background text-ehb-text-primary font-sans flex flex-col transition-colors selection:bg-indigo-500 selection:text-white">
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
 
@@ -1179,6 +1255,7 @@ export default function App() {
             setSelectedCourseId(targetId);
           }
         }}
+        onOpenMobileMenu={() => setShowMobileSidebar(true)}
       />
 
       {/* Main Body with Sidebar */}
@@ -1192,6 +1269,8 @@ export default function App() {
           }}
           userRole={activeUser.role}
           onUploadFileClick={() => setShowUploadModal(true)}
+          isOpen={showMobileSidebar}
+          onClose={() => setShowMobileSidebar(false)}
         />
 
         {/* Content Area */}

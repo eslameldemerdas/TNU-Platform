@@ -14,6 +14,8 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { getAuthHeaders } from "../../lib/storage";
 
+import { Card, Button, Badge, Input, Select, Modal } from "../ui";
+
 export interface AuditEventItem {
   id: string;
   category: "authentication" | "security" | "administration" | "moderation" | "ai" | "system";
@@ -52,12 +54,10 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filters
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Metrics
   const [metrics, setMetrics] = useState<{
     totalEvents: number;
     successfulLogins: number;
@@ -163,159 +163,154 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
     switch (severity) {
       case "critical":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+          <Badge variant="error" size="sm">
             {isAr ? "حرج" : "Critical"}
-          </span>
+          </Badge>
         );
       case "warning":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          <Badge variant="warning" size="sm">
             {isAr ? "تحذير" : "Warning"}
-          </span>
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+          <Badge variant="success" size="sm">
             {isAr ? "معلوماتي" : "Info"}
-          </span>
+          </Badge>
         );
     }
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-slate-800 dark:text-slate-200">
-      {/* Top Security & Performance KPI Cards */}
+    <div className="space-y-6 animate-fade-in text-ehb-text-primary">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
+        <Card padding="md">
+          <div className="flex items-center justify-between text-ehb-text-muted mb-2">
             <span className="text-xs font-bold">{isAr ? "إجمالي السجلات" : "Audit Records"}</span>
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-indigo-500 shrink-0" />
           </div>
-          <div className="text-xl font-black">{metrics.totalEvents || total}</div>
-        </div>
+          <div className="text-xl font-black text-ehb-text-primary">{metrics.totalEvents || total}</div>
+        </Card>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <Card padding="md">
           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
             <span className="text-xs font-bold">{isAr ? "دخول ناجح" : "Auth Success"}</span>
-            <CheckCircle className="w-4 h-4" />
+            <CheckCircle className="w-4 h-4 shrink-0" />
           </div>
           <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
             {metrics.successfulLogins}
           </div>
-        </div>
+        </Card>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <Card padding="md">
           <div className="flex items-center justify-between text-rose-500 mb-2">
             <span className="text-xs font-bold">
               {isAr ? "محاولات دخول فاشلة" : "Failed Logins"}
             </span>
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4 shrink-0" />
           </div>
           <div className="text-xl font-black text-rose-500">{metrics.failedLogins}</div>
-        </div>
+        </Card>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <Card padding="md">
           <div className="flex items-center justify-between text-amber-500 mb-2">
             <span className="text-xs font-bold">{isAr ? "حظر المعدل" : "Rate Limits"}</span>
-            <ShieldAlert className="w-4 h-4" />
+            <ShieldAlert className="w-4 h-4 shrink-0" />
           </div>
           <div className="text-xl font-black text-amber-500">{metrics.rateLimitTrips}</div>
-        </div>
+        </Card>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <Card padding="md">
           <div className="flex items-center justify-between text-purple-500 mb-2">
             <span className="text-xs font-bold">{isAr ? "تعديل صلاحيات" : "Role Updates"}</span>
-            <Key className="w-4 h-4" />
+            <Key className="w-4 h-4 shrink-0" />
           </div>
           <div className="text-xl font-black text-purple-500">{metrics.roleChanges}</div>
-        </div>
+        </Card>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <Card padding="md">
           <div className="flex items-center justify-between text-cyan-500 mb-2">
             <span className="text-xs font-bold">{isAr ? "استجابة الكاش" : "Cache Hit Ratio"}</span>
-            <Server className="w-4 h-4" />
+            <Server className="w-4 h-4 shrink-0" />
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-cyan-600 dark:text-cyan-400">
               {cacheStats.hitRatio}
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleFlushCache}
-              title={isAr ? "تفريغ الكاش" : "Flush Cache"}
-              className="text-[10px] text-slate-400 hover:text-cyan-500 underline"
+              className="text-[10px] text-ehb-text-muted hover:text-cyan-500 underline"
             >
               {cacheFlushedMsg ? (isAr ? "تم!" : "Flushed!") : isAr ? "تفريغ" : "Flush"}
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Audit Log Filter Bar */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <Card padding="lg" className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute top-1/2 -translate-y-1/2 left-3 rtl:left-auto rtl:right-3 text-slate-400" />
-            <input
-              type="text"
-              placeholder={
-                isAr
-                  ? "بحث في الفعاليات، المستخدمين، العناوين، الـ IP..."
-                  : "Search events, users, targets, IPs..."
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 rtl:pl-4 rtl:pr-9 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-            />
-          </div>
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={
+              isAr
+                ? "بحث في الفعاليات، المستخدمين، العناوين، الـ IP..."
+                : "Search events, users, targets, IPs..."
+            }
+            leftIcon={<Search className="w-4 h-4" />}
+          />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap text-xs">
-          <select
+          <Select
+            size="sm"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold"
-          >
-            <option value="all">{isAr ? "كل الأقسام" : "All Categories"}</option>
-            <option value="authentication">
-              {isAr ? "المصادقة وتأكيد الهوية" : "Authentication"}
-            </option>
-            <option value="security">{isAr ? "الأمان والحماية" : "Security"}</option>
-            <option value="administration">{isAr ? "الإدارة والرتب" : "Administration"}</option>
-            <option value="moderation">{isAr ? "الإشراف والمحتوى" : "Moderation"}</option>
-            <option value="ai">{isAr ? "المساعد الذكي AI" : "AI Assistant"}</option>
-            <option value="system">{isAr ? "النظام الداخلي" : "System"}</option>
-          </select>
+            options={[
+              { value: "all", label: isAr ? "كل الأقسام" : "All Categories" },
+              { value: "authentication", label: isAr ? "المصادقة وتأكيد الهوية" : "Authentication" },
+              { value: "security", label: isAr ? "الأمان والحماية" : "Security" },
+              { value: "administration", label: isAr ? "الإدارة والرتب" : "Administration" },
+              { value: "moderation", label: isAr ? "الإشراف والمحتوى" : "Moderation" },
+              { value: "ai", label: isAr ? "المساعد الذكي AI" : "AI Assistant" },
+              { value: "system", label: isAr ? "النظام الداخلي" : "System" },
+            ]}
+          />
 
-          <select
+          <Select
+            size="sm"
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold"
-          >
-            <option value="all">{isAr ? "كل المستويات" : "All Severities"}</option>
-            <option value="info">{isAr ? "معلوماتي" : "Info"}</option>
-            <option value="warning">{isAr ? "تحذيري" : "Warning"}</option>
-            <option value="critical">{isAr ? "حرج" : "Critical"}</option>
-          </select>
+            options={[
+              { value: "all", label: isAr ? "كل المستويات" : "All Severities" },
+              { value: "info", label: isAr ? "معلوماتي" : "Info" },
+              { value: "warning", label: isAr ? "تحذيري" : "Warning" },
+              { value: "critical", label: isAr ? "حرج" : "Critical" },
+            ]}
+          />
 
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => {
               fetchLogs(page);
               fetchMetrics();
             }}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-100 transition-all flex items-center gap-1.5"
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>{isAr ? "تحديث" : "Refresh"}</span>
-          </button>
+            {isAr ? "تحديث" : "Refresh"}
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      {/* Audit Log Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+      <Card padding="none" className="overflow-hidden border-ehb-default">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left rtl:text-right">
-            <thead className="bg-slate-50 dark:bg-slate-950/70 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-ehb-surface text-ehb-text-muted font-bold border-b border-ehb-subtle">
               <tr>
                 <th className="p-3.5">{isAr ? "الوقت" : "Timestamp"}</th>
                 <th className="p-3.5">{isAr ? "المستوى" : "Severity"}</th>
@@ -326,17 +321,17 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
                 <th className="p-3.5 text-center">{isAr ? "التفاصيل" : "Details"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            <tbody className="divide-y divide-ehb-subtle font-medium">
               {loading && logs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-ehb-text-muted">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
                     <span>{isAr ? "جاري جلب سجلات الأمان..." : "Loading audit logs..."}</span>
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-ehb-text-muted">
                     <Shield className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     <span>
                       {isAr
@@ -349,9 +344,9 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
                 logs.map((log) => (
                   <tr
                     key={log.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                    className="hover:bg-ehb-surface-elevated transition-colors"
                   >
-                    <td className="p-3.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                    <td className="p-3.5 font-mono text-[11px] text-ehb-text-muted whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleString(isAr ? "ar-EG" : "en-US", {
                         month: "short",
                         day: "numeric",
@@ -362,37 +357,41 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
                     </td>
                     <td className="p-3.5 whitespace-nowrap">{getSeverityBadge(log.severity)}</td>
                     <td className="p-3.5 font-mono text-indigo-600 dark:text-indigo-400 font-bold whitespace-nowrap">
-                      {log.eventType}
+                      <bdi dir="ltr">{log.eventType}</bdi>
                     </td>
                     <td className="p-3.5">
-                      <div className="font-bold text-slate-900 dark:text-slate-100">
-                        {log.actorName}
+                      <div className="font-bold text-ehb-text-primary">{log.actorName}</div>
+                      <div className="text-[10px] text-ehb-text-muted font-mono">
+                        <bdi dir="ltr">{log.actorRole}</bdi>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">{log.actorRole}</div>
                     </td>
                     <td className="p-3.5">
                       {log.targetName || log.targetType ? (
                         <div>
-                          <span className="font-bold">{log.targetName || log.targetType}</span>
+                          <span className="font-bold text-ehb-text-primary">{log.targetName || log.targetType}</span>
                           {log.targetId && (
-                            <span className="block text-[10px] text-slate-400 font-mono">
-                              {log.targetId}
+                            <span className="block text-[10px] text-ehb-text-muted font-mono">
+                              <bdi dir="ltr">{log.targetId}</bdi>
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-ehb-text-muted">—</span>
                       )}
                     </td>
-                    <td className="p-3.5 font-mono text-[11px] text-slate-500">{log.ipAddress}</td>
+                    <td className="p-3.5 font-mono text-[11px] text-ehb-text-muted">
+                      <bdi dir="ltr">{log.ipAddress}</bdi>
+                    </td>
                     <td className="p-3.5 text-center">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setSelectedEvent(log)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                        className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                         title={isAr ? "معاينة التفاصيل الكاملة" : "View full details"}
                       >
                         <Eye className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -401,130 +400,115 @@ export const AdminAuditDashboard: React.FC<AdminAuditDashboardProps> = ({
           </table>
         </div>
 
-        {/* Pagination Bar */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-          <div className="text-slate-500 font-medium">
+        <div className="p-4 bg-ehb-surface border-t border-ehb-subtle flex items-center justify-between text-xs">
+          <div className="text-ehb-text-muted font-medium">
             {isAr
               ? `عرض صفحة ${page} من أصل ${totalPages} (إجمالي ${total} سجل)`
               : `Page ${page} of ${totalPages} (${total} total records)`}
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => fetchLogs(page - 1)}
               disabled={page <= 1 || loading}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 font-bold disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             >
               {isAr ? "السابق" : "Previous"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => fetchLogs(page + 1)}
               disabled={page >= totalPages || loading}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 font-bold disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             >
               {isAr ? "التالي" : "Next"}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* EVENT DETAILS MODAL */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40">
+        <Modal
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          title={
+            <span className="flex items-center gap-2">
+              {getSeverityBadge(selectedEvent.severity)}
+              <bdi dir="ltr">{selectedEvent.eventType}</bdi>
+            </span>
+          }
+          description={<bdi dir="ltr" className="font-mono">{selectedEvent.id}</bdi>}
+          size="xl"
+          footer={
+            <Button variant="secondary" onClick={() => setSelectedEvent(null)}>
+              {isAr ? "إغلاق" : "Close"}
+            </Button>
+          }
+        >
+          <div className="space-y-4 text-xs">
+            <Card padding="lg" className="grid grid-cols-2 gap-4 border-ehb-subtle">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  {getSeverityBadge(selectedEvent.severity)}
-                  <h3 className="font-black text-slate-900 dark:text-slate-100">
-                    {selectedEvent.eventType}
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500 font-mono">{selectedEvent.id}</p>
-              </div>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div>
-                  <span className="text-slate-400 block mb-1">
-                    {isAr ? "الفاعل (Actor):" : "Actor:"}
-                  </span>
-                  <div className="font-bold text-slate-900 dark:text-slate-100">
-                    {selectedEvent.actorName}
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
-                    {selectedEvent.actorRole} ({selectedEvent.actorId})
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 block mb-1">
-                    {isAr ? "عنوان IP والتاريخ:" : "IP & Timestamp:"}
-                  </span>
-                  <div className="font-bold text-slate-900 dark:text-slate-100 font-mono">
-                    {selectedEvent.ipAddress}
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
-                    {selectedEvent.timestamp}
-                  </div>
+                <span className="text-ehb-text-muted block mb-1">
+                  {isAr ? "الفاعل (Actor):" : "Actor:"}
+                </span>
+                <div className="font-bold text-ehb-text-primary">{selectedEvent.actorName}</div>
+                <div className="text-[11px] text-ehb-text-muted font-mono">
+                  <bdi dir="ltr">{selectedEvent.actorRole} ({selectedEvent.actorId})</bdi>
                 </div>
               </div>
 
-              {selectedEvent.metadata && Object.keys(selectedEvent.metadata).length > 0 && (
-                <div>
-                  <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">
-                    {isAr ? "البيانات الوصفية (Metadata):" : "Metadata:"}
-                  </span>
-                  <pre className="p-3.5 rounded-xl bg-slate-950 text-emerald-400 font-mono text-[11px] overflow-x-auto border border-slate-800">
-                    {JSON.stringify(selectedEvent.metadata, null, 2)}
-                  </pre>
+              <div>
+                <span className="text-ehb-text-muted block mb-1">
+                  {isAr ? "عنوان IP والتاريخ:" : "IP & Timestamp:"}
+                </span>
+                <div className="font-bold text-ehb-text-primary font-mono">
+                  <bdi dir="ltr">{selectedEvent.ipAddress}</bdi>
                 </div>
-              )}
-
-              {(selectedEvent.previousState || selectedEvent.newState) && (
-                <div className="grid grid-cols-2 gap-3">
-                  {selectedEvent.previousState && (
-                    <div>
-                      <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        {isAr ? "الحالة السابقة:" : "Previous State:"}
-                      </span>
-                      <pre className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-mono text-[10px] overflow-x-auto">
-                        {JSON.stringify(selectedEvent.previousState, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-
-                  {selectedEvent.newState && (
-                    <div>
-                      <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        {isAr ? "الحالة الجديدة:" : "New State:"}
-                      </span>
-                      <pre className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-mono text-[10px] overflow-x-auto">
-                        {JSON.stringify(selectedEvent.newState, null, 2)}
-                      </pre>
-                    </div>
-                  )}
+                <div className="text-[11px] text-ehb-text-muted font-mono">
+                  <bdi dir="ltr">{selectedEvent.timestamp}</bdi>
                 </div>
-              )}
-            </div>
+              </div>
+            </Card>
 
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex justify-end">
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-300 dark:hover:bg-slate-700"
-              >
-                {isAr ? "إغلاق" : "Close"}
-              </button>
-            </div>
+            {selectedEvent.metadata && Object.keys(selectedEvent.metadata).length > 0 && (
+              <div>
+                <span className="font-bold text-ehb-text-primary block mb-2">
+                  {isAr ? "البيانات الوصفية (Metadata):" : "Metadata:"}
+                </span>
+                <pre className="p-3.5 rounded-ehb-md bg-slate-950 text-emerald-400 font-mono text-[11px] overflow-x-auto border border-ehb-default">
+                  {JSON.stringify(selectedEvent.metadata, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {(selectedEvent.previousState || selectedEvent.newState) && (
+              <div className="grid grid-cols-2 gap-3">
+                {selectedEvent.previousState && (
+                  <div>
+                    <span className="font-bold text-ehb-text-primary block mb-1">
+                      {isAr ? "الحالة السابقة:" : "Previous State:"}
+                    </span>
+                    <pre className="p-3 rounded-ehb-md bg-ehb-surface text-ehb-text-primary font-mono text-[10px] overflow-x-auto border border-ehb-subtle">
+                      {JSON.stringify(selectedEvent.previousState, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {selectedEvent.newState && (
+                  <div>
+                    <span className="font-bold text-ehb-text-primary block mb-1">
+                      {isAr ? "الحالة الجديدة:" : "New State:"}
+                    </span>
+                    <pre className="p-3 rounded-ehb-md bg-ehb-surface text-ehb-text-primary font-mono text-[10px] overflow-x-auto border border-ehb-subtle">
+                      {JSON.stringify(selectedEvent.newState, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

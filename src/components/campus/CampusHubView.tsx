@@ -30,6 +30,14 @@ import {
   Department,
 } from "../../types";
 import { ScrollableTabs, ScrollableTabItem } from "../common/ScrollableTabs";
+import {
+  Card,
+  Badge,
+  Button,
+  Avatar,
+  SearchField,
+  Select,
+} from "../ui";
 import { EventDetailsModal } from "./EventDetailsModal";
 
 interface CampusHubViewProps {
@@ -210,10 +218,20 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
     },
   ];
 
+  const formatWhatsappUrl = (phone: string, title: string) => {
+    const digits = phone.replace(/[^0-9]/g, "");
+    const message = encodeURIComponent(
+      `Hello! I am interested in your item "${title}" on GNUE Engineering Marketplace.`,
+    );
+    return digits
+      ? `https://wa.me/${digits}?text=${message}`
+      : `https://wa.me/?text=${message}`;
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Sub Tab Selection Bar using ScrollableTabs */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="border-b border-ehb-default pb-3">
         <ScrollableTabs
           tabs={campusTabs}
           activeTab={activeSubTab}
@@ -226,52 +244,57 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       {activeSubTab === "announcements" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
               {t.campus.facultyAnnouncements}
             </h3>
           </div>
 
           <div className="space-y-3">
             {announcements.map((anc) => (
-              <div
+              <Card
                 key={anc.id}
-                className={`p-5 rounded-2xl border bg-white dark:bg-slate-900 shadow-sm space-y-2 ${
+                padding="md"
+                className={
                   anc.isPinned
                     ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-950/10"
-                    : "border-slate-200 dark:border-slate-800"
-                }`}
+                    : undefined
+                }
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {anc.isPinned && <Pin className="w-4 h-4 text-amber-500" />}
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                      {anc.scope} scope
-                    </span>
-                    <span className="text-xs text-slate-400">{anc.date}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {anc.isPinned && <Pin className="w-4 h-4 text-amber-500" />}
+                      <Badge variant="primary" size="sm">
+                        {anc.scope} scope
+                      </Badge>
+                      <span className="text-xs text-ehb-text-muted">
+                        <bdi dir="ltr">{anc.date}</bdi>
+                      </span>
+                    </div>
+
+                    <Badge
+                      variant={anc.priority === "urgent" ? "error" : "neutral"}
+                      size="sm"
+                    >
+                      {anc.priority}
+                    </Badge>
                   </div>
 
-                  <span
-                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                      anc.priority === "urgent"
-                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                    }`}
-                  >
-                    {anc.priority}
-                  </span>
-                </div>
+                  <h4 className="text-sm font-bold text-ehb-text-primary">
+                    {anc.title}
+                  </h4>
+                  <p className="text-xs text-ehb-text-muted leading-relaxed">
+                    {anc.content}
+                  </p>
 
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {anc.title}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {anc.content}
-                </p>
-
-                <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                  Issued by: {anc.authorName} ({anc.authorRole})
+                  <div className="text-[11px] text-ehb-text-muted pt-2 border-t border-ehb-subtle flex items-center gap-2">
+                    <Avatar size="sm" fallback={anc.authorName} />
+                    <span>
+                      Issued by: {anc.authorName} ({anc.authorRole})
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -283,26 +306,21 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
           {/* Header & Search Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-black text-ehb-text-primary uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-indigo-500" />
                 <span>الأنشطة الطلابية والفعاليات الأكاديمية المنشورة</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-ehb-text-muted mt-1">
                 استكشف الورش التدريبية، الهكاثونات، والندوات المتاحة وسجل حضورك بنقرة واحدة.
               </p>
             </div>
 
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute right-3 top-2.5 text-slate-400" />
-              <input
-                type="text"
-                value={eventSearchQuery}
-                onChange={(e) => setEventSearchQuery(e.target.value)}
-                placeholder="بحث في الفعاليات والورش..."
-                className="w-full pr-9 pl-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-medium"
-              />
-            </div>
+            <SearchField
+              value={eventSearchQuery}
+              onChange={(e) => setEventSearchQuery(e.target.value)}
+              placeholder="بحث في الفعاليات والورش..."
+              className="w-full sm:w-64"
+            />
           </div>
 
           {/* Category Filter Chips */}
@@ -315,17 +333,14 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               { id: "field_trip", label: "🚌 رحلات ميدانية" },
               { id: "competition", label: "🏆 مسابقات" },
             ].map((cat) => (
-              <button
+              <Button
                 key={cat.id}
+                variant={selectedEventCat === cat.id ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setSelectedEventCat(cat.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                  selectedEventCat === cat.id
-                    ? "bg-indigo-600 text-white shadow-md"
-                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                }`}
               >
                 {cat.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -346,9 +361,11 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
 
             if (filteredEvents.length === 0) {
               return (
-                <div className="py-12 text-center text-slate-400 text-xs bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  لا توجد أفعاليات مطابقة للبحث حالياً.
-                </div>
+                <Card padding="lg" className="text-center py-12">
+                  <p className="text-xs text-ehb-text-muted">
+                    لا توجد أفعاليات مطابقة للبحث حالياً.
+                  </p>
+                </Card>
               );
             }
 
@@ -361,9 +378,10 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                   const isFull = seatsLeft === 0 && !evt.hasRsvped;
 
                   return (
-                    <div
+                    <Card
                       key={evt.id}
-                      className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all"
+                      padding="none"
+                      className="rounded-ehb-xl overflow-hidden flex flex-col justify-between"
                     >
                       {/* Banner Image */}
                       {evt.image ? (
@@ -397,20 +415,20 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                       {/* Content */}
                       <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                         <div className="space-y-2">
-                          <h4 className="text-base font-black text-slate-900 dark:text-slate-100 leading-snug">
+                          <h4 className="text-base font-black text-ehb-text-primary leading-snug">
                             {evt.title}
                           </h4>
-                          <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-ehb-text-muted line-clamp-2 leading-relaxed">
                             {evt.description}
                           </p>
                         </div>
 
                         {/* Event Details Row */}
-                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                        <div className="grid grid-cols-2 gap-2 text-xs text-ehb-text-muted pt-1">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                             <span className="truncate">
-                              {evt.date} • {evt.time}
+                              <bdi dir="ltr">{evt.date}</bdi> • <bdi dir="ltr">{evt.time}</bdi>
                             </span>
                           </div>
 
@@ -421,16 +439,16 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         </div>
 
                         {/* Seat Availability Bar */}
-                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-1 text-[11px]">
+                        <div className="p-2.5 rounded-ehb-md bg-ehb-surface border border-ehb-subtle space-y-1 text-[11px]">
                           <div className="flex items-center justify-between font-bold">
-                            <span className="text-slate-600 dark:text-slate-300">
+                            <span className="text-ehb-text-muted">
                               مقاعد المحجوزة:
                             </span>
                             <span className="text-indigo-600 dark:text-indigo-400">
-                              {rsvps} / {cap} ({seatsLeft > 0 ? `باقي ${seatsLeft}` : "اكتمل"})
+                              <bdi dir="ltr">{rsvps} / {cap}</bdi> (<bdi dir="ltr">{seatsLeft > 0 ? `باقي ${seatsLeft}` : "اكتمل"}</bdi>)
                             </span>
                           </div>
-                          <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                          <div className="w-full bg-ehb-surface-elevated-2 h-1.5 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${
                                 isFull ? "bg-rose-500" : "bg-indigo-600"
@@ -443,41 +461,34 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <button
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-ehb-subtle">
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setSelectedModalEvent(evt)}
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all flex items-center gap-1"
+                            leftIcon={<Eye className="w-3.5 h-3.5" />}
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>عرض التفاصيل</span>
-                          </button>
+                            عرض التفاصيل
+                          </Button>
 
-                          <button
+                          <Button
+                            variant={evt.hasRsvped ? "success" : isFull ? "secondary" : "primary"}
+                            size="sm"
                             onClick={() => onToggleRSVP(evt.id)}
                             disabled={isFull}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
-                              evt.hasRsvped
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                : isFull
-                                  ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
-                                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20"
-                            }`}
-                          >
-                            {evt.hasRsvped ? (
-                              <>
+                            leftIcon={
+                              evt.hasRsvped ? (
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>مسجل بنجاح</span>
-                              </>
-                            ) : (
-                              <>
+                              ) : (
                                 <UserCheck className="w-3.5 h-3.5" />
-                                <span>حجز مقعد</span>
-                              </>
-                            )}
-                          </button>
+                              )
+                            }
+                          >
+                            {evt.hasRsvped ? "مسجل بنجاح" : isFull ? "اكتمل" : "حجز مقعد"}
+                          </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -491,243 +502,243 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-indigo-500" />
                 <span>Peer Engineering Marketplace (Textbooks & Kits)</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-ehb-text-muted">
                 Buy and sell used engineering textbooks, lab kits, calculators, and components
                 directly with students.
               </p>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => setShowMktModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all shrink-0"
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              <Plus className="w-4 h-4" />
-              <span>Post Listing</span>
-            </button>
+              Post Listing
+            </Button>
           </div>
 
           {showMktModal && (
-            <form
-              onSubmit={handleCreateMarketplace}
-              className="p-5 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 dark:bg-indigo-950/20 space-y-4 text-xs shadow-lg"
-            >
-              <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2">
-                <h4 className="font-bold text-sm text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-indigo-500" />
-                  <span>Sell Textbook or Engineering Hardware</span>
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => setShowMktModal(false)}
-                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {mktError && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 font-medium flex items-center gap-2 text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{mktError}</span>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Item Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Modern Control Systems (13th Ed) or Saleae Logic Analyzer Kit"
-                  required
-                  value={mktTitle}
-                  onChange={(e) => setMktTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={mktCategory}
-                    onChange={(e) => setMktCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
+            <Card padding="md">
+              <form onSubmit={handleCreateMarketplace} className="space-y-4 text-xs">
+                <div className="flex items-center justify-between border-b border-ehb-subtle pb-2">
+                  <h4 className="font-bold text-sm text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-indigo-500" />
+                    <span>Sell Textbook or Engineering Hardware</span>
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => setShowMktModal(false)}
+                    className="p-1"
                   >
-                    <option value="textbook">Textbook</option>
-                    <option value="hardware_kit">Hardware / Lab Kit</option>
-                    <option value="drawing_gear font-medium">Engineering Drawing Tools</option>
-                    <option value="components">Electronic Components</option>
-                    <option value="other">Other Gear</option>
-                  </select>
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Condition
-                  </label>
-                  <select
-                    value={mktCondition}
-                    onChange={(e) => setMktCondition(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
-                  >
-                    <option value="like_new">Like New</option>
-                    <option value="good">Good Condition</option>
-                    <option value="fair">Fair / Used</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Price ($) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Price ($)"
-                    required
-                    min={0}
-                    value={Number.isNaN(mktPrice) || mktPrice === undefined ? "" : mktPrice}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      setMktPrice(Number.isNaN(val) ? ("" as any) : val);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
-                  />
-                </div>
-              </div>
-
-              {/* MANDATORY WHATSAPP FIELD */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                <div>
-                  <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
-                    <svg
-                      className="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.762.459 3.48 1.333 5.001L2 22l5.122-1.334c1.464.799 3.111 1.218 4.88 1.219h.005c5.507 0 9.991-4.479 9.992-9.986.001-2.667-1.033-5.173-2.913-7.054A9.923 9.923 0 0012.012 2zm.005 18.232h-.004a8.28 8.28 0 01-4.22-1.157l-.303-.18-3.136.818.835-3.058-.198-.314a8.272 8.272 0 01-1.267-4.357c.001-4.568 3.719-8.286 8.288-8.286 2.213 0 4.292.862 5.856 2.428a8.23 8.23 0 012.423 5.857c-.001 4.569-3.719 8.287-8.284 8.287zm4.542-6.204c-.249-.125-1.472-.726-1.7-.809-.228-.083-.394-.125-.56.125-.166.249-.643.809-.788.975-.145.166-.29.187-.539.062a6.793 6.793 0 01-1.998-1.231 7.483 7.483 0 01-1.383-1.722c-.145-.249-.015-.384.109-.508.112-.112.249-.29.373-.435.125-.145.166-.249.249-.415.083-.166.042-.311-.021-.435-.062-.125-.56-1.349-.767-1.846-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.871.85-.871 2.074 0 1.224.891 2.406 1.015 2.572.125.166 1.752 2.675 4.244 3.752.593.256 1.056.409 1.417.524.595.189 1.136.162 1.564.098.477-.071 1.472-.601 1.679-1.182.207-.581.207-1.078.145-1.182-.062-.104-.228-.187-.477-.312z" />
-                    </svg>
-                    <span>
-                      WhatsApp Number (Required) <span className="text-red-500">*</span>
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +20 101 234 5678"
-                    required
-                    value={mktWhatsapp}
-                    onChange={(e) => setMktWhatsapp(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold placeholder:font-normal placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Other Contact Info (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Telegram / Email / Campus spot"
-                    value={mktContact}
-                    onChange={(e) => setMktContact(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Item Description
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Describe condition, edition, included components or notes..."
-                  value={mktDesc}
-                  onChange={(e) => setMktDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100"
-                />
-              </div>
-
-              {/* UPLOAD PHOTOS FROM DEVICE */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Camera className="w-4 h-4 text-indigo-500" />
-                  <span>Upload Item Photos from Device</span>
-                </label>
-
-                <div className="border-2 border-dashed border-indigo-300 dark:border-indigo-800/60 rounded-2xl p-4 text-center bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/40 transition-colors">
-                  <input
-                    type="file"
-                    id="mkt-device-photos"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="mkt-device-photos"
-                    className="cursor-pointer flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold"
-                  >
-                    <Upload className="w-6 h-6 animate-bounce" />
-                    <span>Choose photos from device</span>
-                    <span className="text-[11px] text-slate-500 font-normal">
-                      Click to select image files (JPG, PNG, WEBP) from your phone or computer
-                    </span>
-                  </label>
-                </div>
-
-                {mktImages.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold text-slate-500">
-                      Uploaded Photos ({mktImages.length}):
-                    </p>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {mktImages.map((img, index) => (
-                        <div
-                          key={index}
-                          className="relative group shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900"
-                        >
-                          <img
-                            src={img}
-                            alt={`Preview ${index}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeMktImage(index)}
-                            className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-lg opacity-90 hover:opacity-100 shadow transition-opacity"
-                            title="Remove photo"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                {mktError && (
+                  <div className="p-3 rounded-ehb-md bg-rose-500/10 border border-rose-500/30 text-rose-400 font-medium flex items-center gap-2 text-xs">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{mktError}</span>
                   </div>
                 )}
-              </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowMktModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md shadow-indigo-600/20"
-                >
-                  Post Listing
-                </button>
-              </div>
-            </form>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-ehb-text-primary">
+                    Item Title <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Modern Control Systems (13th Ed) or Saleae Logic Analyzer Kit"
+                    required
+                    value={mktTitle}
+                    onChange={(e) => setMktTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated font-medium text-ehb-text-primary"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-ehb-text-primary mb-1">
+                      Category
+                    </label>
+                    <Select
+                      value={mktCategory}
+                      onChange={(e) => setMktCategory(e.target.value as any)}
+                      options={[
+                        { value: "textbook", label: "Textbook" },
+                        { value: "hardware_kit", label: "Hardware / Lab Kit" },
+                        { value: "drawing_gear", label: "Engineering Drawing Tools" },
+                        { value: "components", label: "Electronic Components" },
+                        { value: "other", label: "Other Gear" },
+                      ]}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-ehb-text-primary mb-1">
+                      Condition
+                    </label>
+                    <Select
+                      value={mktCondition}
+                      onChange={(e) => setMktCondition(e.target.value as any)}
+                      options={[
+                        { value: "like_new", label: "Like New" },
+                        { value: "good", label: "Good Condition" },
+                        { value: "fair", label: "Fair / Used" },
+                      ]}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-ehb-text-primary mb-1">
+                      Price ($) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Price ($)"
+                      required
+                      min={0}
+                      value={Number.isNaN(mktPrice) || mktPrice === undefined ? "" : mktPrice}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setMktPrice(Number.isNaN(val) ? ("" as any) : val);
+                      }}
+                      className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated font-medium text-ehb-text-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* MANDATORY WHATSAPP FIELD */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-ehb-md bg-emerald-500/5 border border-emerald-500/20">
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
+                      <svg
+                        className="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.762.459 3.48 1.333 5.001L2 22l5.122-1.334c1.464.799 3.111 1.218 4.88 1.219h.005c5.507 0 9.991-4.479 9.992-9.986.001-2.667-1.033-5.173-2.913-7.054A9.923 9.923 0 0012.012 2zm.005 18.232h-.004a8.28 8.28 0 01-4.22-1.157l-.303-.18-3.136.818.835-3.058-.198-.314a8.272 8.272 0 01-1.267-4.357c.001-4.568 3.719-8.286 8.288-8.286 2.213 0 4.292.862 5.856 2.428a8.23 8.23 0 012.423 5.857c-.001 4.569-3.719 8.287-8.284 8.287zm4.542-6.204c-.249-.125-1.472-.726-1.7-.809-.228-.083-.394-.125-.56.125-.166.249-.643.809-.788.975-.145.166-.29.187-.539.062a6.793 6.793 0 01-1.998-1.231 7.483 7.483 0 01-1.383-1.722c-.145-.249-.015-.384.109-.508.112-.112.249-.29.373-.435.125-.145.166-.249.249-.415.083-.166.042-.311-.021-.435-.062-.125-.56-1.349-.767-1.846-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.871.85-.871 2.074 0 1.224.891 2.406 1.015 2.572.125.166 1.752 2.675 4.244 3.752.593.256 1.056.409 1.417.524.595.189 1.136.162 1.564.098.477-.071 1.472-.601 1.679-1.182.207-.581.207-1.078.145-1.182-.062-.104-.228-.187-.477-.312z" />
+                      </svg>
+                      <span>
+                        WhatsApp Number (Required) <span className="text-rose-500">*</span>
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. +20 101 234 5678"
+                      required
+                      value={mktWhatsapp}
+                      onChange={(e) => setMktWhatsapp(e.target.value)}
+                      className="w-full px-3 py-2 rounded-ehb-md border border-emerald-300 dark:border-emerald-800 bg-ehb-surface-elevated text-ehb-text-primary font-bold placeholder:font-normal placeholder:text-ehb-text-muted focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-ehb-text-primary mb-1">
+                      Other Contact Info (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Telegram / Email / Campus spot"
+                      value={mktContact}
+                      onChange={(e) => setMktContact(e.target.value)}
+                      className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated font-medium text-ehb-text-primary"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ehb-text-primary mb-1">
+                    Item Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Describe condition, edition, included components or notes..."
+                    value={mktDesc}
+                    onChange={(e) => setMktDesc(e.target.value)}
+                    className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated font-medium text-ehb-text-primary"
+                  />
+                </div>
+
+                {/* UPLOAD PHOTOS FROM DEVICE */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-ehb-text-primary flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-indigo-500" />
+                    <span>Upload Item Photos from Device</span>
+                  </label>
+
+                  <div className="border-2 border-dashed border-indigo-300 dark:border-indigo-800/60 rounded-ehb-lg p-4 text-center bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/40 transition-colors">
+                    <input
+                      type="file"
+                      id="mkt-device-photos"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="mkt-device-photos"
+                      className="cursor-pointer flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold"
+                    >
+                      <Upload className="w-6 h-6 animate-bounce" />
+                      <span>Choose photos from device</span>
+                      <span className="text-[11px] text-ehb-text-muted font-normal">
+                        Click to select image files (JPG, PNG, WEBP) from your phone or computer
+                      </span>
+                    </label>
+                  </div>
+
+                  {mktImages.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-semibold text-ehb-text-muted">
+                        Uploaded Photos ({mktImages.length}):
+                      </p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {mktImages.map((img, index) => (
+                          <div
+                            key={index}
+                            className="relative group shrink-0 w-20 h-20 rounded-ehb-md overflow-hidden border border-ehb-default bg-slate-900"
+                          >
+                            <img
+                              src={img}
+                              alt={`Preview ${index}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeMktImage(index)}
+                              className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-90 hover:opacity-100 shadow transition-opacity"
+                              title="Remove photo"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-ehb-default">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() => setShowMktModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button variant="primary" size="sm" type="submit">
+                    Post Listing
+                  </Button>
+                </div>
+              </form>
+            </Card>
           )}
 
           {/* MARKETPLACE LISTINGS GRID */}
@@ -742,26 +753,18 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               const selectedImgIdx = activeImageIndexes[item.id] || 0;
               const activePhoto = itemPhotos[selectedImgIdx] || itemPhotos[0];
 
-              const formatWhatsappUrl = (phone: string, title: string) => {
-                const digits = phone.replace(/[^0-9]/g, "");
-                const message = encodeURIComponent(
-                  `Hello! I am interested in your item "${title}" on GNUE Engineering Marketplace.`,
-                );
-                return digits
-                  ? `https://wa.me/${digits}?text=${message}`
-                  : `https://wa.me/?text=${message}`;
-              };
-
               return (
-                <div
+                <Card
                   key={item.id}
-                  className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-between space-y-3"
+                  variant="interactive"
+                  padding="none"
+                  className="flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-3">
                     {/* Item Photos Display */}
                     {itemPhotos.length > 0 ? (
                       <div className="space-y-2">
-                        <div className="relative h-48 w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <div className="relative h-48 w-full rounded-ehb-lg overflow-hidden bg-slate-950 border border-ehb-subtle">
                           <img
                             src={activePhoto}
                             alt={item.title}
@@ -781,7 +784,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                                 onClick={() =>
                                   setActiveImageIndexes((prev) => ({ ...prev, [item.id]: pIdx }))
                                 }
-                                className={`w-12 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                                className={`w-12 h-12 rounded-ehb-md overflow-hidden border-2 shrink-0 transition-all ${
                                   pIdx === selectedImgIdx
                                     ? "border-indigo-600 scale-105 shadow-sm"
                                     : "border-transparent opacity-60 hover:opacity-100"
@@ -794,42 +797,45 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         )}
                       </div>
                     ) : (
-                      <div className="h-28 w-full rounded-xl bg-slate-100 dark:bg-slate-800/50 flex flex-col items-center justify-center gap-1 text-slate-400 text-xs">
+                      <div className="h-28 w-full rounded-ehb-lg bg-ehb-surface-elevated-2 flex flex-col items-center justify-center gap-1 text-ehb-text-muted text-xs">
                         <ImageIcon className="w-6 h-6 opacity-40" />
                         <span>No photos uploaded</span>
                       </div>
                     )}
 
                     {/* Header: Title, Condition, Price */}
-                    <div className="flex justify-between items-start gap-2">
+                    <div className="flex justify-between items-start gap-2 p-4">
                       <div>
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
+                        <Badge variant="primary" size="sm">
                           {item.condition.replace("_", " ")}
-                        </span>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1.5 line-clamp-2">
+                        </Badge>
+                        <h4 className="text-sm font-bold text-ehb-text-primary mt-1.5 line-clamp-2">
                           {item.title}
                         </h4>
                       </div>
                       <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 shrink-0">
-                        ${item.price}
+                        <bdi dir="ltr">${item.price}</bdi>
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <p className="text-xs text-ehb-text-muted leading-relaxed px-4">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Footer & Direct WhatsApp Button */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>
-                        Seller:{" "}
-                        <strong className="text-slate-800 dark:text-slate-200">
-                          {item.sellerName}
-                        </strong>
-                      </span>
-                      <span className="text-[11px] text-slate-400">({item.sellerDepartment})</span>
+                  <div className="pt-3 border-t border-ehb-subtle space-y-2 px-4 pb-4">
+                    <div className="flex items-center justify-between text-xs text-ehb-text-muted">
+                      <div className="flex items-center gap-2">
+                        <Avatar size="sm" fallback={item.sellerName} />
+                        <span>
+                          Seller:{" "}
+                          <strong className="text-ehb-text-primary">
+                            {item.sellerName}
+                          </strong>
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-ehb-text-muted">({item.sellerDepartment})</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -840,16 +846,18 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                        className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-ehb-md bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-ehb-sm hover:shadow-ehb-md transition-all hover:scale-[1.01] active:scale-[0.99]"
                       >
                         <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                           <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.762.459 3.48 1.333 5.001L2 22l5.122-1.334c1.464.799 3.111 1.218 4.88 1.219h.005c5.507 0 9.991-4.479 9.992-9.986.001-2.667-1.033-5.173-2.913-7.054A9.923 9.923 0 0012.012 2zm.005 18.232h-.004a8.28 8.28 0 01-4.22-1.157l-.303-.18-3.136.818.835-3.058-.198-.314a8.272 8.272 0 01-1.267-4.357c.001-4.568 3.719-8.286 8.288-8.286 2.213 0 4.292.862 5.856 2.428a8.23 8.23 0 012.423 5.857c-.001 4.569-3.719 8.287-8.284 8.287zm4.542-6.204c-.249-.125-1.472-.726-1.7-.809-.228-.083-.394-.125-.56.125-.166.249-.643.809-.788.975-.145.166-.29.187-.539.062a6.793 6.793 0 01-1.998-1.231 7.483 7.483 0 01-1.383-1.722c-.145-.249-.015-.384.109-.508.112-.112.249-.29.373-.435.125-.145.166-.249.249-.415.083-.166.042-.311-.021-.435-.062-.125-.56-1.349-.767-1.846-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.871.85-.871 2.074 0 1.224.891 2.406 1.015 2.572.125.166 1.752 2.675 4.244 3.752.593.256 1.056.409 1.417.524.595.189 1.136.162 1.564.098.477-.071 1.472-.601 1.679-1.182.207-.581.207-1.078.145-1.182-.062-.104-.228-.187-.477-.312z" />
                         </svg>
-                        <span>Contact WhatsApp: {item.whatsappNumber || item.contactInfo}</span>
+                        <span>
+                          Contact WhatsApp: <bdi dir="ltr">{item.whatsappNumber || item.contactInfo}</bdi>
+                        </span>
                       </a>
                     </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -860,122 +868,119 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       {activeSubTab === "lost_found" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
               Faculty Lost & Found Hub
             </h3>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => setShowLafModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md"
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              <Plus className="w-4 h-4" />
-              <span>Report Lost / Found Gear</span>
-            </button>
+              Report Lost / Found Gear
+            </Button>
           </div>
 
           {showLafModal && (
-            <form
-              onSubmit={handleCreateLostFound}
-              className="p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 space-y-3 text-xs"
-            >
-              <h4 className="font-bold text-indigo-950 dark:text-indigo-200">
-                Report Lost or Found Item
-              </h4>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    checked={lafType === "lost"}
-                    onChange={() => setLafType("lost")}
-                  />{" "}
-                  Lost
-                </label>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    checked={lafType === "found"}
-                    onChange={() => setLafType("found")}
-                  />{" "}
-                  Found
-                </label>
-              </div>
-              <input
-                type="text"
-                placeholder="Item Title (e.g. TI-Nspire Calculator)"
-                required
-                value={lafTitle}
-                onChange={(e) => setLafTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-              />
-              <input
-                type="text"
-                placeholder="Location (e.g. Computer Lab 4)"
-                required
-                value={lafLocation}
-                onChange={(e) => setLafLocation(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-              />
-              <textarea
-                placeholder="Details or contact info..."
-                required
-                value={lafContact}
-                onChange={(e) => setLafContact(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLafModal(false)}
-                  className="px-3 py-1 text-slate-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold"
-                >
-                  Submit Report
-                </button>
-              </div>
-            </form>
+            <Card padding="md">
+              <form onSubmit={handleCreateLostFound} className="space-y-3 text-xs">
+                <h4 className="font-bold text-indigo-950 dark:text-indigo-200">
+                  Report Lost or Found Item
+                </h4>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      checked={lafType === "lost"}
+                      onChange={() => setLafType("lost")}
+                    />{" "}
+                    Lost
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      checked={lafType === "found"}
+                      onChange={() => setLafType("found")}
+                    />{" "}
+                    Found
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Item Title (e.g. TI-Nspire Calculator)"
+                  required
+                  value={lafTitle}
+                  onChange={(e) => setLafTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated"
+                />
+                <input
+                  type="text"
+                  placeholder="Location (e.g. Computer Lab 4)"
+                  required
+                  value={lafLocation}
+                  onChange={(e) => setLafLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated"
+                />
+                <textarea
+                  placeholder="Details or contact info..."
+                  required
+                  value={lafContact}
+                  onChange={(e) => setLafContact(e.target.value)}
+                  className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => setShowLafModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button variant="primary" size="sm" type="submit">
+                    Submit Report
+                  </Button>
+                </div>
+              </form>
+            </Card>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {lostFound.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2"
-              >
-                <div className="flex justify-between items-center">
-                  <span
-                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                      item.type === "lost"
-                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                        : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                    }`}
-                  >
-                    {item.type}
-                  </span>
-                  <span className="text-xs text-slate-400">{item.date}</span>
-                </div>
+              <Card key={item.id} padding="md">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Badge
+                      variant={item.type === "lost" ? "error" : "success"}
+                      size="sm"
+                    >
+                      {item.type}
+                    </Badge>
+                    <span className="text-xs text-ehb-text-muted">
+                      <bdi dir="ltr">{item.date}</bdi>
+                    </span>
+                  </div>
 
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {item.title}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300">{item.description}</p>
-                <p className="text-[11px] text-indigo-400 font-semibold">
-                  Location: {item.location}
-                </p>
+                  <h4 className="text-sm font-bold text-ehb-text-primary">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-ehb-text-muted">{item.description}</p>
+                  <p className="text-[11px] text-indigo-400 font-semibold">
+                    Location: {item.location}
+                  </p>
 
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                  <button
-                    onClick={() => toggleContactReveal(item.id)}
-                    className="text-xs font-bold text-indigo-500 hover:underline"
-                  >
-                    {revealedContacts[item.id] ? item.contactInfo : "Contact Reporter"}
-                  </button>
+                  <div className="pt-2 border-t border-ehb-subtle text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleContactReveal(item.id)}
+                    >
+                      {revealedContacts[item.id] ? item.contactInfo : "Contact Reporter"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -985,49 +990,48 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       {activeSubTab === "clubs" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-ehb-text-primary uppercase tracking-wider">
               Student Engineering Clubs & Societies
             </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {clubs.map((club) => (
-              <div
-                key={club.id}
-                className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {club.name}
-                    </h4>
-                    <p className="text-xs text-indigo-500 font-medium mt-0.5">{club.tagline}</p>
+              <Card key={club.id} padding="md">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-sm font-bold text-ehb-text-primary">
+                        {club.name}
+                      </h4>
+                      <p className="text-xs text-indigo-500 font-medium mt-0.5">{club.tagline}</p>
+                    </div>
+
+                    <Badge variant="neutral" size="sm">
+                      <bdi dir="ltr">{club.memberCount}</bdi> Members
+                    </Badge>
                   </div>
 
-                  <span className="text-xs font-semibold text-slate-400">
-                    {club.memberCount} Members
-                  </span>
+                  <p className="text-xs text-ehb-text-muted line-clamp-2">
+                    {club.description}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-ehb-subtle">
+                    <div className="flex items-center gap-2 text-xs text-ehb-text-muted">
+                      <Avatar size="sm" fallback={club.leadName} />
+                      <span>Lead: {club.leadName}</span>
+                    </div>
+
+                    <Button
+                      variant={club.isJoined ? "success" : "primary"}
+                      size="sm"
+                      onClick={() => onToggleClubJoin(club.id)}
+                    >
+                      {club.isJoined ? "Joined Member ✔" : "Join Chapter"}
+                    </Button>
+                  </div>
                 </div>
-
-                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
-                  {club.description}
-                </p>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-xs text-slate-400">Lead: {club.leadName}</span>
-
-                  <button
-                    onClick={() => onToggleClubJoin(club.id)}
-                    className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      club.isJoined
-                        ? "bg-emerald-500 text-white shadow-md"
-                        : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md"
-                    }`}
-                  >
-                    {club.isJoined ? "Joined Member ✔" : "Join Chapter"}
-                  </button>
-                </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>

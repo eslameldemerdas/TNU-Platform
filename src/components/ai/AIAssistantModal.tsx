@@ -111,23 +111,24 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
             if (line.startsWith("data: ")) {
               const dataStr = line.replace("data: ", "").trim();
               if (dataStr === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(dataStr);
-                if (parsed.text) {
-                  accumulated += parsed.text;
-                  setMessages((prev) => {
-                    const newArr = [...prev];
-                    newArr[newArr.length - 1] = {
-                      sender: "ai",
-                      text: accumulated,
-                      time: timeStr,
-                    };
-                    return newArr;
-                  });
-                } else if (parsed.error) {
-                  throw new Error(parsed.error);
-                }
-              } catch {
+               try {
+                 const parsed = JSON.parse(dataStr);
+                 const text = typeof parsed.text === "string" ? parsed.text : "";
+                 if (text) {
+                   accumulated += text;
+                   setMessages((prev) => {
+                     const newArr = [...prev];
+                     newArr[newArr.length - 1] = {
+                       sender: "ai",
+                       text: accumulated,
+                       time: timeStr,
+                     };
+                     return newArr;
+                   });
+                 } else if (parsed.error) {
+                   throw new Error(typeof parsed.error === "string" ? parsed.error : "AI error");
+                 }
+               } catch {
                 // Ignore chunk parse error
               }
             }

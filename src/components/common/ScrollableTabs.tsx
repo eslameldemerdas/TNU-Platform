@@ -180,7 +180,7 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
             type="button"
             onClick={scrollRight}
             aria-label="الانتقال للتبويبات السابقة"
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900/90 dark:bg-slate-800/90 hover:bg-slate-800 dark:hover:bg-slate-700 text-slate-200 shadow-md border border-slate-700/60 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-ehb-md bg-ehb-surface-elevated hover:bg-ehb-surface-elevated-2 text-ehb-text-primary shadow-ehb-sm border border-ehb-default flex items-center justify-center transition-all duration-fast hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -207,16 +207,15 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
           let btnClass = "";
           if (variant === "segmented") {
             btnClass = isActive
-              ? "bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30"
+              ? "bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500/30"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70";
           } else if (variant === "pills") {
             btnClass = isActive
-              ? "bg-emerald-600 text-white shadow-md"
+              ? "bg-indigo-600 text-white shadow-md"
               : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700";
           } else {
-            // underline
             btnClass = isActive
-              ? "text-emerald-500 border-b-2 border-emerald-500 font-bold"
+              ? "text-indigo-500 border-b-2 border-indigo-500 font-bold"
               : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent";
           }
 
@@ -229,7 +228,7 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
               aria-selected={isActive}
               aria-controls={`tabpanel-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${btnClass}`}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-ehb-md text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-normal shrink-0 focus:outline-none focus:ring-2 focus:ring-amber-500/50 ${btnClass}`}
             >
               {tab.icon && <span className="shrink-0">{tab.icon}</span>}
               <span>{tab.label}</span>
@@ -262,7 +261,7 @@ export const ScrollableTabs: React.FC<ScrollableTabsProps> = ({
             type="button"
             onClick={scrollLeft}
             aria-label="الانتقال للتبويبات التالية"
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900/90 dark:bg-slate-800/90 hover:bg-slate-800 dark:hover:bg-slate-700 text-slate-200 shadow-md border border-slate-700/60 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-ehb-md bg-ehb-surface-elevated hover:bg-ehb-surface-elevated-2 text-ehb-text-primary shadow-ehb-sm border border-ehb-default flex items-center justify-center transition-all duration-fast hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
