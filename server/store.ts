@@ -1130,6 +1130,134 @@ export async function listEvents(filters?: { category?: string; status?: string;
 }
 
 // ==================================================================
+// MARKETPLACE & LOST FOUND
+// ==================================================================
+const departmentNames: Record<string, string> = {
+  "dept-cmp": "Computer Engineering",
+  "dept-mtr": "Mechatronics Engineering",
+};
+
+function toMarketplaceListing(entry: any) {
+  return {
+    id: entry.id,
+    title: entry.title,
+    description: entry.description,
+    price: entry.price,
+    currency: "$",
+    category: entry.category,
+    condition: entry.condition,
+    sellerName: entry.seller?.name || "",
+    sellerDepartment: departmentNames[entry.seller?.departmentId || ""] || "Engineering",
+    contactInfo: entry.contactInfo,
+    whatsappNumber: entry.whatsappNumber || entry.contactInfo,
+    date: entry.createdAt.toISOString().split("T")[0],
+    status: entry.status === "active" ? "available" : "sold",
+    image: entry.images?.[0],
+    images: entry.images || [],
+    sellerId: entry.sellerId,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+function toLostFoundPost(entry: any) {
+  return {
+    id: entry.id,
+    title: entry.title,
+    description: entry.description,
+    type: entry.type,
+    location: entry.location,
+    date: entry.createdAt.toISOString().split("T")[0],
+    contactInfo: entry.contactInfo,
+    status: entry.status === "open" ? "active" : "resolved",
+    reporterName: entry.reporter?.name || "",
+    reporterId: entry.reporterId,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+    category: "personal",
+  };
+}
+
+export async function createMarketplaceListing(data: {
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  contactInfo: string;
+  whatsappNumber?: string;
+  images?: string[];
+  sellerId: string;
+}) {
+  const entry = await prisma.marketplaceListing.create({ data: data as any, include: { seller: true } });
+  return toMarketplaceListing(entry);
+}
+
+export async function listMarketplaceListings() {
+  const entries = await prisma.marketplaceListing.findMany({
+    where: { status: "active" },
+    include: { seller: { select: { name: true, departmentId: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return entries.map(toMarketplaceListing);
+}
+
+export async function getMarketplaceListing(id: string) {
+  return prisma.marketplaceListing.findUnique({ where: { id } });
+}
+
+export async function updateMarketplaceListing(id: string, data: { title?: string; description?: string; price?: number; category?: string; condition?: string; contactInfo?: string; whatsappNumber?: string; images?: string[]; status?: string }) {
+  const entry = await prisma.marketplaceListing.update({
+    where: { id },
+    data: data as any,
+    include: { seller: { select: { name: true, departmentId: true } } },
+  });
+  return toMarketplaceListing(entry);
+}
+
+export async function deleteMarketplaceListing(id: string) {
+  await prisma.marketplaceListing.delete({ where: { id } });
+}
+
+export async function createLostFoundPost(data: {
+  type: string;
+  title: string;
+  description: string;
+  location: string;
+  contactInfo: string;
+  reporterId: string;
+}) {
+  const entry = await prisma.lostFoundPost.create({ data: data as any, include: { reporter: true } });
+  return toLostFoundPost(entry);
+}
+
+export async function listLostFoundPosts() {
+  const entries = await prisma.lostFoundPost.findMany({
+    where: { status: "open" },
+    include: { reporter: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return entries.map(toLostFoundPost);
+}
+
+export async function getLostFoundPost(id: string) {
+  return prisma.lostFoundPost.findUnique({ where: { id } });
+}
+
+export async function updateLostFoundPost(id: string, data: { type?: string; title?: string; description?: string; location?: string; contactInfo?: string; status?: string }) {
+  const entry = await prisma.lostFoundPost.update({
+    where: { id },
+    data: data as any,
+    include: { reporter: { select: { name: true } } },
+  });
+  return toLostFoundPost(entry);
+}
+
+export async function deleteLostFoundPost(id: string) {
+  await prisma.lostFoundPost.delete({ where: { id } });
+}
+
+// ==================================================================
 // ASSIGNMENTS
 // ==================================================================
 export async function createAssignment(data: {

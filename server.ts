@@ -3087,6 +3087,272 @@ Return ONLY a raw JSON array of objects without markdown formatting or code fenc
   );
 
   // --------------------------------------------------------------------
+  // MARKETPLACE
+  // --------------------------------------------------------------------
+  app.get("/api/marketplace", async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cacheKey = "marketplace:list";
+      const cached = await serverCache.get<{ marketplace: any[]; listings: any[]; total: number }>(cacheKey);
+      if (cached) return res.json(cached);
+      const listings = await store.listMarketplaceListings();
+      const payload = { marketplace: listings, listings, total: listings.length };
+      await serverCache.set(cacheKey, payload, 120, ["marketplace"]);
+      res.json(payload);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(
+    "/api/marketplace",
+    validate({
+      body: {
+        title: Validators.string(2, 200),
+        description: Validators.string(1, 5000),
+        price: Validators.number(0, 100000000),
+        category: Validators.enum(["textbook", "hardware_kit", "drawing_gear", "components", "other"]),
+        condition: Validators.enum(["like_new", "good", "fair"]),
+        contactInfo: Validators.string(1, 500),
+        whatsappNumber: Validators.optional(Validators.string(1, 100)),
+        images: Validators.optional(Validators.array(Validators.string(1, 10000000), 0, 5)),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required to create a listing."));
+        const listing = await store.createMarketplaceListing({ ...req.body, sellerId: user.id });
+        await serverCache.invalidateTag("marketplace");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "marketplace.created",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: listing.id,
+          targetType: "marketplace_listing",
+          targetName: listing.title,
+          ipAddress: getClientIp(req),
+        });
+        res.status(201).json({ success: true, listing });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.patch(
+    "/api/marketplace/:id",
+    validate({
+      params: { id: Validators.string(1, 100) },
+      body: {
+        title: Validators.optional(Validators.string(2, 200)),
+        description: Validators.optional(Validators.string(1, 5000)),
+        price: Validators.optional(Validators.number(0, 100000000)),
+        category: Validators.optional(Validators.enum(["textbook", "hardware_kit", "drawing_gear", "components", "other"])),
+        condition: Validators.optional(Validators.enum(["like_new", "good", "fair"])),
+        contactInfo: Validators.optional(Validators.string(1, 500)),
+        whatsappNumber: Validators.optional(Validators.string(1, 100)),
+        images: Validators.optional(Validators.array(Validators.string(1, 10000000), 0, 5)),
+        status: Validators.optional(Validators.enum(["active", "sold"])),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required."));
+        const existing = await store.getMarketplaceListing(req.params.id);
+        if (!existing) return next(new NotFoundError("Marketplace listing not found."));
+        if (existing.sellerId !== user.id && !store.ELEVATED_ROLES.includes(user.role as store.Role)) {
+          return next(new ForbiddenError("Only the original seller or a moderator can update this listing."));
+        }
+        const listing = await store.updateMarketplaceListing(req.params.id, req.body);
+        await serverCache.invalidateTag("marketplace");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "marketplace.updated",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: listing.id,
+          targetType: "marketplace_listing",
+          targetName: listing.title,
+          previousState: existing,
+          newState: listing,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, listing });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/marketplace/:id",
+    validate({ params: { id: Validators.string(1, 100) } }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required."));
+        const existing = await store.getMarketplaceListing(req.params.id);
+        if (!existing) return next(new NotFoundError("Marketplace listing not found."));
+        if (existing.sellerId !== user.id && !store.ELEVATED_ROLES.includes(user.role as store.Role)) {
+          return next(new ForbiddenError("Only the original seller or a moderator can delete this listing."));
+        }
+        await store.deleteMarketplaceListing(req.params.id);
+        await serverCache.invalidateTag("marketplace");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "marketplace.deleted",
+          severity: "warning",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: existing.id,
+          targetType: "marketplace_listing",
+          targetName: existing.title,
+          previousState: existing,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // --------------------------------------------------------------------
+  // LOST & FOUND
+  // --------------------------------------------------------------------
+  app.get("/api/lost-found", async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cacheKey = "lost_found:list";
+      const cached = await serverCache.get<{ lostFound: any[]; posts: any[]; total: number }>(cacheKey);
+      if (cached) return res.json(cached);
+      const posts = await store.listLostFoundPosts();
+      const payload = { lostFound: posts, posts, total: posts.length };
+      await serverCache.set(cacheKey, payload, 120, ["lost_found"]);
+      res.json(payload);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(
+    "/api/lost-found",
+    validate({
+      body: {
+        type: Validators.enum(["lost", "found"]),
+        title: Validators.string(2, 200),
+        description: Validators.string(1, 5000),
+        location: Validators.string(1, 300),
+        contactInfo: Validators.string(1, 500),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required to create a report."));
+        const post = await store.createLostFoundPost({ ...req.body, reporterId: user.id });
+        await serverCache.invalidateTag("lost_found");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "lost_found.created",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: post.id,
+          targetType: "lost_found_post",
+          targetName: post.title,
+          ipAddress: getClientIp(req),
+        });
+        res.status(201).json({ success: true, post });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.patch(
+    "/api/lost-found/:id",
+    validate({
+      params: { id: Validators.string(1, 100) },
+      body: {
+        type: Validators.optional(Validators.enum(["lost", "found"])),
+        title: Validators.optional(Validators.string(2, 200)),
+        description: Validators.optional(Validators.string(1, 5000)),
+        location: Validators.optional(Validators.string(1, 300)),
+        contactInfo: Validators.optional(Validators.string(1, 500)),
+        status: Validators.optional(Validators.enum(["open", "resolved"])),
+      },
+    }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required."));
+        const existing = await store.getLostFoundPost(req.params.id);
+        if (!existing) return next(new NotFoundError("Lost and found post not found."));
+        if (existing.reporterId !== user.id && !store.ELEVATED_ROLES.includes(user.role as store.Role)) {
+          return next(new ForbiddenError("Only the original reporter or a moderator can update this post."));
+        }
+        const post = await store.updateLostFoundPost(req.params.id, req.body);
+        await serverCache.invalidateTag("lost_found");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "lost_found.updated",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: post.id,
+          targetType: "lost_found_post",
+          targetName: post.title,
+          previousState: existing,
+          newState: post,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true, post });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/lost-found/:id",
+    validate({ params: { id: Validators.string(1, 100) } }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = await getSessionUser(req);
+        if (!user) return next(new UnauthorizedError("Authentication required."));
+        const existing = await store.getLostFoundPost(req.params.id);
+        if (!existing) return next(new NotFoundError("Lost and found post not found."));
+        if (existing.reporterId !== user.id && !store.ELEVATED_ROLES.includes(user.role as store.Role)) {
+          return next(new ForbiddenError("Only the original reporter or a moderator can delete this post."));
+        }
+        await store.deleteLostFoundPost(req.params.id);
+        await serverCache.invalidateTag("lost_found");
+        await store.writeAudit({
+          category: "campus",
+          eventType: "lost_found.deleted",
+          severity: "warning",
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: user.role,
+          targetId: existing.id,
+          targetType: "lost_found_post",
+          targetName: existing.title,
+          previousState: existing,
+          ipAddress: getClientIp(req),
+        });
+        res.json({ success: true });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // --------------------------------------------------------------------
   // ASSIGNMENTS
   // --------------------------------------------------------------------
   app.get(

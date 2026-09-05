@@ -113,6 +113,35 @@ enum EventCategory {
   seminar
 }
 
+enum MarketplaceCategory {
+  textbook
+  hardware_kit
+  drawing_gear
+  components
+  other
+}
+
+enum MarketplaceCondition {
+  like_new
+  good
+  fair
+}
+
+enum MarketplaceStatus {
+  active
+  sold
+}
+
+enum LostFoundType {
+  lost
+  found
+}
+
+enum LostFoundStatus {
+  open
+  resolved
+}
+
 enum AssignmentStatus {
   todo
   in_progress
@@ -364,6 +393,8 @@ model User {
   quizSubmissions QuizSubmission[]
   pomodoroLogs    PomodoroSession[]
   honorStudents   HonorStudent[]
+  marketplaceListings MarketplaceListing[] @relation("MarketplaceSeller")
+  lostFoundPosts  LostFoundPost[]        @relation("LostFoundReporter")
 
   @@index([email])
   @@index([role])
@@ -843,6 +874,45 @@ model CampusEvent {
   @@index([category])
   @@index([date])
   @@index([status])
+  @@index([createdAt])
+}
+
+model MarketplaceListing {
+  id             String               @id @default(uuid())
+  title          String
+  description    String
+  price          Float
+  category       MarketplaceCategory
+  condition      MarketplaceCondition
+  contactInfo    String
+  whatsappNumber String?
+  images         String[]             @default([])
+  status         MarketplaceStatus    @default(active)
+  sellerId       String
+  seller         User                 @relation("MarketplaceSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([status])
+  @@index([sellerId])
+  @@index([createdAt])
+}
+
+model LostFoundPost {
+  id          String          @id @default(uuid())
+  type        LostFoundType
+  title       String
+  description String
+  location    String
+  contactInfo String
+  status      LostFoundStatus @default(open)
+  reporterId  String
+  reporter    User            @relation("LostFoundReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([status])
+  @@index([reporterId])
   @@index([createdAt])
 }
 

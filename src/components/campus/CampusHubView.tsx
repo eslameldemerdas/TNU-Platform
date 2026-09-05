@@ -49,8 +49,8 @@ interface CampusHubViewProps {
   departments: Department[];
   onToggleRSVP: (eventId: string) => void;
   onToggleClubJoin: (clubId: string) => void;
-  onAddMarketplaceItem: (item: Partial<MarketplaceItem>) => void;
-  onAddLostFoundItem: (item: Partial<LostFoundItem>) => void;
+  onAddMarketplaceItem: (item: Partial<MarketplaceItem>) => Promise<void>;
+  onAddLostFoundItem: (item: Partial<LostFoundItem>) => Promise<void>;
 }
 
 export const CampusHubView: React.FC<CampusHubViewProps> = ({
@@ -98,6 +98,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
   const [lafDesc, setLafDesc] = useState("");
   const [lafContact, setLafContact] = useState("");
   const [lafType, setLafType] = useState<"lost" | "found">("lost");
+  const [lafError, setLafError] = useState<string | null>(null);
 
   const toggleContactReveal = (id: string) => {
     setRevealedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -132,7 +133,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
     setMktImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleCreateMarketplace = (e: React.FormEvent) => {
+  const handleCreateMarketplace = async (e: React.FormEvent) => {
     e.preventDefault();
     setMktError(null);
 
@@ -148,17 +149,22 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
       return;
     }
 
-    onAddMarketplaceItem({
-      title: mktTitle.trim(),
-      price: mktPrice || 0,
-      description: mktDesc.trim(),
-      category: mktCategory,
-      condition: mktCondition,
-      contactInfo: mktContact.trim() || `WhatsApp: ${cleanWhatsapp}`,
-      whatsappNumber: cleanWhatsapp,
-      images: mktImages,
-      image: mktImages.length > 0 ? mktImages[0] : undefined,
-    });
+    try {
+      await onAddMarketplaceItem({
+        title: mktTitle.trim(),
+        price: mktPrice || 0,
+        description: mktDesc.trim(),
+        category: mktCategory,
+        condition: mktCondition,
+        contactInfo: mktContact.trim() || `WhatsApp: ${cleanWhatsapp}`,
+        whatsappNumber: cleanWhatsapp,
+        images: mktImages,
+        image: mktImages.length > 0 ? mktImages[0] : undefined,
+      });
+    } catch (error) {
+      setMktError(error instanceof Error ? error.message : "Failed to publish listing.");
+      return;
+    }
 
     setMktTitle("");
     setMktPrice(25);
@@ -172,17 +178,26 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
     setShowMktModal(false);
   };
 
-  const handleCreateLostFound = (e: React.FormEvent) => {
+  const handleCreateLostFound = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lafTitle || !lafContact) return;
-    onAddLostFoundItem({
-      title: lafTitle,
-      location: lafLocation,
-      description: lafDesc,
-      contactInfo: lafContact,
-      type: lafType,
-      category: "calculator",
-    });
+    if (!lafTitle || !lafLocation || !lafDesc || !lafContact) {
+      setLafError("Please complete all report fields.");
+      return;
+    }
+    setLafError(null);
+    try {
+      await onAddLostFoundItem({
+        title: lafTitle,
+        location: lafLocation,
+        description: lafDesc,
+        contactInfo: lafContact,
+        type: lafType,
+        category: "calculator",
+      });
+    } catch (error) {
+      setLafError(error instanceof Error ? error.message : "Failed to publish report.");
+      return;
+    }
     setLafTitle("");
     setLafLocation("");
     setLafDesc("");
@@ -890,6 +905,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                 <h4 className="font-bold text-indigo-950 dark:text-indigo-200">
                   Report Lost or Found Item
                 </h4>
+                {lafError && <p className="text-rose-500">{lafError}</p>}
                 <div className="flex gap-4">
                   <label className="flex items-center gap-1">
                     <input
@@ -925,7 +941,15 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                   className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated"
                 />
                 <textarea
-                  placeholder="Details or contact info..."
+                  placeholder="Describe the item and identifying details..."
+                  required
+                  value={lafDesc}
+                  onChange={(e) => setLafDesc(e.target.value)}
+                  className="w-full px-3 py-2 rounded-ehb-md border border-ehb-default bg-ehb-surface-elevated"
+                />
+                <input
+                  type="text"
+                  placeholder="Contact information"
                   required
                   value={lafContact}
                   onChange={(e) => setLafContact(e.target.value)}

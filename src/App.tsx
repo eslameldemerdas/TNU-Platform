@@ -468,6 +468,39 @@ export default function App() {
   };
 
   useEffect(() => {
+    fetch("/api/marketplace")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.marketplace || data.listings;
+        if (Array.isArray(loaded)) setMarketplace(loaded);
+      })
+      .catch(() => {});
+    fetch("/api/lost-found")
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Array.isArray(data) ? data : data.lostFound || data.posts;
+        if (Array.isArray(loaded)) setLostFound(loaded);
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchMarketplace = async () => {
+    const res = await fetch("/api/marketplace");
+    const data = await res.json();
+    const loaded = Array.isArray(data) ? data : data.marketplace || data.listings;
+    if (!res.ok) throw new Error(data.message || "Failed to load marketplace listings.");
+    if (Array.isArray(loaded)) setMarketplace(loaded);
+  };
+
+  const fetchLostFound = async () => {
+    const res = await fetch("/api/lost-found");
+    const data = await res.json();
+    const loaded = Array.isArray(data) ? data : data.lostFound || data.posts;
+    if (!res.ok) throw new Error(data.message || "Failed to load lost and found posts.");
+    if (Array.isArray(loaded)) setLostFound(loaded);
+  };
+
+  useEffect(() => {
     fetch("/api/assignments?limit=100")
       .then((res) => res.json())
       .then((data) => {
@@ -1184,43 +1217,45 @@ export default function App() {
     addToast("success", "Club Membership Updated", "You are now connected with society members.");
   };
 
-  const handleAddMarketplaceItem = (itemData: Partial<MarketplaceItem>) => {
+  const handleAddMarketplaceItem = async (itemData: Partial<MarketplaceItem>) => {
     const uploadedImages = itemData.images || (itemData.image ? [itemData.image] : []);
-    const newItem: MarketplaceItem = {
-      id: `mkt-${Date.now()}`,
-      title: itemData.title || "Item for Sale",
-      description: itemData.description || "",
-      price: itemData.price || 15,
-      currency: "$",
-      category: itemData.category || "textbook",
-      condition: itemData.condition || "good",
-      sellerName: user?.name || activeUser?.name || "Student Seller",
-      sellerDepartment: activeDept?.name || "Engineering",
-      contactInfo: itemData.contactInfo || "",
-      whatsappNumber: itemData.whatsappNumber || "",
-      date: new Date().toISOString().split("T")[0],
-      status: "available",
-      image: uploadedImages.length > 0 ? uploadedImages[0] : itemData.image,
-      images: uploadedImages,
-    };
-    setMarketplace((prev) => [newItem, ...prev]);
+    const res = await fetch("/api/marketplace", {
+      method: "POST",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: itemData.title,
+        description: itemData.description,
+        price: itemData.price,
+        category: itemData.category,
+        condition: itemData.condition,
+        contactInfo: itemData.contactInfo,
+        whatsappNumber: itemData.whatsappNumber,
+        images: uploadedImages,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error?.message || "Failed to create listing.");
+    await fetchMarketplace();
     addToast("success", "Marketplace Listing Created", "Listing published on campus hub.");
   };
 
-  const handleAddLostFoundItem = (itemData: Partial<LostFoundItem>) => {
-    const newItem: LostFoundItem = {
-      id: `laf-${Date.now()}`,
-      title: itemData.title || "Item",
-      description: itemData.description || "",
-      type: itemData.type || "lost",
-      location: itemData.location || "Engineering Building",
-      date: new Date().toISOString().split("T")[0],
-      contactInfo: itemData.contactInfo || user?.email || "guest@student.edu",
-      status: "active",
-      reporterName: user?.name || "Guest",
-      category: itemData.category || "personal",
-    };
-    setLostFound((prev) => [newItem, ...prev]);
+  const handleAddLostFoundItem = async (itemData: Partial<LostFoundItem>) => {
+    const res = await fetch("/api/lost-found", {
+      method: "POST",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: itemData.title,
+        description: itemData.description,
+        type: itemData.type,
+        location: itemData.location,
+        contactInfo: itemData.contactInfo,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error?.message || "Failed to create report.");
+    await fetchLostFound();
     addToast("success", "Lost & Found Posted", "Campus community notified.");
   };
 
