@@ -1502,8 +1502,8 @@ export const AdminModerationView: React.FC<AdminModerationViewProps> = ({
                 const matchesLevel =
                   userLevelFilter === "all" || !u.level || u.level === userLevelFilter;
                 const matchesQuery =
-                  u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                  u.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                  (u.name || "").toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                  (u.email || "").toLowerCase().includes(userSearchQuery.toLowerCase()) ||
                   (u.studentId &&
                     u.studentId.toLowerCase().includes(userSearchQuery.toLowerCase())) ||
                   (u.departmentId &&

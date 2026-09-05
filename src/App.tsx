@@ -1225,7 +1225,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden bg-ehb-background text-ehb-text-primary font-sans flex flex-col transition-colors selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-ehb-background text-ehb-text-primary font-sans flex flex-col transition-colors">
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
 
@@ -1370,8 +1370,12 @@ export default function App() {
                   (() => {
                     const isMechatronicsUser =
                       activeUser?.departmentId === "dept-mtr" ||
-                      activeUser?.departmentName?.toLowerCase().includes("mechatronics") ||
-                      activeUser?.departmentName?.includes("ميكاترونكس");
+                      (activeUser?.departmentName
+                        ? activeUser.departmentName.toLowerCase().includes("mechatronics")
+                        : false) ||
+                      (activeUser?.departmentName
+                        ? activeUser.departmentName.includes("ميكاترونكس")
+                        : false);
 
                     const isMechatronicsLevel1 =
                       isMechatronicsUser &&

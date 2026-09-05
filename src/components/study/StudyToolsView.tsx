@@ -194,7 +194,9 @@ export const StudyToolsView: React.FC<StudyToolsViewProps> = ({
                       <span>
                         موعد التسليم:{" "}
                         <bdi className="course-code" dir="ltr">
-                          {new Date(asgn.dueDate).toLocaleDateString("ar-EG")}
+                          {asgn.dueDate
+                            ? new Date(asgn.dueDate).toLocaleDateString("ar-EG")
+                            : "—"}
                         </bdi>
                       </span>
                       <span>الدرجة: {asgn.totalPoints} درجة</span>

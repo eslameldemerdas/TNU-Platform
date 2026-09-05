@@ -6,6 +6,7 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { serverCache } from "./cache";
+import { ValidationError } from "./errors";
 import { prisma } from "./prisma";
 
 export type Role = "student" | "moderator" | "department_admin" | "supervisor" | "super_admin";
@@ -154,7 +155,7 @@ export async function getHonorBoard(filters?: {
     achievementTitle: e.achievementTitle,
     category: e.category,
     description: e.description,
-    honoredDate: e.honoredDate.toISOString(),
+    honoredDate: e.honoredDate ? e.honoredDate.toISOString() : null,
     academicYear: e.academicYear,
     gpaOrMetric: e.gpaOrMetric,
     badgeLabel: e.badgeLabel,
@@ -164,7 +165,7 @@ export async function getHonorBoard(filters?: {
     featured: e.featured,
     applauseCount: e.applauseCount,
     tags: e.tags,
-    createdAt: e.createdAt.toISOString(),
+    createdAt: e.createdAt ? e.createdAt.toISOString() : null,
   }));
 }
 
@@ -193,10 +194,14 @@ export async function createHonorEntry(data: {
   createdById: string;
   createdByName: string;
 }) {
+  const honoredDateVal = data.honoredDate ? new Date(data.honoredDate) : null;
+  if (data.honoredDate && isNaN(honoredDateVal!.getTime())) {
+    throw new ValidationError("Invalid honoredDate format.");
+  }
   const entry = await prisma.honorStudent.create({
     data: {
       ...data,
-      honoredDate: new Date(data.honoredDate),
+      ...(honoredDateVal ? { honoredDate: honoredDateVal } : {}),
     } as any,
   });
   return {
@@ -213,7 +218,7 @@ export async function createHonorEntry(data: {
     achievementTitle: entry.achievementTitle,
     category: entry.category,
     description: entry.description,
-    honoredDate: entry.honoredDate.toISOString(),
+    honoredDate: entry.honoredDate ? entry.honoredDate.toISOString() : null,
     academicYear: entry.academicYear,
     gpaOrMetric: entry.gpaOrMetric,
     badgeLabel: entry.badgeLabel,
@@ -249,7 +254,9 @@ export async function updateHonorEntry(
 ) {
   const updateData: any = { ...data };
   if (data.honoredDate) {
-    updateData.honoredDate = new Date(data.honoredDate);
+    const d = new Date(data.honoredDate);
+    if (isNaN(d.getTime())) throw new ValidationError("Invalid honoredDate format.");
+    updateData.honoredDate = d;
   }
 
   const entry = await prisma.honorStudent.update({
@@ -270,7 +277,7 @@ export async function updateHonorEntry(
     achievementTitle: entry.achievementTitle,
     category: entry.category,
     description: entry.description,
-    honoredDate: entry.honoredDate.toISOString(),
+    honoredDate: entry.honoredDate ? entry.honoredDate.toISOString() : null,
     academicYear: entry.academicYear,
     gpaOrMetric: entry.gpaOrMetric,
     badgeLabel: entry.badgeLabel,
@@ -374,8 +381,8 @@ export async function listSessions(userId: string, currentSessionId?: string) {
     id: s.id,
     deviceInfo: s.deviceInfo,
     ipAddress: s.ipAddress,
-    createdAt: s.createdAt.toISOString(),
-    lastUsedAt: s.lastUsedAt.toISOString(),
+    createdAt: s.createdAt ? s.createdAt.toISOString() : null,
+    lastUsedAt: s.lastUsedAt ? s.lastUsedAt.toISOString() : null,
     isCurrent: s.id === currentSessionId,
   }));
 }
@@ -922,8 +929,8 @@ export async function createAnnouncement(data: {
     date: entry.date,
     isPinned: entry.isPinned,
     priority: entry.priority,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -947,8 +954,8 @@ export async function updateAnnouncement(id: string, data: {
     date: entry.date,
     isPinned: entry.isPinned,
     priority: entry.priority,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -973,8 +980,8 @@ export async function listAnnouncements(filters?: { scope?: string; targetId?: s
     date: e.date,
     isPinned: e.isPinned,
     priority: e.priority,
-    createdAt: e.createdAt.toISOString(),
-    updatedAt: e.updatedAt.toISOString(),
+    createdAt: e.createdAt ? e.createdAt.toISOString() : null,
+    updatedAt: e.updatedAt ? e.updatedAt.toISOString() : null,
   }));
 }
 
@@ -1027,8 +1034,8 @@ export async function createEvent(data: {
     status: entry.status,
     registeredStudents: entry.registeredStudents,
     agenda: entry.agenda,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -1078,8 +1085,8 @@ export async function updateEvent(id: string, data: {
     status: entry.status,
     registeredStudents: entry.registeredStudents,
     agenda: entry.agenda,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -1117,8 +1124,8 @@ export async function listEvents(filters?: { category?: string; status?: string;
     status: e.status,
     registeredStudents: e.registeredStudents,
     agenda: e.agenda,
-    createdAt: e.createdAt.toISOString(),
-    updatedAt: e.updatedAt.toISOString(),
+    createdAt: e.createdAt ? e.createdAt.toISOString() : null,
+    updatedAt: e.updatedAt ? e.updatedAt.toISOString() : null,
   }));
 }
 
@@ -1162,8 +1169,8 @@ export async function createAssignment(data: {
     level: entry.level,
     createdByName: entry.createdByName,
     createdByRole: entry.createdByRole,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -1198,8 +1205,8 @@ export async function updateAssignment(id: string, data: {
     level: entry.level,
     createdByName: entry.createdByName,
     createdByRole: entry.createdByRole,
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+    updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : null,
   };
 }
 
@@ -1232,8 +1239,8 @@ export async function listAssignments(filters?: { courseId?: string; departmentI
     level: e.level,
     createdByName: e.createdByName,
     createdByRole: e.createdByRole,
-    createdAt: e.createdAt.toISOString(),
-    updatedAt: e.updatedAt.toISOString(),
+    createdAt: e.createdAt ? e.createdAt.toISOString() : null,
+    updatedAt: e.updatedAt ? e.updatedAt.toISOString() : null,
   }));
 }
 

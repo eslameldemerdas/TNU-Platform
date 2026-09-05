@@ -129,11 +129,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   hint?: string;
-  options: { value: string; label: string }[];
+  options?: { value: string; label: string }[];
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ size = "md", label, error, hint, options, className = "", id, ...props }, ref) => {
+  ({ size = "md", label, error, hint, options, children, className = "", id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
     const sizeClasses: Record<InputSize, string> = {
@@ -169,11 +169,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           `}
           {...props}
         >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
+          {options
+            ? options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))
+            : children}
         </select>
         {error && <p className="mt-1.5 text-xs text-rose-400 font-medium">{error}</p>}
         {hint && !error && <p className="mt-1.5 text-xs text-ehb-text-muted">{hint}</p>}

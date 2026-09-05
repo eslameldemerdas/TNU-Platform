@@ -171,8 +171,8 @@ export const CourseWorkspace: React.FC<CourseWorkspaceProps> = ({
     }
 
     const matchesSearch =
-      f.title.toLowerCase().includes(fileSearchQuery.toLowerCase()) ||
-      f.description.toLowerCase().includes(fileSearchQuery.toLowerCase()) ||
+      (f.title || "").toLowerCase().includes(fileSearchQuery.toLowerCase()) ||
+      (f.description || "").toLowerCase().includes(fileSearchQuery.toLowerCase()) ||
       (f.tags || []).some((t) => t.toLowerCase().includes(fileSearchQuery.toLowerCase()));
     return matchesCategory && matchesVerification && matchesSearch;
   });

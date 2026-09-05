@@ -27,12 +27,12 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
             transition={{ duration: 0.2 }}
             className={`pointer-events-auto flex items-start gap-3 p-4 rounded-ehb-md border shadow-ehb-lg backdrop-blur-xl ${
               toast.type === "success"
-                ? "bg-emerald-950/90 text-emerald-100 border-emerald-500/40"
+                ? "bg-ehb-success-subtle text-ehb-text-primary border-ehb-success"
                 : toast.type === "error"
-                  ? "bg-rose-950/90 text-rose-100 border-rose-500/40"
+                  ? "bg-ehb-error-subtle text-ehb-text-primary border-ehb-error"
                   : toast.type === "warning"
-                    ? "bg-amber-950/90 text-amber-100 border-amber-500/40"
-                    : "bg-slate-900/90 text-slate-100 border-indigo-500/30"
+                    ? "bg-ehb-warning-subtle text-ehb-text-primary border-ehb-warning"
+                    : "bg-ehb-surface-elevated text-ehb-text-primary border-ehb-default"
             }`}
           >
             {toast.type === "success" && (
@@ -49,7 +49,7 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
             <div className="flex-1 min-w-0">
               <h4 className="text-xs font-bold tracking-tight">{toast.title}</h4>
               {toast.description && (
-                <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed line-clamp-2">
+                <p className="text-[11px] text-ehb-text-muted mt-0.5 leading-relaxed line-clamp-2">
                   {toast.description}
                 </p>
               )}
@@ -57,7 +57,7 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
 
             <button
               onClick={() => onDismiss(toast.id)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-ehb-text-muted hover:text-ehb-text-primary p-1 rounded-lg hover:bg-ehb-surface-elevated-2 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

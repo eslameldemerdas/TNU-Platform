@@ -13,15 +13,15 @@ const variantClasses: Record<BadgeVariant, string> = {
     neutral:
       "bg-ehb-surface-elevated-2 text-ehb-text-muted border border-ehb-subtle",
     success:
-      "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+      "bg-ehb-success-subtle text-ehb-success border border-ehb-success",
     warning:
-      "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+      "bg-ehb-warning-subtle text-ehb-warning border border-ehb-warning",
     error:
-      "bg-rose-500/15 text-rose-400 border border-rose-500/30",
+      "bg-ehb-error-subtle text-ehb-error border border-ehb-error",
     info:
-      "bg-sky-500/15 text-sky-400 border border-sky-500/30",
+      "bg-ehb-info-subtle text-ehb-info border border-ehb-info",
     primary:
-      "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
+      "bg-ehb-primary-subtle text-ehb-primary-accent border border-ehb-default",
   };
 
   const sizeClasses: Record<BadgeSize, string> = {

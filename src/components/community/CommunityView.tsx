@@ -114,9 +114,11 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchTitle = post.title.toLowerCase().includes(q);
-        const matchContent = post.content.toLowerCase().includes(q);
-        const matchCode = post.courseCode?.toLowerCase().includes(q);
+        const matchTitle = (post.title || "").toLowerCase().includes(q);
+        const matchContent = (post.content || "").toLowerCase().includes(q);
+        const matchCode = post.courseCode
+          ? post.courseCode.toLowerCase().includes(q)
+          : false;
         const matchTag = post.tags?.some((t) => t.toLowerCase().includes(q));
         if (!matchTitle && !matchContent && !matchCode && !matchTag) return false;
       }
@@ -570,7 +572,9 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                             <span>{post.authorDepartment}</span>
                             <span>•</span>
                             <span className="font-mono">
-                              {new Date(post.createdAt).toLocaleDateString("ar-EG")}
+                              {post.createdAt
+                                ? new Date(post.createdAt).toLocaleDateString("ar-EG")
+                                : "—"}
                             </span>
                           </div>
                         </div>

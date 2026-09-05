@@ -26,7 +26,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <AlertTriangle className="w-7 h-7" />
       </div>
 
-      <h3 className="text-base font-bold text-rose-200 mb-1 max-w-md">
+      <h3 className="text-base font-bold text-ehb-error mb-1 max-w-md">
         {title}
       </h3>
 
@@ -37,7 +37,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-ehb-md bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-bold shadow-ehb-md transition-all focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none min-h-[44px]"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-ehb-md bg-ehb-error hover:bg-ehb-error-hover active:bg-ehb-error text-ehb-error-text text-xs font-bold shadow-ehb-md transition-all focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none min-h-[44px]"
         >
           <RefreshCw className="w-4 h-4" />
           <span>إعادة المحاولة</span>
@@ -48,7 +48,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <div className="mt-6 w-full max-w-md text-right">
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ehb-text-muted hover:text-ehb-text-primary transition-colors"
           >
             <span>تفاصيل تقنية للمطورين</span>
             {showDetails ? (

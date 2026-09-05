@@ -351,9 +351,11 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
               if (selectedEventCat !== "all" && evt.category !== selectedEventCat) return false;
               if (eventSearchQuery.trim()) {
                 const q = eventSearchQuery.toLowerCase();
-                const matchTitle = evt.title.toLowerCase().includes(q);
-                const matchDesc = evt.description.toLowerCase().includes(q);
-                const matchSpeaker = evt.speaker?.toLowerCase().includes(q);
+                const matchTitle = (evt.title || "").toLowerCase().includes(q);
+                const matchDesc = (evt.description || "").toLowerCase().includes(q);
+                const matchSpeaker = evt.speaker
+                  ? evt.speaker.toLowerCase().includes(q)
+                  : false;
                 return matchTitle || matchDesc || matchSpeaker;
               }
               return true;
@@ -771,7 +773,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-2 left-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white border border-white/20">
-                            {item.category.replace("_", " ")}
+                            {(item.category || "").replace("_", " ")}
                           </span>
                         </div>
 
@@ -807,7 +809,7 @@ export const CampusHubView: React.FC<CampusHubViewProps> = ({
                     <div className="flex justify-between items-start gap-2 p-4">
                       <div>
                         <Badge variant="primary" size="sm">
-                          {item.condition.replace("_", " ")}
+                          {(item.condition || "").replace("_", " ")}
                         </Badge>
                         <h4 className="text-sm font-bold text-ehb-text-primary mt-1.5 line-clamp-2">
                           {item.title}

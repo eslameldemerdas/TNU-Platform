@@ -9,6 +9,18 @@ import "./index.css";
 // Ensure any previous service workers are unregistered
 registerServiceWorker();
 
+// Apply the persisted theme before React mounts to avoid a light-mode flash.
+try {
+  const savedTheme = window.localStorage.getItem("enghub_theme");
+  if (savedTheme === "dark" || savedTheme === "light") {
+    document.documentElement.classList.toggle("dark", savedTheme === "dark");
+  } else {
+    document.documentElement.classList.add("dark");
+  }
+} catch {
+  document.documentElement.classList.add("dark");
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>

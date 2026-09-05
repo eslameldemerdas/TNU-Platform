@@ -116,16 +116,27 @@
   --ehb-primary-text: #0f172a;       /* slate-900 — dark text on amber */
 
   --ehb-success: #10b981;            /* emerald-500 */
+  --ehb-success-hover: #34d399;
   --ehb-success-subtle: rgba(16, 185, 129, 0.12);
+  --ehb-success-border: rgb(16 185 129 / 0.35);
   --ehb-success-text: #ffffff;
 
   --ehb-warning: #f59e0b;            /* amber-500 */
+  --ehb-warning-hover: #fbbf24;
   --ehb-warning-subtle: rgba(245, 158, 11, 0.12);
+  --ehb-warning-border: rgb(245 158 11 / 0.35);
   --ehb-warning-text: #0f172a;
 
   --ehb-error: #ef4444;              /* red-500 */
+  --ehb-error-hover: #f87171;
   --ehb-error-subtle: rgba(239, 68, 68, 0.12);
+  --ehb-error-border: rgb(239 68 68 / 0.35);
   --ehb-error-text: #ffffff;
+  --ehb-info: #38bdf8;
+  --ehb-info-subtle: rgb(14 165 233 / 0.12);
+  --ehb-info-border: rgb(14 165 233 / 0.35);
+  --ehb-info-text: #082f49;
+  --ehb-overlay: rgb(2 6 23 / 0.78);
 
   /* ==========================================================================
      LIGHT MODE (explicit variant — toggled via .dark class on <html>)
@@ -145,8 +156,22 @@
 
   --ehb-primary-subtle-light: rgba(217, 119, 6, 0.08);   /* amber-600/8 */
   --ehb-success-subtle-light: rgba(5, 150, 105, 0.08);   /* emerald-600/8 */
+  --ehb-success-light: #059669;
+  --ehb-success-hover-light: #047857;
+  --ehb-success-border-light: rgb(5 150 105 / 0.3);
   --ehb-warning-subtle-light: rgba(217, 119, 6, 0.08);   /* amber-600/8 */
+  --ehb-warning-light: #d97706;
+  --ehb-warning-hover-light: #b45309;
+  --ehb-warning-border-light: rgb(217 119 6 / 0.3);
   --ehb-error-subtle-light: rgba(220, 38, 38, 0.08);     /* red-600/8 */
+  --ehb-error-light: #dc2626;
+  --ehb-error-hover-light: #b91c1c;
+  --ehb-error-border-light: rgb(220 38 38 / 0.3);
+  --ehb-info-light: #0369a1;
+  --ehb-info-subtle-light: rgb(14 116 144 / 0.08);
+  --ehb-info-border-light: rgb(3 105 161 / 0.3);
+  --ehb-info-text-light: #0c4a6e;
+  --ehb-overlay-light: rgb(15 23 42 / 0.5);
 }
 
 /* ==========================================================================
@@ -155,7 +180,7 @@
    We apply light values via the absence of .dark, using :where() to keep
    specificity low so component classes can override when needed.
    ========================================================================== */
-:where(:not(.dark)) {
+:root:not(.dark) {
   --ehb-background: var(--ehb-background-light);
   --ehb-surface: var(--ehb-surface-light);
   --ehb-surface-elevated: var(--ehb-surface-elevated-light);
@@ -171,8 +196,22 @@
 
   --ehb-primary-subtle: var(--ehb-primary-subtle-light);
   --ehb-success-subtle: var(--ehb-success-subtle-light);
+  --ehb-success: var(--ehb-success-light);
+  --ehb-success-hover: var(--ehb-success-hover-light);
+  --ehb-success-border: var(--ehb-success-border-light);
   --ehb-warning-subtle: var(--ehb-warning-subtle-light);
+  --ehb-warning: var(--ehb-warning-light);
+  --ehb-warning-hover: var(--ehb-warning-hover-light);
+  --ehb-warning-border: var(--ehb-warning-border-light);
   --ehb-error-subtle: var(--ehb-error-subtle-light);
+  --ehb-error: var(--ehb-error-light);
+  --ehb-error-hover: var(--ehb-error-hover-light);
+  --ehb-error-border: var(--ehb-error-border-light);
+  --ehb-info: var(--ehb-info-light);
+  --ehb-info-subtle: var(--ehb-info-subtle-light);
+  --ehb-info-border: var(--ehb-info-border-light);
+  --ehb-info-text: var(--ehb-info-text-light);
+  --ehb-overlay: var(--ehb-overlay-light);
 }
 
 /* ==========================================================================
@@ -187,6 +226,27 @@ body {
   color: var(--ehb-text-primary);
   transition: background-color var(--duration-smooth) var(--ease-default),
               color var(--duration-smooth) var(--ease-default);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+::selection {
+  background-color: var(--ehb-primary-subtle);
+  color: var(--ehb-text-primary);
+}
+
+/* Keep browser-rendered controls consistent with the active surface theme. */
+input,
+textarea,
+select,
+button {
+  color-scheme: inherit;
 }
 
 /* --- Tabular figures for numbers, GPAs, stats, and scores --- */
@@ -256,11 +316,16 @@ body {
 .bg-ehb-surface { background-color: var(--ehb-surface); }
 .bg-ehb-surface-elevated { background-color: var(--ehb-surface-elevated); }
 .bg-ehb-surface-elevated-2 { background-color: var(--ehb-surface-elevated-2); }
+.bg-ehb-overlay { background-color: var(--ehb-overlay); }
 
 /* --- Token-based text colors --- */
 .text-ehb-primary { color: var(--ehb-text-primary); }
 .text-ehb-muted { color: var(--ehb-text-muted); }
 .text-ehb-inverse { color: var(--ehb-text-inverse); }
+/* Backwards-compatible semantic aliases used by existing components. */
+.text-ehb-text-primary { color: var(--ehb-text-primary); }
+.text-ehb-text-muted { color: var(--ehb-text-muted); }
+.text-ehb-text-inverse { color: var(--ehb-text-inverse); }
 
 /* --- Token-based border colors --- */
 .border-ehb-subtle { border-color: var(--ehb-border-subtle); }
@@ -278,18 +343,31 @@ body {
 /* --- Token-based semantic colors --- */
 .text-ehb-success { color: var(--ehb-success); }
 .bg-ehb-success { background-color: var(--ehb-success); }
+.bg-ehb-success-hover { background-color: var(--ehb-success-hover); }
 .bg-ehb-success-subtle { background-color: var(--ehb-success-subtle); }
 .text-ehb-success-text { color: var(--ehb-success-text); }
+.border-ehb-success { border-color: var(--ehb-success-border); }
 
 .text-ehb-warning { color: var(--ehb-warning); }
 .bg-ehb-warning { background-color: var(--ehb-warning); }
+.bg-ehb-warning-hover { background-color: var(--ehb-warning-hover); }
 .bg-ehb-warning-subtle { background-color: var(--ehb-warning-subtle); }
 .text-ehb-warning-text { color: var(--ehb-warning-text); }
+.border-ehb-warning { border-color: var(--ehb-warning-border); }
 
 .text-ehb-error { color: var(--ehb-error); }
 .bg-ehb-error { background-color: var(--ehb-error); }
+.bg-ehb-error-hover { background-color: var(--ehb-error-hover); }
 .bg-ehb-error-subtle { background-color: var(--ehb-error-subtle); }
 .text-ehb-error-text { color: var(--ehb-error-text); }
+.border-ehb-error { border-color: var(--ehb-error-border); }
+
+.text-ehb-info { color: var(--ehb-info); }
+.bg-ehb-info-subtle { background-color: var(--ehb-info-subtle); }
+.border-ehb-info { border-color: var(--ehb-info-border); }
+.text-ehb-info-text { color: var(--ehb-info-text); }
+
+.ring-offset-ehb-background { --tw-ring-offset-color: var(--ehb-background); }
 
 /* --- Token-based shadows --- */
 .shadow-ehb-xs { box-shadow: var(--shadow-xs); }

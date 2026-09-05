@@ -207,8 +207,8 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
               </div>
 
               <pre className="whitespace-pre-wrap font-mono text-xs">
-                {file.previewContent ||
-                  `// ${file.title}\n// Standard study resource file: ${file.fileType.toUpperCase()} format.\n// Verified Academic Resource for Engineering Students.\n// Download the original document securely using the signed download button.`}
+                  {file.previewContent ||
+                    `// ${file.title || "Untitled"}\n// Standard study resource file: ${(file.fileType || "FILE").toUpperCase()} format.\n// Verified Academic Resource for Engineering Students.\n// Download the original document securely using the signed download button.`}
               </pre>
             </div>
 
@@ -263,7 +263,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                           {cmt.authorName}
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          {cmt.createdAt.slice(0, 10)}
+                          {(cmt.createdAt || "").slice(0, 10)}
                         </span>
                       </div>
                       <p className="text-slate-600 dark:text-slate-300">{cmt.content}</p>

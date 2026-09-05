@@ -59,8 +59,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const isMechatronicsUser =
     user?.departmentId === "dept-mtr" ||
-    user?.departmentName?.toLowerCase().includes("mechatronics") ||
-    user?.departmentName?.includes("ميكاترونكس");
+    (user?.departmentName
+      ? user.departmentName.toLowerCase().includes("mechatronics")
+      : false) ||
+    (user?.departmentName ? user.departmentName.includes("ميكاترونكس") : false);
 
   const isMechatronicsLevel1 =
     isMechatronicsUser &&

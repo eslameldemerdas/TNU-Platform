@@ -114,7 +114,6 @@ export function formatErrorResponse(err: unknown): { statusCode: number; payload
           message: err.message,
           ...(err.details ? { details: err.details } : {}),
         },
-        // Backwards compatibility for existing client code expecting string error:
         message: err.message,
         errorMessage: err.message,
         errorString: err.message,
@@ -122,7 +121,23 @@ export function formatErrorResponse(err: unknown): { statusCode: number; payload
     };
   }
 
-  // Handle unexpected errors (never leak stack traces or internals)
+  const prismaErr = err as any;
+  if (prismaErr && typeof prismaErr === "object" && prismaErr.code === "P2025") {
+    return {
+      statusCode: 404,
+      payload: {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "The requested resource was not found.",
+        },
+        message: "The requested resource was not found.",
+        errorMessage: "The requested resource was not found.",
+        errorString: "The requested resource was not found.",
+      },
+    };
+  }
+
   const _isProd = process.env.NODE_ENV === "production";
   const _rawMessage = err instanceof Error ? err.message : "Internal Server Error";
 

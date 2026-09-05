@@ -27,7 +27,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseClasses =
-      "inline-flex items-center justify-center gap-2 font-bold transition-all duration-fast ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
+      "inline-flex items-center justify-center gap-2 font-bold transition-all duration-fast ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ring-offset-ehb-background disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
 
     const sizeClasses: Record<ButtonSize, string> = {
       sm: "px-3 py-1.5 text-xs rounded-ehb-sm min-h-[36px]",
@@ -37,15 +37,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantClasses: Record<ButtonVariant, string> = {
       primary:
-        "bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-ehb-sm hover:shadow-ehb-md",
+        "bg-ehb-primary hover:bg-ehb-primary-hover active:bg-ehb-primary-active text-ehb-primary-text shadow-ehb-sm hover:shadow-ehb-md",
       secondary:
         "border border-ehb-default bg-ehb-surface-elevated text-ehb-text-primary hover:bg-ehb-surface-elevated-2 hover:border-ehb-strong",
       ghost:
         "text-ehb-text-muted hover:text-ehb-text-primary hover:bg-ehb-surface-elevated-2",
       danger:
-        "bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white shadow-ehb-sm",
+        "bg-ehb-error hover:bg-ehb-error-hover active:bg-ehb-error text-ehb-error-text shadow-ehb-sm",
       success:
-        "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-ehb-sm",
+        "bg-ehb-success hover:bg-ehb-success-hover active:bg-ehb-success text-ehb-success-text shadow-ehb-sm",
       attention:
         "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-ehb-sm hover:shadow-ehb-md",
     };

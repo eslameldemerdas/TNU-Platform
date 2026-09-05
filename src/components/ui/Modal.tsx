@@ -61,7 +61,7 @@ export const Modal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-ehb-overlay backdrop-blur-sm"
             onClick={onClose}
             aria-hidden="true"
           />
